@@ -73,7 +73,7 @@
         box#main {
           border-radius: 16px;
           background-color: alpha(@base, 0.6);
-          border: 0.5px solid aplpha(@border-color, 0.25);
+          border: 0.5px solid alpha(@border-color, 0.25);
         }
 
         entry#entry {
