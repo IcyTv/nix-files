@@ -43,7 +43,7 @@
 
         box#main {
           border-radius: 16px;
-          background-color: alpha(@bg-color, 0.6);
+          background-color: alpha(@base, 0.6);
           border: 0.5px solid aplpha(@border-color, 0.25);
         }
 
@@ -90,12 +90,12 @@
 
         #match label#info {
           color: transparent;
-          color: @fg-color;
+          color: @text;
         }
 
         label#match-desc {
           font-size: 1rem;
-          color: @fg-color;
+          color: @text;
         }
 
         label#plugin {
