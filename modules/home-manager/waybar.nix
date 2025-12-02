@@ -61,7 +61,7 @@ in {
       }
 
       window#waybar {
-        background-color: @mantle;
+        background-color: transparent;
         transition-property: background-color;
         transition-duration: 0.5s;
       }
