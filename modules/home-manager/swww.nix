@@ -54,7 +54,7 @@ in {
     };
 
     Timer = {
-      OnUnitActivateSec = "15m";
+      OnUnitActiveSec = "15m";
       OnBootSec = "15m";
       Unit = "random-wallpaper.service";
     };
