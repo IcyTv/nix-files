@@ -46,6 +46,7 @@
     # (pkgs.nerdfonts.override { fonts = [ "FantasqueSansMono" ]; })
     pkgs.nerd-fonts.jetbrains-mono
     pkgs.nerd-fonts.fantasque-sans-mono
+    pkgs.uutils-coreutils
     pkgs.gemini-cli-bin
 
     # # You can also create simple shell scripts directly inside your
