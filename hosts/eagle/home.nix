@@ -8,6 +8,7 @@
     ../../modules/home-manager/kitty.nix
     ../../modules/home-manager/cursor.nix
     ../../modules/home-manager/niri.nix
+    ../../modules/home-manager/waybar.nix
     ../../modules/home-manager/zsh.nix
     ../../modules/home-manager/nix.nix
     ../../modules/home-manager/git.nix

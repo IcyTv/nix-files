@@ -19,6 +19,7 @@
     ../../modules/nixos/rebuild.nix
     ../../modules/nixos/limine.nix
     ../../modules/nixos/plymouth.nix
+    ../../modules/nixos/sudo-rs.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
