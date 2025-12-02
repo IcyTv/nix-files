@@ -35,9 +35,9 @@
       if [[ "$PLAYERCTL_OUT" == "No players found" ]]; then
         echo -n ' No players active'
       elif [[ "$PLAYERCTL_OUT" == "Playing" ]]; then
-        echo -n " $TITLE"
-      elif [[ "$PLAYERCTL_OUT" == "Paused" ]]; then
         echo -n " $TITLE"
+      elif [[ "$PLAYERCTL_OUT" == "Paused" ]]; then
+        echo -n " $TITLE"
       elif [[ "$PLAYERCTL_OUT" == "Stopped" ]]; then
         echo -n " $TITLE"
       else

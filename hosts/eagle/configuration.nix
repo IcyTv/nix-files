@@ -117,6 +117,7 @@
   boot.kernelPackages = pkgs.linuxPackages;
 
   # Hardware configuration
+  hardware.bluetooth.enable = true;
   hardware.graphics.enable = true;
 
   hardware.nvidia = {
