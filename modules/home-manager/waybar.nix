@@ -91,6 +91,7 @@ in {
 
       #memory,
       #custom-power,
+      #custom-music,
       #wireplumber,
       #network,
       #clock,
@@ -110,6 +111,10 @@ in {
       .niri-taskbar {
         margin-left: 5px;
         color: @sky;
+      }
+
+      #custom-music {
+        background-color: @subtext1;
       }
 
       #memory {
