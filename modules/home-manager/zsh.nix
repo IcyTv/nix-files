@@ -18,6 +18,8 @@
     cat = "bat";
     bathelp = "bat --plain --language=help";
     nix-shell = "nix-shell --run zsh";
+    # TODO: This isn't great. Surely we can just send a signal or something...
+    logout = "sudo systemctl restart greetd";
   };
 
   programs.zsh = {
