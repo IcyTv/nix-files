@@ -5,7 +5,7 @@
       closeOnClick = true;
       maxEntries = 12;
       ignoreExclusiveZones = false;
-      showResultsImmediately = true;
+      showResultsImmediately = false;
       hidePluginInfo = true;
 
       x = {fraction = 0.5;};
