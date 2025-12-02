@@ -7,6 +7,10 @@
 	defaultBranch = "main";
       };
 
+      push = {
+	autoSetupRemote = true;
+      };
+
       user = {
 	name = "Michael Finger";
 	email = "michael.finger@icytv.de";
