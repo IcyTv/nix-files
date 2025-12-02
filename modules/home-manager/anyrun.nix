@@ -97,38 +97,38 @@
           padding-bottom: 4px;
         }
 
-        #match {
+        .match {
           font-size: 1.1rem;
           padding: 2px 4px;
         }
 
-        #match:selected,
-        #match:hover {
+        .match:selected,
+        .match:hover {
           background-color: @selected-bg-color;
           color: @selected-fg-color;
         }
 
-        #match:selected label#info,
-        #match:hover label#info {
+        .match:selected label.info,
+        .match:hover label.info {
           color: @selected-fg-color;
         }
 
-        #match:selected label#match-desc,
-        #match:hover label#match-desc {
+        .match:selected label.match.description,
+        .match:hover label.match.description {
           color: alpha(@selected-fg-color, 0.9);
         }
 
-        #match label#info {
+        .match label.info {
           color: transparent;
           color: @text;
         }
 
-        label#match-desc {
+        label.match.description {
           font-size: 1rem;
           color: @text;
         }
 
-        label#plugin {
+        label.plugin.info {
           font-size: 16px;
         }
       '';
