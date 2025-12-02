@@ -1,16 +1,13 @@
 # Edit this configuration file to define what should be installed on
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
-
 {
   config,
   lib,
   pkgs,
   inputs,
   ...
-}:
-
-{
+}: {
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
@@ -75,11 +72,12 @@
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users.michael = {
     isNormalUser = true;
-    extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+    extraGroups = ["wheel"]; # Enable ‘sudo’ for the user.
+    shell = pkgs.zsh;
   };
 
   home-manager = {
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = {inherit inputs;};
     users = {
       "michael" = import ./home.nix;
     };
@@ -103,7 +101,10 @@
     wl-clipboard
   ];
 
-  environment.pathsToLink = [ "/share/zsh" ];
+  programs.zsh.enable = true;
+
+  environment.pathsToLink = ["/share/zsh"];
+  environment.shells = [pkgs.zsh pkgs.bash];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
@@ -131,7 +132,7 @@
   system.autoUpgrade = {
     enable = true;
     flake = inputs.self.outPath;
-    flags = [ "-L" ];
+    flags = ["-L"];
     dates = "06:00";
     randomizedDelaySec = "45min";
   };
@@ -154,5 +155,4 @@
   #
   # For more information, see `man configuration.nix` or https://nixos.org/manual/nixos/stable/options#opt-system.stateVersion .
   system.stateVersion = "25.11"; # Did you read the comment?
-
 }

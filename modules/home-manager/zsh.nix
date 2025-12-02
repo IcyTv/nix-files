@@ -1,5 +1,8 @@
-{ pkgs, lib, ... }:
 {
+  pkgs,
+  lib,
+  ...
+}: {
   home.shellAliases = {
     ls = "eza --color=auto";
     la = "eza -a";
@@ -67,7 +70,7 @@
 
   programs.ripgrep = {
     enable = true;
-    arguments = [ "--sort=path" ];
+    arguments = ["--sort=path"];
   };
   programs.ripgrep-all.enable = true;
 
@@ -216,7 +219,7 @@
           "docker-compose.yaml"
           "Dockerfile"
         ];
-        detect_folders = [ ];
+        detect_folders = [];
         disabled = false;
       };
 
@@ -247,7 +250,7 @@
           "python3"
           "python2"
         ];
-        detect_extensions = [ "py" ];
+        detect_extensions = ["py"];
         version_format = "v\${raw}";
       };
 
@@ -263,7 +266,7 @@
           "package.json"
           ".node-version"
         ];
-        detect_folders = [ "node_modules" ];
+        detect_folders = ["node_modules"];
       };
     };
   };

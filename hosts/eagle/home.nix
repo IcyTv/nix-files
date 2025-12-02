@@ -3,9 +3,7 @@
   pkgs,
   inputs,
   ...
-}:
-
-{
+}: {
   imports = [
     ../../modules/home-manager/kitty.nix
     ../../modules/home-manager/cursor.nix
@@ -66,7 +64,7 @@
     ];
     config = {
       common = {
-        default = [ "gtk" ];
+        default = ["gtk"];
       };
     };
   };

@@ -1,28 +1,27 @@
-{ ... }:
-{
+{...}: {
   programs.git = {
     enable = true;
     settings = {
       init = {
-	defaultBranch = "main";
+        defaultBranch = "main";
       };
 
       push = {
-	autoSetupRemote = true;
+        autoSetupRemote = true;
       };
 
       user = {
-	name = "Michael Finger";
-	email = "michael.finger@icytv.de";
+        name = "Michael Finger";
+        email = "michael.finger@icytv.de";
       };
 
       url = {
-	"https://github.com/" = {
-	  insteadOf = [
-	    "gh:"
-	    "github:"
-	  ];
-	};
+        "https://github.com/" = {
+          insteadOf = [
+            "gh:"
+            "github:"
+          ];
+        };
       };
     };
   };

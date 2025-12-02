@@ -1,5 +1,8 @@
-{ lib, pkgs, ... }:
 {
+  lib,
+  pkgs,
+  ...
+}: {
   # This is how you set the option, after the module is imported
   catppuccin.kitty = {
     enable = true;
