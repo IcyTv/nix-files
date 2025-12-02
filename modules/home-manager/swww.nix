@@ -11,7 +11,7 @@
         exit 1
       fi
 
-      wallpaper=$(fd "$WALLPAPER_DIR" -d 1 -t f | shuf -n 1)
+      wallpaper=$(fd . "$WALLPAPER_DIR" -d 1 -t f | shuf -n 1)
 
       if [ -n "$wallpaper" ]; then
         swww img "$wallpaper"
