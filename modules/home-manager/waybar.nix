@@ -49,11 +49,29 @@ in {
         opacity: 0.5;
       }
 
-      #memory.
+      .niri-taskbar {
+        border-radius: 4px;
+        padding: 0.4rem;
+      }
+
+      .niri-taskbar button {
+        color: @lavender;
+      }
+
+      .niri-taskbar button.active {
+        color: @pink;
+      }
+
+      .niri-taskbar button:hover {
+        color: @mauve;
+      }
+
+      #memory,
       #custom-power,
       #wireplumber,
       #network,
       #clock,
+      #bluetooth,
       #tray {
         border-radius: 4px;
         margin: 6px 3px;
@@ -77,6 +95,10 @@ in {
 
       #wireplumber {
         background-color: @yellow;
+      }
+
+      #bluetooth {
+        background-color: @blue;
       }
 
       #network {
