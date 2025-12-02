@@ -130,7 +130,7 @@
     "nouveau.modeset=0"
     "nvidia_drm.fbdev=1"
     "initcall_blacklist=simpledrm_platform_driver_init"
-    "video=2560x1440"
+    "video=DP-2:2560x1440@240"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
