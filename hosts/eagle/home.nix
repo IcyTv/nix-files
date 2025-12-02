@@ -15,6 +15,7 @@
     ../../modules/home-manager/spotify.nix
     ../../modules/home-manager/anyrun.nix
     ../../modules/home-manager/swww.nix
+    ../../modules/home-manager/neovim.nix
     # ../../modules/home-manager/walker.nix
     inputs.catppuccin.homeModules.catppuccin
     inputs.nix-index-database.homeModules.nix-index
