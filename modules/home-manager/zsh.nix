@@ -17,8 +17,6 @@
     man = "batman";
     cat = "bat";
     bathelp = "bat --plain --language=help";
-    # TODO make this a script
-    rebuild = "sudo nixos-rebuild switch --flake $HOME/nix/#eagle";
   };
 
   programs.zsh = {

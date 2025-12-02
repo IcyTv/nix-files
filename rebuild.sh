@@ -17,7 +17,7 @@ alejandra . &>/dev/null || echo "Alejandra skipped or failed"
 echo " Building system configuration..."
 
 git add .
-nixos-rebuild build --flake .#$HOST || exit 1
+nixos-rebuild build --flake ".#$HOST" || exit 1
 
 NEW_SYSTEM=$(readlink -f result)
 CURRENT_SYSTEM=$(readlink -f /run/current-system)
@@ -38,7 +38,7 @@ if command -v nvd &> /dev/null; then
 	echo "󰍉 Analyzing changes..."
 	RAW_DIFF=$(nvd diff "$CURRENT_SYSTEM" "$NEW_SYSTEM")
 
-	CLEAN_DIFF=$(echo "$RAW_DIFF" | sed 's/\x1b\[[0-9;]*m//g')
+	CLEAN_DIFF="${RAW_DIFF//+($'\e'[)+([0-9;])m/}"
 
 	if [[ "$CLEAN_DIFF" == *"Added packages"* ]]; then
 		COMMIT_PREFIX="feat"

@@ -12,6 +12,7 @@
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
     ../../modules/nixos/greetd.nix
+    ../../modules/nixos/rebuild.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
   ];
