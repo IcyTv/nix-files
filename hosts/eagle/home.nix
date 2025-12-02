@@ -12,9 +12,13 @@
     ../../modules/home-manager/zsh.nix
     ../../modules/home-manager/nix.nix
     ../../modules/home-manager/git.nix
+    ../../modules/home-manager/spotify.nix
     inputs.catppuccin.homeModules.catppuccin
     inputs.nix-index-database.homeModules.nix-index
+    inputs.spicetify-nix.homeManagerModules.default
   ];
+
+  nixpkgs.config.allowUnfree = true;
 
   # Home Manager needs a bit of information about you and the paths it should
   # manage.
