@@ -56,7 +56,7 @@
       ''
         @define-color base #1e1e2e;
         @define-color text #cdd6f4;
-        @define-color primary-color #eba0ac;
+        @define-color primary-color #b4befe;
         @define-color secondary-color #313244;
         @define-color border-color #9399b2;
         @define-color selected-bg-color @primary-color;
@@ -75,6 +75,7 @@
           border-radius: 16px;
           background-color: alpha(@base, 0.9);
           border: 0.5px solid alpha(@border-color, 0.25);
+          border-radius: 16px;
         }
 
         text {
