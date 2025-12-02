@@ -1,12 +1,9 @@
 {...}: {
-  catppuccin.waybar = {
-    enable = true;
-    mode = "createLink";
-  };
-
+  catppuccin.waybar.enable = true;
   programs.waybar = {
     enable = true;
     systemd.enable = true;
+
     settings.main = {
       layer = "top";
       position = "top";
