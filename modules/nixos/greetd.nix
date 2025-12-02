@@ -8,7 +8,7 @@
     useTextGreeter = true;
     settings = {
       default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --cmd niri --theme 'prompt=blue;user=green;user_default=green;password=white;password_default=white;password_hidden=white;borders=blue;text=white;text_secondary=brightblack'";
+        command = "${pkgs.tuigreet}/bin/tuigreet -r --cmd niri --theme 'prompt=blue;user=green;user_default=green;password=white;password_default=white;password_hidden=white;borders=blue;text=white;text_secondary=brightblack'";
       };
     };
   };
