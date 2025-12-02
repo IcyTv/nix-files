@@ -13,6 +13,7 @@
     ./hardware-configuration.nix
     ../../modules/nixos/greetd.nix
     ../../modules/nixos/rebuild.nix
+    ../../modules/nixos/limine.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
   ];
@@ -24,12 +25,6 @@
     "nix-command"
     "flakes"
   ];
-
-  # Use the systemd-boot EFI boot loader.
-  # boot.loader.systemd-boot.enable = true;
-  # boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.limine.enable = true;
-
   networking.hostName = "eagle"; # Define your hostname.
 
   # Configure network connections interactively with nmcli or nmtui.
