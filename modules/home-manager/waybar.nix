@@ -51,19 +51,21 @@ in {
 
       .niri-taskbar {
         border-radius: 4px;
-        padding: 0.4rem;
+        margin: 2px;
+        margin-left: 8px;
       }
 
       .niri-taskbar button {
-        color: @lavender;
+        border-radius: 4px;
+        padding: 0.4rem;
       }
 
       .niri-taskbar button.active {
-        color: @pink;
+        background-color: @pink;
       }
 
       .niri-taskbar button:hover {
-        color: @mauve;
+        background-color: @mauve;
       }
 
       #memory,
