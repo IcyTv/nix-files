@@ -57,7 +57,7 @@ in {
 
       .niri-taskbar button {
         border-radius: 4px;
-        padding: 0.4rem;
+        padding: 2px;
       }
 
       .niri-taskbar button.active {
@@ -144,12 +144,24 @@ in {
       modules-right = [
         "clock"
         "tray"
+        "memory"
+        "wireplumber"
         "bluetooth"
+        "custom/power"
       ];
 
       "cffi/niri-taskbar" = {
         module_path = "${niri-taskbar}/lib/libniri_taskbar.so";
       };
+
+      "custom/power" = {
+        format = "⏻";
+        tooltip = false;
+        on-click = "wlogout";
+      };
     };
   };
+
+  programs.wlogout.enable = true;
+  catppuccin.wlogout.enable = true;
 }
