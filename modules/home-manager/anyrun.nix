@@ -6,6 +6,7 @@
       maxEntries = 12;
       ignoreExclusiveZones = false;
       showResultsImmediately = true;
+      hidePluginInfo = true;
 
       x = {fraction = 0.5;};
       y = {fraction = 0.3;};
@@ -72,7 +73,7 @@
 
         box.main {
           border-radius: 16px;
-          background-color: alpha(@base, 0.6);
+          background-color: alpha(@base, 0.9);
           border: 0.5px solid alpha(@border-color, 0.25);
         }
 
