@@ -136,7 +136,7 @@
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
-  boot.loader.limine.style.interface.resolution = "2560x1440";
+  boot.loader.limine.extraConfig = "RESOLUTION=2560x1440";
 
   # To ensure the console font is loaded early, uncomment the following line
   # and replace /path/to/your/font.psfu.gz with the actual path to your font.
