@@ -58,7 +58,7 @@
         @define-color text #cdd6f4;
         @define-color primary-color #eba0ac;
         @define-color secondary-color #313244;
-        @define-color border-color #11111b;
+        @define-color border-color #9399b2;
         @define-color selected-bg-color @primary-color;
         @define-color selected-fg-color @secondary-color;
 
