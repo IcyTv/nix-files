@@ -74,7 +74,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo " Switching to new configuration..."
-sudo "$NEW_SYSTEM/bin/switch-to-configuration" switch
+sudo nixos-rebuild switch --flake ".#$HOST"
 
 echo " Committing changes to git..."
 git commit -am "$COMMIT_MESSAGE"
