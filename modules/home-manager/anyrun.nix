@@ -7,6 +7,10 @@
       ignoreExclusiveZones = false;
       showResultsImmediately = true;
 
+      x = {fraction = 0.5;};
+      y = {fraction = 0.3;};
+      width = {fraction = 0.5;};
+
       plugins = [
         "${pkgs.anyrun}/lib/libapplications.so"
         "${pkgs.anyrun}/lib/libsymbols.so"
@@ -18,6 +22,31 @@
         "${pkgs.anyrun}/lib/libwebsearch.so"
       ];
     };
+
+    extraConfigFiles."applications.ron".text = ''
+      Config(
+        desktop_actions: true,
+        max_entries: 5,
+        hide_description: true,
+        terminal: Some(Terminal(
+          command: "kitty",
+          args: "-e {}",
+        ))
+      )
+    '';
+    extraConfigFiles."niri-focus.ron".text = ''
+      Config(
+        max_entries: 2,
+      )
+    '';
+    extraConfigFiles."nix-run.ron".text = ''
+      Config(
+        prefix: ":nr ",
+        allow_unfree: true,
+        channel: "nixpkgs-stable",
+        max_entries: 3,
+      )
+    '';
 
     extraCss =
       /*
