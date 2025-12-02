@@ -177,7 +177,11 @@ in {
 
       "custom/music" = {
         format = "{}";
-        exec = "${player-script}";
+        interval = 5;
+        tooltip = false;
+        on-click = "playerctl play-pause";
+        max-length = 50;
+        exec = "${player-script}/bin/playerctl-waybar-script";
       };
 
       "custom/power" = {
