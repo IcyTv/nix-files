@@ -1,4 +1,8 @@
-{lib, ...}: {
+{
+  lib,
+  pkgs,
+  ...
+}: {
   programs.niri.settings = {
     prefer-no-csd = true;
     input = {
@@ -236,4 +240,8 @@
         ]) (lib.range 1 9)
       ));
   };
+
+  home.packages = [
+    pkgs.xwayland-satellite
+  ];
 }
