@@ -55,7 +55,7 @@ in {
       #network,
       #clock,
       #tray {
-        boder-radius: 4px;
+        border-radius: 4px;
         margin: 6px 3px;
         padding: 6px 12px;
         background-color: @base;
