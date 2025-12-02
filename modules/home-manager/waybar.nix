@@ -30,8 +30,8 @@
     runtimeInputs = [pkgs.playerctl];
 
     text = ''
-      PLAYERCTL_OUT=$(playerctl status)
-      TITLE=$(playerctl metadata --format='{{ title }}')
+      PLAYERCTL_OUT=$(playerctl status || echo "No players found")
+      TITLE=$(playerctl metadata --format='{{ title }}' || echo "None")
       if [[ "$PLAYERCTL_OUT" == "No players found" ]]; then
         echo -n ' No players active'
       elif [[ "$PLAYERCTL_OUT" == "Playing" ]]; then
