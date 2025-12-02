@@ -24,6 +24,27 @@
       cp target/x86_64-unknown-linux-gnu/release/libniri_taskbar.so $out/lib/
     '';
   };
+  player-script = pkgs.writeShellApplication {
+    name = "playerctl-waybar-script";
+
+    runtimeInputs = [pkgs.playerctl];
+
+    text = ''
+      PLAYERCTL_OUT=$(playerctl status)
+      TITLE=$(playerctl metadata --format='{{ title }}')
+      if [[ "$PLAYERCTL_OUT" == "No players found" ]]; then
+        echo -n ' No players active'
+      elif [[ "$PLAYERCTL_OUT" == "Playing" ]]; then
+        echo -n " $TITLE"
+      elif [[ "$PLAYERCTL_OUT" == "Paused" ]]; then
+        echo -n " $TITLE"
+      elif [[ "$PLAYERCTL_OUT" == "Stopped" ]]; then
+        echo -n " $TITLE"
+      else
+        echo -n " Error executing playerctl"
+      fi
+    '';
+  };
 in {
   catppuccin.waybar.enable = true;
   programs.waybar = {
@@ -92,7 +113,7 @@ in {
       }
 
       #memory {
-        color: @peach;
+        background-color: @peach;
       }
 
       #wireplumber {
@@ -154,6 +175,11 @@ in {
         module_path = "${niri-taskbar}/lib/libniri_taskbar.so";
       };
 
+      "custom/music" = {
+        format = "{}";
+        exec = "${player-script}";
+      };
+
       "custom/power" = {
         format = "⏻";
         tooltip = false;
@@ -164,4 +190,8 @@ in {
 
   programs.wlogout.enable = true;
   catppuccin.wlogout.enable = true;
+
+  home.packages = [
+    pkgs.playerctl
+  ];
 }
