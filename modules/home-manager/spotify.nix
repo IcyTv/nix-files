@@ -7,6 +7,14 @@
 in {
   programs.spicetify = {
     enable = true;
+
+    enabledExtensions = with spicePkgs.extensions; [
+      shuffle
+      bookmark
+      trashbin
+    ];
+
     theme = spicePkgs.themes.catppuccin;
+    colorScheme = "mocha";
   };
 }
