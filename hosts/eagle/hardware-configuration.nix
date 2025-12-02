@@ -20,7 +20,6 @@
     "usb_storage"
     "sd_mod"
   ];
-  boot.initrd.kernelModules = [];
   boot.kernelModules = ["kvm-amd"];
   boot.extraModulePackages = [];
 
@@ -66,15 +65,4 @@
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   nixpkgs.config.nvidia.acceptLicense = true;
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
-
-  hardware.graphics = {
-    enable = true;
-  };
-
-  hardware.nvidia = {
-    modesetting.enable = true;
-    open = false;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
-    nvidiaSettings = true;
-  };
 }

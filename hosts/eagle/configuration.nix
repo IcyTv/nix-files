@@ -11,6 +11,10 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ../../modules/nixos/default-packages.nix
+    ../../modules/nixos/keymap.nix
+    ../../modules/nixos/console-font.nix
+    ../../modules/nixos/zsh.nix
     ../../modules/nixos/greetd.nix
     ../../modules/nixos/rebuild.nix
     ../../modules/nixos/limine.nix
@@ -27,29 +31,18 @@
   ];
   networking.hostName = "eagle"; # Define your hostname.
 
+  nixpkgs.config.allowUnfree = true;
+
   # Configure network connections interactively with nmcli or nmtui.
   networking.networkmanager.enable = true;
 
   # Set your time zone.
   time.timeZone = "Europe/Berlin";
 
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
-  console = {
-    font = "Lat2-Terminus16";
-    keyMap = "us";
-  };
 
-  # Enable the X11 windowing system.
-  # services.xserver.enable = true;
-
-  # Configure keymap in X11
-  # services.xserver.xkb.layout = "us";
-  # services.xserver.xkb.options = "eurosign:e,caps:escape";
+  services.xserver.enable = false;
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
@@ -86,22 +79,6 @@
 
   programs.firefox.enable = true;
 
-  # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
-  environment.systemPackages = with pkgs; [
-    neovim
-    kitty
-    xdg-utils
-    git
-    zsh
-    wl-clipboard
-  ];
-
-  programs.zsh.enable = true;
-
-  environment.pathsToLink = ["/share/zsh"];
-  environment.shells = [pkgs.zsh pkgs.bash];
-
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
@@ -132,6 +109,23 @@
     dates = "06:00";
     randomizedDelaySec = "45min";
   };
+
+  # Use LTS kernel
+  boot.kernelPackages = pkgs.linuxPackages;
+
+  # Hardware configuration
+  hardware.graphics.enable = true;
+
+  hardware.nvidia = {
+    modesetting.enable = true;
+    open = false;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    nvidiaSettings = true;
+  };
+
+  services.xserver.videoDrivers = ["nvidia"];
+
+  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
