@@ -17,6 +17,7 @@
     man = "batman";
     cat = "bat";
     bathelp = "bat --plain --language=help";
+    nix-shell = "nix-shell --run zsh";
   };
 
   programs.zsh = {
