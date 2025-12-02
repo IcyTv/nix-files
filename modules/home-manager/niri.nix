@@ -49,6 +49,11 @@
     };
 
     hotkey-overlay.skip-at-startup = true;
+    spawn-at-startup = [
+      {
+        sh = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri";
+      }
+    ];
     screenshot-path = "~/Pictures/Screenshots/screenshot-%Y%m%d-%H-%M-%S.png";
 
     window-rules = [
