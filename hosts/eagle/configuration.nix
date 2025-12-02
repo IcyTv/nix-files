@@ -128,9 +128,9 @@
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
   boot.kernelParams = [
     "nouveau.modeset=0"
-    "nvidia_drm.fbdev=1"
+    "nvidia-drm.fbdev=1"
     "initcall_blacklist=simpledrm_platform_driver_init"
-    "video=DP-2:2560x1440@240"
+    "video=DP-2:2560x1440@60"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
