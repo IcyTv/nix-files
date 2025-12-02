@@ -1,6 +1,6 @@
 {pkgs, ...}: {
   console = {
     packages = [pkgs.terminus_font];
-    font = "ter-v32n";
+    font = "ter-v16n";
   };
 }

@@ -126,8 +126,14 @@
   services.xserver.videoDrivers = ["nvidia"];
 
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
-  boot.kernelParams = ["nouveau.modeset=0" "nvidia_drm.fbdev=1"];
+  boot.kernelParams = [
+    "nouveau.modeset=0"
+    "nvidia_drm.fbdev=1"
+    "initcall_blacklist=simpledrm_platform_driver_init"
+  ];
   boot.blacklistedKernelModules = ["nouveau"];
+
+  console.earlySetup = false;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
