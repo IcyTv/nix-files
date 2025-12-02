@@ -20,6 +20,7 @@
     ../../modules/nixos/limine.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
+    inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
 
   catppuccin.flavor = "mocha";
