@@ -18,6 +18,7 @@
     ../../modules/nixos/greetd.nix
     ../../modules/nixos/rebuild.nix
     ../../modules/nixos/limine.nix
+    ../../modules/nixos/plymouth.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
@@ -131,9 +132,7 @@
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
   boot.kernelParams = [
     "nouveau.modeset=0"
-    "nvidia-drm.fbdev=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
-    "video=DP-2:2560x1440@60"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
