@@ -2,16 +2,17 @@
 
 set -euo pipefail
 
-HOST=eagle
+HOST=$(hostname)
 
 pushd ~/nix
+sudo -v
 
 cleanup() {
 	rm -f result
 }
 trap cleanup EXIT
 
-alejandra .
+alejandra . &>/dev/null || echo "Alejandra skipped or failed"
 
 echo " Building system configuration..."
 
