@@ -131,13 +131,14 @@
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
   boot.kernelParams = [
     "nouveau.modeset=0"
-    "nvidia-drm.fbdev=1"
+    "nvidia-drm.fbdev=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
     "video=DP-2:2560x1440@60"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
   boot.loader.limine.extraConfig = "RESOLUTION=2560x1440";
+  boot.loader.limine.style.interface.resolution = "2560x1440";
 
   # To ensure the console font is loaded early, uncomment the following line
   # and replace /path/to/your/font.psfu.gz with the actual path to your font.
