@@ -130,8 +130,11 @@
     "nouveau.modeset=0"
     "nvidia_drm.fbdev=1"
     "initcall_blacklist=simpledrm_platform_driver_init"
+    "video=2560x1440"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
+
+  boot.loader.limine.style.interface.resolution = "2560x1440";
 
   console.earlySetup = false;
 
