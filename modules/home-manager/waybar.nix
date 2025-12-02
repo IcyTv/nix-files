@@ -9,6 +9,12 @@
         font-family: "JetBrainsMono Nerd Font";
         font-size: 17px;
         min-height: 0;
+        border: none;
+        border-radius: 0;
+      }
+
+      window#waybar {
+        background-color: @mantle;
       }
     '';
 
