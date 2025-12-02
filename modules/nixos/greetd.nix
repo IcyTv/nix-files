@@ -4,6 +4,10 @@
   ...
 }: let
   niriLoginConfig = pkgs.writeText "niri-login.kdl" ''
+    hotkey-overlay {
+      skip-at-startup
+    }
+
     output "HDMI-A-1" {
       off
     }
@@ -15,7 +19,7 @@
       position x=0 y=0
       transform "normal"
     }
-    spawn-at-startup "foot" "-f" "monospace:size=20" "--fullscreen" "-e" "tuigreet" "--cmd" "niri-session"
+    spawn-at-startup "sh" "-c" "foot -f monospace:size=20 --fullscreen --title tuigreet -e tuigreet --cmd niri-session; ${pkgs.niri}/bin/niri msg action quit"
 
     window-rule {
       match app-id="foot"
@@ -26,6 +30,17 @@
 
     cursor {
       hide-when-typing
+      hide-after-inactive-ms 1
+    }
+
+    animations {
+      off
+    }
+
+    layout {
+        gaps 0
+        default-column-width { proportion 1.0; }
+        focus-ring { off; }
     }
   '';
 in {
@@ -40,8 +55,16 @@ in {
     };
   };
 
+  programs.foot = {
+    enable = true;
+    settings = {
+      main = {
+        font = "JetBrainsMono Nerd Font";
+      };
+    };
+  };
+
   environment.systemPackages = [
     pkgs.tuigreet
-    pkgs.foot
   ];
 }

@@ -133,6 +133,7 @@
   boot.kernelParams = [
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
+    "video=DP-2:1920x1080@60"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
