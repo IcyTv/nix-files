@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+shopt -s extglob
+
 HOST=$(hostname)
 
 pushd ~/nix
