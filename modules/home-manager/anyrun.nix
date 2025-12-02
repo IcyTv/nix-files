@@ -77,7 +77,7 @@
           border: 0.5px solid alpha(@border-color, 0.25);
         }
 
-        entry#entry {
+        text {
           font-size: 1.25rem;
           background: transparent;
           box-shadow: none;
