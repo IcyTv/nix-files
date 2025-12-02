@@ -94,7 +94,7 @@
         "Mod+Shift+Slash".action.show-hotkey-overlay = {};
 
         "Mod+Return".action.spawn = ["kitty"];
-        "Mod+Space".action.spawn = ["walker"];
+        "Mod+Space".action.spawn = ["anyrun"];
         "Mod+B".action.spawn = ["firefox"];
         "Mod+E".action.spawn = ["thunar"];
         "Mod+Alt+L".action.spawn = ["swaylock"];
