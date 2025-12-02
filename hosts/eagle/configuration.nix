@@ -23,7 +23,6 @@
   ];
 
   catppuccin.flavor = "mocha";
-  catppuccin.tty.enable = true;
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -136,7 +135,9 @@
 
   boot.loader.limine.style.interface.resolution = "2560x1440";
 
-  console.earlySetup = false;
+  # To ensure the console font is loaded early, uncomment the following line
+  # and replace /path/to/your/font.psfu.gz with the actual path to your font.
+  boot.initrd.postDeviceCommands = lib.mkAfter ''zcat /path/to/your/font.psfu.gz > /dev/tty0'';
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
