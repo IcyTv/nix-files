@@ -61,6 +61,48 @@ in {
         background-color: @base;
         color: @mantle;
       }
+
+      #custom-power {
+        margin-right: 6px;
+      }
+
+      .niri-taskbar {
+        margin-left: 5px;
+        color: @sky;
+      }
+
+      #memory {
+        color: @peach;
+      }
+
+      #wireplumber {
+        background-color: @yellow;
+      }
+
+      #network {
+        padding-right: 17px;
+        background-color: @teal;
+      }
+
+      #clock {
+        background-color: @mauve;
+      }
+
+      #custom-power {
+        background-color: @flamingo;
+      }
+
+      tooltip {
+        border-radius: 8px;
+        padding: 15px;
+        background-color: @surface0;
+      }
+
+      tooltip label {
+        padding: 5px;
+        background-color: @surface0;
+        color: @text;
+      }
     '';
 
     settings.main = {
