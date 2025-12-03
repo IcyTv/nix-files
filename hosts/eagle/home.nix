@@ -18,6 +18,7 @@
     ../../modules/home-manager/neovim.nix
     ../../modules/home-manager/discord.nix
     ../../modules/home-manager/bluetooth.nix
+    ../../modules/home-manager/audio.nix
     # ../../modules/home-manager/walker.nix
     inputs.catppuccin.homeModules.catppuccin
     inputs.nix-index-database.homeModules.nix-index
