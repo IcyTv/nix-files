@@ -1,16 +1,12 @@
-{
-  config,
-  pkgs,
-  ...
-}: let
+{pkgs, ...}: let
   niri-taskbar = pkgs.rustPlatform.buildRustPackage rec {
     pname = "niri-taskbar";
     version = "0.3.0";
 
     src = pkgs.fetchFromGitHub {
-      owner = "LawnGnome";
+      owner = "onlca";
       repo = "niri-taskbar";
-      rev = "v0.3.0+niri.25.08";
+      rev = "fix/update-niri-ipc";
       hash = "sha256-Gbzh4OTkvtP9F/bfDUyA14NH2DMDdr3i6oFoFwinEAg=";
     };
 
