@@ -21,6 +21,7 @@
     ../../modules/nixos/plymouth.nix
     ../../modules/nixos/sudo-rs.nix
     ../../modules/nixos/ananicy.nix
+    ../../modules/nixos/bluetooth.nix
     inputs.home-manager.nixosModules.default
     inputs.catppuccin.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
@@ -117,8 +118,10 @@
   # Use LTS kernel
   boot.kernelPackages = pkgs.linuxPackages;
 
-  # Hardware configuration
+  # Bluetooth
   hardware.bluetooth.enable = true;
+
+  # Hardware configuration
   hardware.graphics.enable = true;
 
   hardware.nvidia = {
