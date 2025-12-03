@@ -7,6 +7,7 @@
           installation_mode = "force_installed";
           install_url = "file://${pkg}/share/mozilla/extensions/${firefoxID}/${pkg.addonId}.xpi";
           private_browsing = true;
+          default_area = "menupanel";
         };
       })
       packages);
@@ -111,6 +112,7 @@ in {
 
       yes = {
         id = 2;
+        name = "Yes";
         isDefault = false;
         extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
           privacy-possum
