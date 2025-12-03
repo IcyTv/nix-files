@@ -11,6 +11,7 @@
       scrollback_pager = "bat --color=always";
       scrollback_pager_history_size = 0;
       shell = "zsh";
+      confirm_os_window_close = 0;
     };
     shellIntegration = {
       enableBashIntegration = true;
