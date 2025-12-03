@@ -6,7 +6,6 @@
 }: {
   imports = [
     ../../modules/home-manager/kitty.nix
-    ../../modules/home-manager/cursor.nix
     ../../modules/home-manager/niri.nix
     ../../modules/home-manager/waybar.nix
     ../../modules/home-manager/zsh.nix
@@ -19,11 +18,12 @@
     ../../modules/home-manager/discord.nix
     ../../modules/home-manager/bluetooth.nix
     ../../modules/home-manager/audio.nix
+    ../../modules/home-manager/stylix.nix
     # ../../modules/home-manager/walker.nix
-    inputs.catppuccin.homeModules.catppuccin
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim
+    inputs.stylix.homeModules.stylix
   ];
 
   nixpkgs.config.allowUnfree = true;

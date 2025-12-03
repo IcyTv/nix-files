@@ -59,8 +59,6 @@
     '';
   };
 
-  catppuccin.zsh-syntax-highlighting.enable = true;
-
   programs.eza = {
     enable = true;
     enableBashIntegration = true;
@@ -131,7 +129,6 @@
     };
   };
 
-  catppuccin.starship.enable = true;
   programs.starship = {
     enable = true;
     settings = {
@@ -283,5 +280,4 @@
     enableZshIntegration = true;
     exitShellOnExit = true;
   };
-  catppuccin.zellij.enable = true;
 }

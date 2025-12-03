@@ -46,7 +46,6 @@
     '';
   };
 in {
-  catppuccin.waybar.enable = true;
   programs.waybar = {
     enable = true;
     systemd.enable = true;
@@ -211,7 +210,6 @@ in {
   };
 
   programs.wlogout.enable = true;
-  catppuccin.wlogout.enable = true;
 
   home.packages = [
     pkgs.playerctl

@@ -9,11 +9,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    catppuccin = {
-      url = "github:catppuccin/nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -35,6 +30,11 @@
       url = "github:nix-community/nixvim";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -52,6 +52,7 @@
             nixpkgs.overlays = [inputs.niri.overlays.niri];
           }
         )
+        inputs.stylix.nixosModules.stylix
         inputs.niri.nixosModules.niri
         inputs.nix-index-database.nixosModules.nix-index
         ./hosts/eagle/configuration.nix

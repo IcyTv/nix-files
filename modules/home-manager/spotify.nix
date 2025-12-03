@@ -15,9 +15,6 @@ in {
       bookmark
       trashbin
     ];
-
-    theme = spicePkgs.themes.catppuccin;
-    colorScheme = "mocha";
   };
 
   xdg.configFile."autostart/spotify.desktop".source = "${pkgs.spotify}/share/applications/spotify.desktop";

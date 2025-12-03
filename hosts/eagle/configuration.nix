@@ -23,12 +23,8 @@
     ../../modules/nixos/ananicy.nix
     ../../modules/nixos/bluetooth.nix
     inputs.home-manager.nixosModules.default
-    inputs.catppuccin.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
-
-  catppuccin.flavor = "mocha";
-  catppuccin.tty.enable = true;
 
   nix.settings.experimental-features = [
     "nix-command"

@@ -1,6 +1,4 @@
 {...}: {
-  catppuccin.plymouth.enable = true;
-
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = true;
   boot.kernelParams = [

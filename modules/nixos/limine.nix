@@ -1,6 +1,4 @@
 {...}: {
-  catppuccin.limine.enable = true;
-
   boot.loader.limine = {
     enable = true;
     maxGenerations = 5;
