@@ -44,7 +44,7 @@
 
     plugins.direnv.enable = true;
 
-    extraPackages = with pkgs; [
+    extraPackages = [
       pkgs.alejandra
       pkgs.nixfmt-rfc-style
     ];
