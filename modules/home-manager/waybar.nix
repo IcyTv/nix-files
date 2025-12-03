@@ -52,6 +52,10 @@ in {
       */
       ''
         @define-color pink @base07;
+        @define-color mauve @base0E;
+        @define-color base @base00;
+        @define-color text @base05;
+        @define-color sky @base0D;
 
         * {
           font-size: 17px;
