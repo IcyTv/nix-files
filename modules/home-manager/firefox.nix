@@ -85,7 +85,7 @@ in {
 
       ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
         ublock-origin
-        privacy-possum
+        privacy-badger
         adnauseam
       ]);
 
@@ -121,6 +121,7 @@ in {
         isDefault = true;
         search = {
           order = ["google"];
+          force = true;
           engines = {
             "Nix Packages" = {
               urls = [
