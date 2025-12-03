@@ -20,8 +20,5 @@
       mini-nvim
       catppuccin-nvim
     ];
-    extraLuaConfig = ''
-      vim.cmd.colorscheme "catppuccin-mocha"
-    '';
   };
 }
