@@ -11,6 +11,8 @@
     vimAlias = true;
     vimdiffAlias = true;
 
+    withNodeJs = true;
+
     plugins = with pkgs.vimPlugins; [
       nvim-lspconfig
       nvim-treesitter.withAllGrammars
@@ -18,7 +20,8 @@
       mini-nvim
       catppuccin-nvim
     ];
+    extraLuaConfig = ''
+      vim.cmd.colorscheme "catppuccin"
+    '';
   };
-
-  catppuccin.nvim.enable = true;
 }
