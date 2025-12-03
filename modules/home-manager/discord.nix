@@ -1,4 +1,4 @@
-{...}: {
+{pkgs, ...}: {
   programs.vesktop = {
     enable = true;
     vencord.settings = {
@@ -39,4 +39,6 @@
   };
 
   catppuccin.vesktop.enable = true;
+
+  xdg.configFile."autostart/vesktop.desktop".source = "${pkgs.vesktop}/share/applications/vesktop.desktop";
 }
