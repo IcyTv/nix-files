@@ -11,6 +11,7 @@
   imports = [
     # Include the results of the hardware scan.
     ./hardware-configuration.nix
+    ../../modules/nixos/stylix.nix
     ../../modules/nixos/default-packages.nix
     ../../modules/nixos/keymap.nix
     ../../modules/nixos/console-font.nix
