@@ -4,21 +4,12 @@
   config,
   ...
 }: {
-  programs.neovim = {
+  programs.nixvim = {
     enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimAlias = true;
-    vimdiffAlias = true;
 
-    withNodeJs = true;
+    colorschemes.catppuccin.enable = true;
+    plugins.lualine.enable = true;
 
-    plugins = with pkgs.vimPlugins; [
-      nvim-lspconfig
-      nvim-treesitter.withAllGrammars
-      plenary-nvim
-      mini-nvim
-      catppuccin-nvim
-    ];
+    plugins.treesitter.enable = true;
   };
 }

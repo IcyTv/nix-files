@@ -20,7 +20,7 @@
     inputs.catppuccin.homeModules.catppuccin
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
-    inputs.walker.homeManagerModules.default
+    inputs.nixvim.homeModules.nixvim
   ];
 
   nixpkgs.config.allowUnfree = true;
