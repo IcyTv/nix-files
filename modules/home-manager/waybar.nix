@@ -129,19 +129,22 @@ in {
         }
 
         #custom-music {
-          background-color: @subtext1;
+          background-color: @surface1;
         }
 
         #memory {
           background-color: @peach;
+          color: @base;
         }
 
         #wireplumber {
           background-color: @yellow;
+          color: @base;
         }
 
         #bluetooth {
           background-color: @blue;
+          color: @base;
         }
 
         #network {
@@ -151,10 +154,12 @@ in {
 
         #clock {
           background-color: @mauve;
+          color: @base;
         }
 
         #custom-power {
           background-color: @flamingo;
+          color: @base;
         }
 
         tooltip {
@@ -188,6 +193,7 @@ in {
         "memory"
         "wireplumber"
         "bluetooth"
+        "network"
         "custom/power"
       ];
 
