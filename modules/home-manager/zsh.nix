@@ -277,4 +277,11 @@
     enableZshIntegration = true;
     enableBashIntegration = true;
   };
+
+  programs.zellij = {
+    enable = true;
+    enableZshIntegration = true;
+    exitShellOnExit = true;
+  };
+  catppuccin.zellij.enable = true;
 }
