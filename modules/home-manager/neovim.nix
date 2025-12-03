@@ -90,6 +90,18 @@ in {
     ];
 
     keymaps = [
+      (nKey "<C-h>" "<cmd>wincmd h" "Go window left")
+      (nKey "<C-l>" "<cmd>wincmd l" "Go window left")
+      (nKey "<C-j>" "<cmd>wincmd j" "Go window left")
+      (nKey "<C-k>" "<cmd>wincmd k" "Go window left")
+      (nKey "<C-Up>" "<cmd>resize +5" "Increase window height")
+      (nKey "<C-Down>" "<cmd>resize -5" "Decrease window height")
+      (nKey "<C-Left>" "<cmd>vertical resize -5" "Decrease window width")
+      (nKey "<C-Right>" "<cmd>vertical resize +5" "Decrease window width")
+      (nKey "[b" "<cmd>next" "Go to next Buffer")
+      (nKey "]b" "<cmd>previous" "Go to previous Buffer")
+      (nKey "<leader>bb" "<cmd>Telescope buffers" "Switch to other Buffer")
+      (nKey "<leader>bd" "<cmd>bdelete" "Delete Buffer")
       (nKey "<leader>e" "<cmd>Neotree toggle<CR>" "Toggle Explorer")
       (nKey "<leader>ff" "<cmd>Telescope find_files<CR>" "Find Files")
       (nKey "<leader>fg" "<cmd>Telescope live_grep<CR>" "Live Grep")
