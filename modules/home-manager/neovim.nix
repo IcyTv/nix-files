@@ -16,6 +16,7 @@
       nvim-treesitter.withAllGrammars
       plenary-nvim
       mini-nvim
+      catppuccin-nvim
     ];
   };
 
