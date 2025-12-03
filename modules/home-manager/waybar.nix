@@ -119,10 +119,6 @@ in {
           color: @text;
         }
 
-        #custom-power {
-          margin-right: 6px;
-        }
-
         .niri-taskbar {
           margin-left: 5px;
           color: @sky;
@@ -150,6 +146,7 @@ in {
         #network {
           padding-right: 17px;
           background-color: @teal;
+          color: @base
         }
 
         #clock {
@@ -160,6 +157,7 @@ in {
         #custom-power {
           background-color: @flamingo;
           color: @base;
+          margin-right: 16px;
         }
 
         tooltip {
