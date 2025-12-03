@@ -3,19 +3,47 @@
   lib,
   config,
   ...
-}: {
+}: let
+  nKey = key: action: desc: {
+    mode = "n";
+    key = key;
+    action = action;
+    options.desc = desc;
+  };
+in {
   programs.nixvim = {
     enable = true;
 
     colorschemes.catppuccin.enable = true;
 
+    globals.mapleader = " ";
+    opts = {
+      number = true;
+      relativenumber = true;
+      tabstop = 4;
+      wrap = false;
+      termguicolors = true;
+    };
+
     plugins.lualine.enable = true;
-    plugins.treesitter.enable = true;
+    plugins.bufferline.enable = true;
+    plugins.treesitter = {
+      enable = true;
+      settings.highlight.enable = true;
+    };
     plugins.lz-n.enable = true;
     plugins.which-key.enable = true;
     plugins.noice.enable = true;
+    plugins.dashboard.enable = true;
+    plugins.web-devicons.enable = true;
     plugins.mini.enable = true;
     plugins.guess-indent.enable = true;
+
+    plugins.neo-tree.enable = true;
+    plugins.telescope.enable = true;
+    plugins.flash.enable = true;
+    plugins.gitsigns.enable = true;
+    plugins.luasnip.enable = true;
 
     plugins.lsp = {
       enable = true;
@@ -49,6 +77,7 @@
       settings.sources = [
         {name = "nvim_lsp";}
         {name = "async_path";}
+        {name = "luasnip";}
         {name = "buffer";}
       ];
     };
@@ -58,6 +87,12 @@
     extraPackages = [
       pkgs.alejandra
       pkgs.nixfmt-rfc-style
+    ];
+
+    keymaps = [
+      (nKey "<leader>e" "<cmd>Neotree toggle<CR>" "Toggle Explorer")
+      (nKey "<leader>ff" "<cmd>Telescope find_files<CR>" "Find Files")
+      (nKey "<leader>fg" "<cmd>Telescope live_grep<CR>" "Live Grep")
     ];
   };
 }
