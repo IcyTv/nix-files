@@ -198,6 +198,15 @@ in {
         tooltip = false;
         on-click = "wlogout";
       };
+
+      wireplumber = {
+        format = "{icon} {volume}%";
+        format-muted = "";
+        format-icons = {
+          default = ["" "" ""];
+        };
+        on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+      };
     };
   };
 
