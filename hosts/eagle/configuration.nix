@@ -23,6 +23,7 @@
     ../../modules/nixos/sudo-rs.nix
     ../../modules/nixos/ananicy.nix
     ../../modules/nixos/bluetooth.nix
+    ../../modules/nixos/printing.nix
     inputs.home-manager.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
