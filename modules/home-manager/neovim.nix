@@ -15,6 +15,7 @@
     plugins.which-key.enable = true;
     plugins.noice.enable = true;
     plugins.mini.enable = true;
+    plugins.guess-indent.enable = true;
 
     plugins.lsp = {
       enable = true;
@@ -40,6 +41,16 @@
           nix = ["alejandra"];
         };
       };
+    };
+
+    plugins.cmp = {
+      enable = true;
+      autoEnableSources = true;
+      settings.sources = [
+        {name = "nvim_lsp";}
+        {name = "async_path";}
+        {name = "buffer";}
+      ];
     };
 
     plugins.direnv.enable = true;
