@@ -45,8 +45,20 @@
   outputs = {
     self,
     nixpkgs,
+    nur,
     ...
-  } @ inputs: {
+  } @ inputs: let
+    systems = nixpkgs.lib.systems.flakeExposed;
+    forAllSystems = function:
+      nixpkgs.lib.genAttrs systems (system:
+        function (import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          overlays = [nur.overlays.default];
+        }));
+  in {
+    legacyPackages = forAllSystems (pkgs: pkgs);
+
     # use "nixos", or your hostname as the name of the configuration
     # it's a better practice than "default" shown in the video
     nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {

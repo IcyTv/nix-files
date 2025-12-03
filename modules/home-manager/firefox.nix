@@ -1,7 +1,52 @@
-{pkgs, ...}: {
+{pkgs, ...}: let
+  firefoxID = "{ec8030f7-c20a-464f-9b0e-13a3a9e97384}";
+  makeSettings = packages:
+    builtins.listToAttrs (map (pkg: {
+        name = pkg.addonId;
+        value = {
+          installation_mode = "force_installed";
+          install_url = "file://${pkg}/share/mozilla/extensions/${firefoxID}/${pkg.addonId}.xpi";
+          private_browsing = true;
+        };
+      })
+      packages);
+in {
   stylix.targets.firefox.profileNames = ["default"];
   programs.firefox = {
     enable = true;
+
+    policies = {
+      ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
+        ublock-origin
+        privacy-possum
+        adnauseam
+      ]);
+
+      "3rdparty".Extensions = {
+        "uBlock0@raymondhill.net" = {
+          adminSettings = {
+            selectedFilterLists = [
+              "user-filters"
+              "ublock-filters"
+              "ublock-badware"
+              "ublock-privacy"
+              "ublock-quick-fixes"
+              "ublock-unbreak"
+              "easylist"
+              "easyprivacy"
+              "urlhaus-1"
+              "plowe-0"
+
+              "ublock-annoyances"
+              "adguard-annoyance"
+              "fanboy-cookiemonster"
+              "fanboy-annoyance"
+            ];
+          };
+        };
+      };
+    };
+
     profiles = {
       default = {
         id = 0;
@@ -52,9 +97,25 @@
           };
         };
         extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-          ublock-origin
-          bitwarden
           vimium
+          bitwarden
+          return-youtube-dislikes
+          sponsorblock
+          tabliss
+          tab-stash
+          auto-tab-discard
+          istilldontcareaboutcookies
+          behind-the-overlay-revival
+        ];
+      };
+
+      yes = {
+        id = 2;
+        isDefault = false;
+        extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
+          privacy-possum
+          istilldontcareaboutcookies
+          behind-the-overlay-revival
         ];
       };
     };
