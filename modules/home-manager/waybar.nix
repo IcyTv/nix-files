@@ -51,8 +51,9 @@ in {
       css
       */
       ''
+        @define-color pink @base07;
+
         * {
-          font-family: "JetBrainsMono Nerd Font";
           font-size: 17px;
           min-height: 0;
           border: none;
@@ -100,7 +101,7 @@ in {
           margin: 6px 3px;
           padding: 6px 12px;
           background-color: @base;
-          color: @mantle;
+          color: @text;
         }
 
         #custom-power {
