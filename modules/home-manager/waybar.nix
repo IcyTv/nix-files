@@ -51,11 +51,22 @@ in {
       css
       */
       ''
-        @define-color pink @base07;
-        @define-color mauve @base0E;
         @define-color base @base00;
+        @define-color mantle @base01;
+        @define-color surface0 @base02;
+        @define-color surface1 @base03;
+        @define-color surface2 @base04;
         @define-color text @base05;
-        @define-color sky @base0D;
+        @define-color rosewater @base06;
+        @define-color lavender @base07;
+        @define-color red @base08;
+        @define-color peach @base09;
+        @define-color yellow @base0A;
+        @define-color green @base0B;
+        @define-color teal @base0C;
+        @define-color blue @base0D;
+        @define-color mauve @base0E;
+        @define-color flamingo @base0F;
 
         * {
           font-size: 17px;
@@ -86,7 +97,7 @@ in {
         }
 
         .niri-taskbar button.active {
-          background-color: @pink;
+          background-color: @mauve;
         }
 
         .niri-taskbar button:hover {
