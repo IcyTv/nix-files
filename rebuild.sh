@@ -7,7 +7,6 @@ shopt -s extglob
 HOST=$(hostname)
 
 pushd ~/nix
-sudo -v
 
 cleanup() {
 	rm -f result
@@ -74,7 +73,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo " Switching to new configuration..."
-sudo nixos-rebuild switch --flake ".#$HOST"
+nixos-rebuild switch --sudo --flake ".#$HOST"
 
 echo " Committing changes to git..."
 git commit -am "$COMMIT_MESSAGE"

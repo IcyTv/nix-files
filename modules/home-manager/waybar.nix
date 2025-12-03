@@ -7,10 +7,10 @@
       owner = "onlca";
       repo = "niri-taskbar";
       rev = "fix/update-niri-ipc";
-      hash = "sha256-Gbzh4OTkvtP9F/bfDUyA14NH2DMDdr3i6oFoFwinEAg=";
+      hash = "sha256-D8kLAaKT4NDdT3TTxNCX8NtvGyLTxFCmPcTjtwZD6nc=";
     };
 
-    cargoHash = "sha256-Ql9iqbbS3DY7o5/PR96c2t4VXKoS1kjZ9k3SfhNdbzE=";
+    cargoHash = "sha256-lzzNAO/3P+9ZXuDSekGumvz7uawRAqVONgwXNonOpjg=";
 
     nativeBuildInputs = [pkgs.pkg-config];
     buildInputs = [pkgs.gtk3];
