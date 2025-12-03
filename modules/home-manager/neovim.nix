@@ -9,6 +9,7 @@
     key = key;
     action = action;
     options.desc = desc;
+    options.silent = true;
   };
 in {
   programs.nixvim = {
