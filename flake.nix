@@ -54,7 +54,9 @@
       modules = [
         (
           {pkgs, ...}: {
-            nixpkgs.overlays = [inputs.niri.overlays.niri];
+            nixpkgs.overlays = [
+              inputs.niri.overlays.niri
+            ];
           }
         )
         inputs.stylix.nixosModules.stylix
@@ -62,6 +64,7 @@
         inputs.nix-index-database.nixosModules.nix-index
         ./hosts/eagle/configuration.nix
         inputs.home-manager.nixosModules.default
+        inputs.nur.modules.nixos.default
       ];
     };
   };

@@ -1,4 +1,5 @@
 {pkgs, ...}: {
+  stylix.targets.firefox.profileNames = ["default"];
   programs.firefox = {
     enable = true;
     profiles = {
@@ -7,7 +8,7 @@
         name = "default";
         isDefault = true;
         search = {
-          order = ["Google"];
+          order = ["google"];
           engines = {
             "Nix Packages" = {
               urls = [
@@ -30,26 +31,31 @@
             };
             "NixOS Wiki" = {
               urls = [{template = "https://nixos.wiki/index.php?search={searchTerms}";}];
-              iconUpdateURL = "https://nixos.wiki/favicon.png";
+              icon = "https://nixos.wiki/favicon.png";
               updateInterval = 24 * 60 * 60 * 1000;
               definedAliases = ["nixos" "nixwiki"];
             };
             "Rust Crates" = {
               urls = [{template = "https://crates.io/search?q={searchTerms}";}];
-              iconUpdateURL = "https://crates.io/favicon.ico";
+              icon = "https://crates.io/favicon.ico";
               updateInterval = 24 * 60 * 60 * 1000;
               definedAliases = ["crates"];
             };
             "Rust Docs" = {
               urls = [{template = "https://docs.rs/releases/search?query={searchTerms}";}];
-              iconUpdateURL = "https://docs.rs/favicon.ico";
+              icon = "https://docs.rs/favicon.ico";
               updateInterval = 24 * 60 * 60 * 1000;
               definedAliases = ["docs"];
             };
-            "Bing".metaData.hidden = true;
-            "Google".metaData.alias = "@g";
+            bing.metaData.hidden = true;
+            google.metaData.alias = "@g";
           };
         };
+        extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
+          ublock-origin
+          bitwarden
+          vimium
+        ];
       };
     };
   };

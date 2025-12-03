@@ -18,10 +18,11 @@
     ../../modules/home-manager/discord.nix
     ../../modules/home-manager/bluetooth.nix
     ../../modules/home-manager/audio.nix
-    # ../../modules/home-manager/walker.nix
+    ../../modules/home-manager/firefox.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim
+    inputs.nur.modules.homeManager.default
   ];
 
   nixpkgs.config.allowUnfree = true;
