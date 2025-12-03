@@ -13,6 +13,9 @@
         package = pkgs.nerd-fonts.jetbrains-mono;
         name = "JetBrainsMono Nerd Font";
       };
+      sizes = {
+        applications = 8;
+      };
     };
   };
 }

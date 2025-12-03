@@ -5,7 +5,6 @@
 }: {
   programs.kitty = {
     enable = true;
-    font.size = 12;
     settings = {
       force_ltr = "no";
       scrollback_lines = 1000000;
