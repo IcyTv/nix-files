@@ -11,5 +11,6 @@
     plugins.lualine.enable = true;
 
     plugins.treesitter.enable = true;
+    plugins.lz-n.enable = true;
   };
 }
