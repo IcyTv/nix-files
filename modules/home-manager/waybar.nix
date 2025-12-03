@@ -51,109 +51,113 @@ in {
     enable = true;
     systemd.enable = true;
 
-    style = ''
-      * {
-        font-family: "JetBrainsMono Nerd Font";
-        font-size: 17px;
-        min-height: 0;
-        border: none;
-        border-radius: 0;
-      }
+    style =
+      /*
+      css
+      */
+      ''
+        * {
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 17px;
+          min-height: 0;
+          border: none;
+          border-radius: 0;
+        }
 
-      window#waybar {
-        background-color: transparent;
-        transition-property: background-color;
-        transition-duration: 0.5s;
-      }
+        window#waybar {
+          background-color: transparent;
+          transition-property: background-color;
+          transition-duration: 0.5s;
+        }
 
-      window#waybar.hidden {
-        opacity: 0.5;
-      }
+        window#waybar.hidden {
+          opacity: 0.5;
+        }
 
-      .niri-taskbar {
-        border-radius: 4px;
-        margin: 2px;
-        margin-left: 8px;
-      }
+        .niri-taskbar {
+          border-radius: 4px;
+          margin: 2px;
+          margin-left: 8px;
+        }
 
-      .niri-taskbar button {
-        border-radius: 4px;
-        padding: 2px;
-      }
+        .niri-taskbar button {
+          border-radius: 4px;
+          padding: 2px;
+        }
 
-      .niri-taskbar button.active {
-        background-color: @pink;
-      }
+        .niri-taskbar button.active {
+          background-color: @pink;
+        }
 
-      .niri-taskbar button:hover {
-        background-color: @mauve;
-      }
+        .niri-taskbar button:hover {
+          background-color: @mauve;
+        }
 
-      #memory,
-      #custom-power,
-      #custom-music,
-      #wireplumber,
-      #network,
-      #clock,
-      #bluetooth,
-      #tray {
-        border-radius: 4px;
-        margin: 6px 3px;
-        padding: 6px 12px;
-        background-color: @base;
-        color: @mantle;
-      }
+        #memory,
+        #custom-power,
+        #custom-music,
+        #wireplumber,
+        #network,
+        #clock,
+        #bluetooth,
+        #tray {
+          border-radius: 4px;
+          margin: 6px 3px;
+          padding: 6px 12px;
+          background-color: @base;
+          color: @mantle;
+        }
 
-      #custom-power {
-        margin-right: 6px;
-      }
+        #custom-power {
+          margin-right: 6px;
+        }
 
-      .niri-taskbar {
-        margin-left: 5px;
-        color: @sky;
-      }
+        .niri-taskbar {
+          margin-left: 5px;
+          color: @sky;
+        }
 
-      #custom-music {
-        background-color: @subtext1;
-      }
+        #custom-music {
+          background-color: @subtext1;
+        }
 
-      #memory {
-        background-color: @peach;
-      }
+        #memory {
+          background-color: @peach;
+        }
 
-      #wireplumber {
-        background-color: @yellow;
-      }
+        #wireplumber {
+          background-color: @yellow;
+        }
 
-      #bluetooth {
-        background-color: @blue;
-      }
+        #bluetooth {
+          background-color: @blue;
+        }
 
-      #network {
-        padding-right: 17px;
-        background-color: @teal;
-      }
+        #network {
+          padding-right: 17px;
+          background-color: @teal;
+        }
 
-      #clock {
-        background-color: @mauve;
-      }
+        #clock {
+          background-color: @mauve;
+        }
 
-      #custom-power {
-        background-color: @flamingo;
-      }
+        #custom-power {
+          background-color: @flamingo;
+        }
 
-      tooltip {
-        border-radius: 8px;
-        padding: 15px;
-        background-color: @surface0;
-      }
+        tooltip {
+          border-radius: 8px;
+          padding: 15px;
+          background-color: @surface0;
+        }
 
-      tooltip label {
-        padding: 5px;
-        background-color: @surface0;
-        color: @text;
-      }
-    '';
+        tooltip label {
+          padding: 5px;
+          background-color: @surface0;
+          color: @text;
+        }
+      '';
 
     settings.main = {
       layer = "top";
