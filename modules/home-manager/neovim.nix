@@ -12,5 +12,6 @@
 
     plugins.treesitter.enable = true;
     plugins.lz-n.enable = true;
+    plugins.which-key.enable = true;
   };
 }
