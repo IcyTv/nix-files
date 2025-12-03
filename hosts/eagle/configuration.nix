@@ -70,14 +70,12 @@
 
   home-manager = {
     extraSpecialArgs = {inherit inputs;};
-    backupFileExtension = ".bak";
+    backupFileExtension = "bak";
 
     users = {
       "michael" = import ./home.nix;
     };
   };
-
-  programs.firefox.enable = true;
 
   programs.niri = {
     enable = true;

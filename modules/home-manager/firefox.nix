@@ -7,16 +7,82 @@
           installation_mode = "force_installed";
           install_url = "file://${pkg}/share/mozilla/extensions/${firefoxID}/${pkg.addonId}.xpi";
           private_browsing = true;
-          default_area = "menupanel";
+          default_area = "navbar";
         };
       })
       packages);
+  lock-false = {
+    Value = false;
+    Status = "locked";
+  };
+  lock-true = {
+    Value = true;
+    Status = "locked";
+  };
 in {
   stylix.targets.firefox.profileNames = ["default"];
   programs.firefox = {
     enable = true;
+    languagePacks = ["en-US"];
 
     policies = {
+      DisableTelemetry = true;
+      DisableFirefoxStudies = true;
+      EnableTrackingProtection = {
+        Value = true;
+        Locked = true;
+        Cryptomining = true;
+        Fingerprinting = true;
+      };
+      DisablePocket = true;
+      DisableFirefoxAccounts = true;
+      DisableFirefoxScreenshots = true;
+      DisableProfileImport = true;
+      OverrideFirstRunPage = "";
+      OverridePostUpdatePage = "";
+      DontCheckDefaultBrowser = true;
+      DisplayBookmarksToolbar = "always";
+      DisplayMenuBar = "default-off";
+      SearchBar = "unified";
+      GenerativeAI = {
+        Enabled = false;
+      };
+
+      Preferences = {
+        "browser.contentblocking.category" = {
+          Value = "strict";
+          Status = "locked";
+        };
+        "extensions.pocket.enabled" = lock-false;
+        "extensions.screenshots.disabled" = lock-true;
+        "extensions.autoDisableScopes" = 0;
+        "browser.topsites.contile.enabled" = lock-false;
+        "browser.formfill.enable" = lock-false;
+        "browser.search.suggest.enabled" = {Value = "true";};
+        "browser.search.suggest.enabled.private" = {Value = "true";};
+        "browser.urlbar.suggest.searches" = {Value = "true";};
+        "browser.urlbar.showSearchSuggestionsFirst" = lock-false;
+        "browser.newtabpage.activity-stream.feeds.section.topstories" = lock-false;
+        "browser.newtabpage.activity-stream.feeds.snippets" = lock-false;
+        "browser.newtabpage.activity-stream.section.highlights.includePocket" = lock-false;
+        "browser.newtabpage.activity-stream.section.highlights.includeBookmarks" = {Value = "true";};
+        "browser.newtabpage.activity-stream.section.highlights.includeDownloads" = lock-false;
+        "browser.newtabpage.activity-stream.section.highlights.includeVisited" = {Value = "true";};
+        "browser.newtabpage.activity-stream.showSponsored" = lock-false;
+        "browser.newtabpage.activity-stream.system.showSponsored" = lock-false;
+        "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
+      };
+
+      UserMessaging = {
+        ExtensionRecommendations = false;
+        FeatureRecommendations = false;
+        UrlbarInterventions = false;
+        SkipOnboarding = true;
+        MoreFromMozilla = false;
+        FirefoxLabs = false;
+        Locked = true;
+      };
+
       ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
         ublock-origin
         privacy-possum
@@ -97,17 +163,20 @@ in {
             google.metaData.alias = "@g";
           };
         };
-        extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-          vimium
-          bitwarden
-          return-youtube-dislikes
-          sponsorblock
-          tabliss
-          tab-stash
-          auto-tab-discard
-          istilldontcareaboutcookies
-          behind-the-overlay-revival
-        ];
+        extensions = {
+          force = true;
+          packages = with pkgs.nur.repos.rycee.firefox-addons; [
+            vimium
+            bitwarden
+            return-youtube-dislikes
+            sponsorblock
+            tabliss
+            tab-stash
+            auto-tab-discard
+            istilldontcareaboutcookies
+            behind-the-overlay-revival
+          ];
+        };
       };
 
       yes = {
@@ -115,7 +184,6 @@ in {
         name = "Yes";
         isDefault = false;
         extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-          privacy-possum
           istilldontcareaboutcookies
           behind-the-overlay-revival
         ];
