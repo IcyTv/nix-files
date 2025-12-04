@@ -19,6 +19,7 @@
     ../../modules/home-manager/bluetooth.nix
     ../../modules/home-manager/audio.nix
     ../../modules/home-manager/firefox.nix
+    ../../modules/home-manager/ssh.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim
@@ -132,20 +133,18 @@
     };
   };
 
-  # Home Manager is pretty good at managing dotfiles. The primary way to manage
-  # plain files is through 'home.file'.
-  home.file = {
-    # # Building this configuration will create a copy of 'dotfiles/screenrc' in
-    # # the Nix store. Activating the configuration will then make '~/.screenrc' a
-    # # symlink to the Nix store copy.
-    # ".screenrc".source = dotfiles/screenrc;
+  # TODO: I'm sure there is a way to extract this, I just don't know how...
+  age.identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];
 
-    # # You can also set the file content immediately.
-    # ".gradle/gradle.properties".text = ''
-    #   org.gradle.console=verbose
-    #   org.gradle.daemon.idletimeout=3600000
-    # '';
+  age.secrets.mainKey = {
+    file = ../../secrets/id_ed25519.age;
+    path = "/home/michael/.ssh/id_ed25519";
+    mode = "600";
   };
+
+  home.file.".ssh/id_ed25519.pub".text = ''
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE7ZqNhzqRIfH0C9OOuGvJRxQSG1y5HX8RAH6FsF/V3R
+  '';
 
   # Home Manager can also manage your environment variables through
   # 'home.sessionVariables'. These will be explicitly sourced when using a
