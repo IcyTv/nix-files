@@ -43,6 +43,7 @@ in {
       DisableProfileImport = true;
       OverrideFirstRunPage = "";
       OverridePostUpdatePage = "";
+      OfferToSaveLogins = false;
       DontCheckDefaultBrowser = true;
       DisplayBookmarksToolbar = "always";
       DisplayMenuBar = "default-off";
