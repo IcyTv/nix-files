@@ -1,4 +1,4 @@
-{...}: {
+{pkgs, ...}: {
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -32,4 +32,8 @@
     gitCredentialHelper.enable = true;
     settings.git_protocol = "ssh";
   };
+
+  home.packages = [
+    pkgs.git-crypt
+  ];
 }

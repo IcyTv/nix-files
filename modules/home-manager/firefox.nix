@@ -21,6 +21,7 @@
   };
 in {
   stylix.targets.firefox.profileNames = ["default"];
+  stylix.targets.firefox.colorTheme.enable = true;
   programs.firefox = {
     enable = true;
     languagePacks = ["en-US"];
@@ -58,9 +59,6 @@ in {
         "extensions.autoDisableScopes" = 0;
         "browser.topsites.contile.enabled" = lock-false;
         "browser.formfill.enable" = lock-false;
-        "browser.search.suggest.enabled" = {Value = "true";};
-        "browser.search.suggest.enabled.private" = {Value = "true";};
-        "browser.urlbar.suggest.searches" = {Value = "true";};
         "browser.urlbar.showSearchSuggestionsFirst" = lock-false;
         "browser.newtabpage.activity-stream.feeds.section.topstories" = lock-false;
         "browser.newtabpage.activity-stream.feeds.snippets" = lock-false;
@@ -87,6 +85,7 @@ in {
         ublock-origin
         privacy-badger
         adnauseam
+        firefox-color
       ]);
 
       "3rdparty".Extensions = {
