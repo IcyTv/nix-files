@@ -52,10 +52,10 @@ in {
       };
 
       Preferences = {
-        "browser.contentblocking.category" = {
-          Value = "strict";
-          Status = "locked";
-        };
+        # "browser.contentblocking.category" = {
+        #   Value = "strict";
+        #   Status = "locked";
+        # };
         "extensions.pocket.enabled" = lock-false;
         "extensions.screenshots.disabled" = lock-true;
         "extensions.autoDisableScopes" = 0;
