@@ -136,6 +136,7 @@
   # TODO: I'm sure there is a way to extract this, I just don't know how...
   age.identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];
 
+  # TODO: I'm not sure this belongs here. It should go into modules/home-manager/ssh
   age.secrets.mainKey = {
     file = ../../secrets/id_ed25519.age;
     path = "/home/michael/.ssh/id_ed25519";
