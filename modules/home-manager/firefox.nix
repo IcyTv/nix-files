@@ -71,6 +71,9 @@ in {
         "browser.newtabpage.activity-stream.showSponsored" = lock-false;
         "browser.newtabpage.activity-stream.system.showSponsored" = lock-false;
         "browser.newtabpage.activity-stream.showSponsoredTopSites" = lock-false;
+        "browser.startup.page" = {
+          Value = 3;
+        };
       };
 
       UserMessaging = {
@@ -84,15 +87,40 @@ in {
       };
 
       ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
-        ublock-origin
+        # ublock-origin
         privacy-badger
         adnauseam
         firefox-color
       ]);
 
+      # "3rdparty".Extensions = {
+      #   "uBlock0@raymondhill.net" = {
+      #     adminSettings = {
+      #       selectedFilterLists = [
+      #         "user-filters"
+      #         "ublock-filters"
+      #         "ublock-badware"
+      #         "ublock-privacy"
+      #         "ublock-quick-fixes"
+      #         "ublock-unbreak"
+      #         "easylist"
+      #         "easyprivacy"
+      #         "urlhaus-1"
+      #         "plowe-0"
+      #
+      #         "ublock-annoyances"
+      #         "adguard-annoyance"
+      #         "fanboy-cookiemonster"
+      #         "fanboy-annoyance"
+      #       ];
+      #     };
+      #   };
+      # };
+
       "3rdparty".Extensions = {
-        "uBlock0@raymondhill.net" = {
+        "adnauseam@rednoise.org" = {
           adminSettings = {
+            # AdNauseam supports all uBlock settings
             selectedFilterLists = [
               "user-filters"
               "ublock-filters"
@@ -109,7 +137,13 @@ in {
               "adguard-annoyance"
               "fanboy-cookiemonster"
               "fanboy-annoyance"
+
+              "adnauseam-filters"
             ];
+
+            "adnauseam" = {
+              "automated" = "true";
+            };
           };
         };
       };
