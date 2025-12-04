@@ -14,7 +14,7 @@
     ../../modules/home-manager/spotify.nix
     ../../modules/home-manager/anyrun.nix
     ../../modules/home-manager/swww.nix
-    ../../modules/home-manager/neovim.nix
+    # ../../modules/home-manager/neovim.nix
     ../../modules/home-manager/discord.nix
     ../../modules/home-manager/bluetooth.nix
     ../../modules/home-manager/audio.nix
