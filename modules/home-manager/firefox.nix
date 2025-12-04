@@ -168,7 +168,7 @@ in {
             auto-tab-discard
             istilldontcareaboutcookies
             behind-the-overlay-revival
-            playback-speed
+            videospeed
           ];
         };
 
