@@ -60,7 +60,11 @@
     ];
   };
 
-  swapDevices = [];
+  swapDevices = [
+    {
+      device = "/dev/disk/by-uuid/c85ef8b0-8dfa-4aea-aa9c-c2ab13955989";
+    }
+  ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   nixpkgs.config.nvidia.acceptLicense = true;
