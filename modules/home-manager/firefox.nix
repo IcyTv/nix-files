@@ -222,7 +222,7 @@ in {
   xdg.desktopEntries.firefox-yes = {
     name = "Firefox (Yes)";
     genericName = "Web Browser";
-    exec = "firefox -P yes --name firefox-yes %U";
+    exec = "firefox -P Yes --name firefox-yes %U";
     terminal = false;
     categories = ["Application" "Network" "WebBrowser"];
     icon = "firefox";
