@@ -201,7 +201,7 @@ in {
       };
 
       yes = {
-        id = 2;
+        id = 1;
         name = "Yes";
         isDefault = false;
         extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
