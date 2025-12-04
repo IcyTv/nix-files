@@ -31,12 +31,12 @@ in {
     policies = {
       DisableTelemetry = true;
       DisableFirefoxStudies = true;
-      # EnableTrackingProtection = {
-      #   Value = true;
-      #   Locked = true;
-      #   Cryptomining = true;
-      #   Fingerprinting = true;
-      # };
+      EnableTrackingProtection = {
+        Value = true;
+        Locked = true;
+        Cryptomining = true;
+        Fingerprinting = true;
+      };
       DisablePocket = true;
       DisableFirefoxAccounts = true;
       DisableFirefoxScreenshots = true;
@@ -52,10 +52,10 @@ in {
       };
 
       Preferences = {
-        # "browser.contentblocking.category" = {
-        #   Value = "strict";
-        #   Status = "locked";
-        # };
+        "browser.contentblocking.category" = {
+          Value = "strict";
+          Status = "locked";
+        };
         "extensions.pocket.enabled" = lock-false;
         "extensions.screenshots.disabled" = lock-true;
         "extensions.autoDisableScopes" = 0;
@@ -87,40 +87,14 @@ in {
       };
 
       ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
-        # ublock-origin
-        # privacy-badger
-        adnauseam
+        ublock-origin
+        privacy-badger
         firefox-color
       ]);
 
-      # "3rdparty".Extensions = {
-      #   "uBlock0@raymondhill.net" = {
-      #     adminSettings = {
-      #       selectedFilterLists = [
-      #         "user-filters"
-      #         "ublock-filters"
-      #         "ublock-badware"
-      #         "ublock-privacy"
-      #         "ublock-quick-fixes"
-      #         "ublock-unbreak"
-      #         "easylist"
-      #         "easyprivacy"
-      #         "urlhaus-1"
-      #         "plowe-0"
-      #
-      #         "ublock-annoyances"
-      #         "adguard-annoyance"
-      #         "fanboy-cookiemonster"
-      #         "fanboy-annoyance"
-      #       ];
-      #     };
-      #   };
-      # };
-
       "3rdparty".Extensions = {
-        "adnauseam@rednoise.org" = {
+        "uBlock0@raymondhill.net" = {
           adminSettings = {
-            # AdNauseam supports all uBlock settings
             selectedFilterLists = [
               "user-filters"
               "ublock-filters"
@@ -137,13 +111,7 @@ in {
               "adguard-annoyance"
               "fanboy-cookiemonster"
               "fanboy-annoyance"
-
-              "adnauseam-filters"
             ];
-
-            "adnauseam" = {
-              "automated" = "true";
-            };
           };
         };
       };
@@ -211,6 +179,7 @@ in {
             auto-tab-discard
             istilldontcareaboutcookies
             behind-the-overlay-revival
+            playback-speed
           ];
         };
 
