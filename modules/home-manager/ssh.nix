@@ -11,7 +11,7 @@
 
     matchBlocks = {
       "server-local" = lib.hm.dag.entryBefore ["server"] {
-        match = "host myserver exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
+        match = "host server exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
         hostname = "192.168.1.28";
       };
 
