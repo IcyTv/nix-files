@@ -6,7 +6,7 @@ shopt -s extglob
 
 HOST=$(hostname)
 
-pushd ~/nix
+pushd ~/.dotfiles/nix
 
 cleanup() {
 	rm -f result
