@@ -19,6 +19,8 @@
     Value = true;
     Status = "locked";
   };
+  defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
+  yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
 in {
   stylix.targets.firefox.profileNames = ["default"];
   stylix.targets.firefox.colorTheme.enable = true;
@@ -177,6 +179,11 @@ in {
             behind-the-overlay-revival
           ];
         };
+
+        bookmarks = {
+          force = true;
+          settings = defaultBookmarks;
+        };
       };
 
       yes = {
@@ -187,6 +194,10 @@ in {
           istilldontcareaboutcookies
           behind-the-overlay-revival
         ];
+        bookmarks = {
+          force = true;
+          settings = yesBookmarks;
+        };
       };
     };
   };
