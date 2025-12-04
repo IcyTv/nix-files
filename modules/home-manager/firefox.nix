@@ -180,6 +180,20 @@ in {
           ];
         };
 
+        settings = {
+          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+        };
+        userChrome = ''
+          #import-button {
+            display: none !important;
+          }
+
+          /* Optional: Hide the helper text if the toolbar is ever empty again */
+          #places-toolbar-empty-label {
+            display: none !important;
+          }
+        '';
+
         bookmarks = {
           force = true;
           settings = defaultBookmarks;
