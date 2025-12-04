@@ -88,7 +88,7 @@ in {
 
       ExtensionSettings = makeSettings (with pkgs.nur.repos.rycee.firefox-addons; [
         # ublock-origin
-        privacy-badger
+        # privacy-badger
         adnauseam
         firefox-color
       ]);
