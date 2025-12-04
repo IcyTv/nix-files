@@ -22,7 +22,7 @@
   defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
   yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
 in {
-  stylix.targets.firefox.profileNames = ["default"];
+  stylix.targets.firefox.profileNames = ["default" "yes"];
   stylix.targets.firefox.colorTheme.enable = true;
   programs.firefox = {
     enable = true;
@@ -204,15 +204,31 @@ in {
         id = 1;
         name = "Yes";
         isDefault = false;
-        extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-          istilldontcareaboutcookies
-          behind-the-overlay-revival
-        ];
+        extensions = {
+          force = true;
+          packages = with pkgs.nur.repos.rycee.firefox-addons; [
+            istilldontcareaboutcookies
+            behind-the-overlay-revival
+          ];
+        };
         bookmarks = {
           force = true;
           settings = yesBookmarks;
         };
       };
+    };
+  };
+
+  xdg.desktopEntries.firefox-yes = {
+    name = "Firefox (Yes)";
+    genericName = "Web Browser";
+    exec = "firefox -P yes --name firefox-yes %U";
+    terminal = false;
+    categories = ["Application" "Network" "WebBrowser"];
+    icon = "firefox";
+    settings = {
+      StartupWMClass = "firefox-yes";
+      Keywords = "browser;internet;yes;";
     };
   };
 }
