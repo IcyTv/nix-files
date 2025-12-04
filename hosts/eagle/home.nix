@@ -23,6 +23,7 @@
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nixvim.homeModules.nixvim
     inputs.nur.modules.homeManager.default
+    inputs.agenix.homeManagerModules.default
   ];
 
   nixpkgs.config.allowUnfree = true;

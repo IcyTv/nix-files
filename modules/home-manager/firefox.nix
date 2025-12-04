@@ -132,13 +132,13 @@ in {
             "Nix Packages" = {
               urls = [{template = "https://search.nixos.org/packages?channel=25.11&query={searchTerms}";}];
               icon = "file://${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
-              definedAlias = ["nix" "nixpkgs"];
+              definedAlias = ["nixpkgs"];
             };
             "NixOS Wiki" = {
               urls = [{template = "https://nixos.wiki/index.php?search={searchTerms}";}];
               icon = "https://nixos.wiki/favicon.png";
               updateInterval = 24 * 60 * 60 * 1000;
-              definedAliases = ["nixos" "nixwiki"];
+              definedAliases = ["nixwiki"];
             };
             "Rust Crates" = {
               urls = [{template = "https://crates.io/search?q={searchTerms}";}];

@@ -40,6 +40,11 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -78,6 +83,7 @@
         ./hosts/eagle/configuration.nix
         inputs.home-manager.nixosModules.default
         inputs.nur.modules.nixos.default
+        inputs.agenix.nixosModules.default
       ];
     };
   };
