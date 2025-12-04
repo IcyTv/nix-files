@@ -29,6 +29,8 @@ in {
     languagePacks = ["en-US"];
 
     policies = {
+      AutofillAddressEnabled = false;
+      AutofillCreditCardEnabled = false;
       DisableTelemetry = true;
       DisableFirefoxStudies = true;
       EnableTrackingProtection = {
