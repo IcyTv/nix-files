@@ -114,6 +114,7 @@
   };
 
   boot.loader.limine.secureBoot.enable = true;
+  boot.loader.limine.efiSupport = true;
 
   # Use LTS kernel
   boot.kernelPackages = pkgs.linuxPackages;
