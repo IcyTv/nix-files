@@ -360,11 +360,11 @@
         "nixvim": "nixvim"
       },
       "locked": {
-        "lastModified": 1765142215,
-        "narHash": "sha256-n5MUafdhl8QhQJxXt3H3HIKQlf4x3OuHpTRLq2unfy4=",
+        "lastModified": 1765142540,
+        "narHash": "sha256-WWo79djqLCbp7mkLqJn57rYSUYSyzCpVMT/DjuX7tBI=",
         "owner": "IcyTv",
         "repo": "nvim.nix",
-        "rev": "02c91e932082af93a2fe4a13dd96a41547728d07",
+        "rev": "1a05d63dba36b8adb9230fa01ea514a8a672fa1e",
         "type": "github"
       },
       "original": {
