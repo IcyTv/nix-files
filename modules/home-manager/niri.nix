@@ -100,6 +100,12 @@
         ];
         open-on-output = "HDMI-A-1";
       }
+      {
+        matches = [
+          {app-id = "^kitty$";}
+        ];
+        open-maximized = true;
+      }
     ];
     layer-rules = [
       {
