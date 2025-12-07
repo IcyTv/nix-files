@@ -113,6 +113,8 @@
     randomizedDelaySec = "45min";
   };
 
+  boot.loader.limine.secureBoot.enable = true;
+
   # Use LTS kernel
   boot.kernelPackages = pkgs.linuxPackages;
 
