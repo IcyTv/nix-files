@@ -1,4 +1,4 @@
-{...}: {
+{pkgs, ...}: {
   boot.consoleLogLevel = 3;
   boot.initrd.verbose = true;
   boot.kernelParams = [
@@ -8,6 +8,17 @@
     "udev.log_priority=3"
     "rd.systemd.show_status=auto"
   ];
-  boot.loader.timeout = 0;
-  boot.plymouth.enable = true;
+  boot.loader.timeout = 1;
+
+  stylix.targets.plymouth.enable = false;
+
+  boot.plymouth = {
+    enable = true;
+    theme = "catppuccin-mocha";
+    themePackages = [
+      (pkgs.catppuccin-plymouth.override {
+        variant = "mocha";
+      })
+    ];
+  };
 }
