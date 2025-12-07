@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  lib,
   inputs,
   ...
 }: {
@@ -118,7 +119,7 @@
     configPackages = [
       pkgs.xdg-desktop-portal-gtk
     ];
-    extraPortals = [
+    extraPortals = lib.mkForce [
       pkgs.xdg-desktop-portal-gtk
     ];
     config = {
