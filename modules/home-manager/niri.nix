@@ -82,6 +82,24 @@
         };
         clip-to-geometry = true;
       }
+      {
+        matches = [
+          {
+            app-id = "^Spotify$";
+            at-startup = true;
+          }
+        ];
+        open-on-output = "HDMI-A-1";
+      }
+      {
+        matches = [
+          {
+            app-id = "^vesktop$";
+            at-startup = true;
+          }
+        ];
+        open-on-output = "HDMI-A-1";
+      }
     ];
     layer-rules = [
       {
