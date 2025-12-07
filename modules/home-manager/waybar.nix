@@ -1,4 +1,8 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  lib,
+  ...
+}: let
   niri-taskbar = pkgs.rustPlatform.buildRustPackage rec {
     pname = "niri-taskbar";
     version = "0.3.0";
@@ -221,6 +225,14 @@ in {
           default = ["" "" ""];
         };
         on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+      };
+
+      bluetooth = {
+        format-off = "󰂲";
+        format-disabled = "";
+        format-on = "";
+        format-connected = "󰂱";
+        on-click = lib.getExe pkgs.overskride;
       };
     };
   };
