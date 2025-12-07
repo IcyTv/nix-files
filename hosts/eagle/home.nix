@@ -22,7 +22,6 @@
     ../../modules/home-manager/ssh.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
-    inputs.nixvim.homeModules.nixvim
     inputs.nur.modules.homeManager.default
     inputs.agenix.homeManagerModules.default
   ];
@@ -61,6 +60,8 @@
     pkgs.nerd-fonts.fantasque-sans-mono
     pkgs.uutils-coreutils-noprefix
     pkgs.gemini-cli-bin
+
+    inputs.neovim.packages.x86_64-linux.default
 
     # # You can also create simple shell scripts directly inside your
     # # configuration. For example, this adds a command 'my-hello' to your
