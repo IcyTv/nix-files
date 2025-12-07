@@ -2,6 +2,8 @@
   boot.loader.limine = {
     enable = true;
     maxGenerations = 5;
+    enrollConfig = true;
+    panicOnChecksumMismatch = true;
     extraEntries = ''
       # Windows
       / Windows

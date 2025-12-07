@@ -169,6 +169,7 @@ in {
             istilldontcareaboutcookies
             behind-the-overlay-revival
             videospeed
+            catppuccin-web-file-icons
           ];
         };
 
