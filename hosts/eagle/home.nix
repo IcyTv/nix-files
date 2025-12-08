@@ -119,6 +119,7 @@
     extraPortals = [
       pkgs.xdg-desktop-portal-gtk
       pkgs.xdg-desktop-portal-gnome
+      pkgs.gnome-keyring
     ];
     config = {
       common.default = ["gtk"];
