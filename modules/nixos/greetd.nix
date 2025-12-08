@@ -14,6 +14,8 @@
     };
   };
 
+  security.pam.services.greetd.enableGnomeKeyring = false;
+
   environment.systemPackages = [
     pkgs.tuigreet
   ];
