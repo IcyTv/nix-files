@@ -4,4 +4,8 @@
     enable = true;
     hidden = true;
   };
+
+  home.packages = [
+    pkgs.openrgb
+  ];
 }
