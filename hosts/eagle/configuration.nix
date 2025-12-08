@@ -24,6 +24,7 @@
     ../../modules/nixos/ananicy.nix
     ../../modules/nixos/bluetooth.nix
     ../../modules/nixos/printing.nix
+    ../../modules/nixos/openrgb.nix
     inputs.home-manager.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];

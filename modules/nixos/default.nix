@@ -7,6 +7,7 @@
     ./greetd.nix
     ./keymap.nix
     ./limine.nix
+    ./openrgb.nix
     ./plymouth.nix
     ./printing.nix
     ./rebuild.nix
