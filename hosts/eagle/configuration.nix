@@ -45,6 +45,11 @@
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
+  # The niri-flake unconditionally enables gnome-keyring, which we don't want.
+  # We use mkForce to override this upstream setting.
+  services.gnome.gnome-keyring.enable = lib.mkForce false;
+  xdg.portal.extraPortals = lib.mkForce [pkgs.xdg-desktop-portal-gtk];
+
   services.xserver.enable = false;
 
   # Enable CUPS to print documents.
