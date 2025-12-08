@@ -243,7 +243,7 @@ in {
         format-disabled = "";
         format-on = "";
         format-connected = "󰂱";
-        on-click = "${btctl}/bin/btctl";
+        on-click = "${btctl}/bin/btctl connect";
       };
     };
   };
@@ -254,7 +254,7 @@ in {
       #toml
       ''
         [launcher]
-        command = ["${lib.getExe pkgs.anyrun}", "--plugins", "libstdin.so"]
+        command = ["${lib.getExe pkgs.anyrun}", "--plugins", "libstdin.so", "--show-results-immediately", "true", "--max-entries", "10"]
       '';
   };
 
