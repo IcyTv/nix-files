@@ -35,7 +35,7 @@ COMMIT_PREFIX="chore"
 DIFF_OUTPUT=""
 RAW_DIFF=""
 
-if command -v nvd &> /dev/null; then
+if command -v nvd &>/dev/null; then
 	echo "󰍉 Analyzing changes..."
 	RAW_DIFF=$(nvd diff "$CURRENT_SYSTEM" "$NEW_SYSTEM")
 
@@ -60,13 +60,14 @@ $DIFF_OUTPUT"
 echo -e "\n Proposed Commit:"
 echo "-------------------------------------------"
 echo -e "\033[1;33m$COMMIT_TITLE\033[0m"
-if [ -n "$RAW_DIFF" ]; then
+if [ "$RAW_DIFF" != "" ]; then
 	echo -e "\n$RAW_DIFF"
 fi
 echo "-------------------------------------------"
 
 read -p "Do you want to switch to this configuration? (y/N)" -n1 -r
 echo
+
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 	echo " Aborting"
 	exit 1
