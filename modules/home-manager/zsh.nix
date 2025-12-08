@@ -35,6 +35,8 @@
     };
     syntaxHighlighting.enable = true;
 
+    historySubstringSearch.enable = true;
+
     history.size = 10000;
 
     plugins = [
