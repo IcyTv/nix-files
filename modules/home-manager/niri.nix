@@ -106,6 +106,12 @@
         ];
         open-maximized = true;
       }
+      {
+        matches = [
+          {app-id = "^firefox-yes$";}
+        ];
+        open-maximized = true;
+      }
     ];
     layer-rules = [
       {
