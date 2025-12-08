@@ -45,6 +45,17 @@
       fi
     '';
   };
+
+  btctl = pkgs.writers.writePython3Bin "btctl" {
+    libraries = [
+      pkgs.python3Packages.dbus-python
+      pkgs.python3Packages.toml
+    ];
+    flakeIgnore = [
+      "E501"
+      "W503"
+    ];
+  } (builtins.readFile ../../scripts/btctl.py);
 in {
   programs.waybar = {
     enable = true;
@@ -232,9 +243,19 @@ in {
         format-disabled = "";
         format-on = "";
         format-connected = "󰂱";
-        on-click = lib.getExe pkgs.overskride;
+        on-click = "${btctl}/bin/btctl";
       };
     };
+  };
+
+  xdg.configFile."btctl/config.toml" = {
+    enable = true;
+    text =
+      #toml
+      ''
+        [launcher]
+        command = ["${lib.getExe pkgs.anyrun}", "--plugins", "libstdin.so"]
+      '';
   };
 
   programs.wlogout.enable = true;
