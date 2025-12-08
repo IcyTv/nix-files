@@ -35,7 +35,12 @@
     };
     syntaxHighlighting.enable = true;
 
-    historySubstringSearch.enable = true;
+    historySubstringSearch = {
+      enable = true;
+
+      searchUpKey = ["^[[A" "^[OA"];
+      searchDownKey = ["^[[B" "^[OB"];
+    };
 
     history.size = 10000;
 
