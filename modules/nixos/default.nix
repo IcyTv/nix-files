@@ -3,7 +3,6 @@
     ./ananicy.nix
     ./bluetooth.nix
     ./console-font.nix
-    ./default-packages.nix
     ./greetd.nix
     ./keymap.nix
     ./limine.nix
@@ -13,6 +12,7 @@
     ./rebuild.nix
     ./stylix.nix
     ./sudo-rs.nix
+    ./tools.nix
     ./zsh.nix
   ];
 }
