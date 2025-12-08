@@ -130,6 +130,9 @@
     config = {
       common.default = ["gtk"];
       "org.freedesktop.impl.portal.Secret".default = ["gnome-keyring"];
+      "org.freedesktop.impl.portal.ScreenCast".default = [
+        "gnome"
+      ];
     };
   };
   xdg.mime.enable = true;
