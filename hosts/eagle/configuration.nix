@@ -46,6 +46,7 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   services.xserver.enable = false;
+  security.rtkit.enable = true;
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
