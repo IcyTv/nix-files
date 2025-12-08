@@ -113,19 +113,19 @@
     };
   };
 
-  # xdg.portal = {
-  #   enable = true;
-  #   xdgOpenUsePortal = true;
-  #   extraPortals = [
-  #     pkgs.xdg-desktop-portal-gtk
-  #     pkgs.xdg-desktop-portal-gnome
-  #     pkgs.gnome-keyring
-  #   ];
-  #   config = {
-  #     common.default = ["gtk"];
-  #     "org.freedesktop.impl.portal.Secret".default = ["gnome-keyring"];
-  #   };
-  # };
+  xdg.portal = {
+    enable = true;
+    xdgOpenUsePortal = true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-gnome
+      pkgs.gnome-keyring
+    ];
+    config = {
+      common.default = ["gtk"];
+      "org.freedesktop.impl.portal.Secret".default = ["gnome-keyring"];
+    };
+  };
   xdg.mime.enable = true;
   xdg.mimeApps = {
     enable = true;
