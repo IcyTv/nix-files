@@ -121,6 +121,11 @@
       pkgs.xdg-desktop-portal-gnome
       pkgs.gnome-keyring
     ];
+    configPackages = [
+      pkgs.xdg-desktop-portal-gtk
+      pkgs.xdg-desktop-portal-gnome
+      pkgs.gnome-keyring
+    ];
     config = {
       common.default = ["gtk"];
       "org.freedesktop.impl.portal.Secret".default = ["gnome-keyring"];
