@@ -45,8 +45,6 @@
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
-  services.gnome.gnome-keyring.enable = lib.mkForce false;
-
   services.xserver.enable = false;
 
   # Enable CUPS to print documents.
@@ -129,6 +127,7 @@
 
   hardware.nvidia = {
     modesetting.enable = true;
+    powerManagement.enable = true;
     open = false;
     package = config.boot.kernelPackages.nvidiaPackages.stable;
     nvidiaSettings = true;
