@@ -116,16 +116,12 @@
   xdg.portal = {
     enable = true;
     xdgOpenUsePortal = true;
-    configPackages = [
-      pkgs.xdg-desktop-portal-gtk
-    ];
-    extraPortals = lib.mkForce [
+    extraPortals = [
       pkgs.xdg-desktop-portal-gtk
     ];
     config = {
-      common = {
-        default = ["gtk"];
-      };
+      common.default = ["gtk"];
+      "org.freedesktop.impl.portal.Secret".default = ["gnome-keyring"];
     };
   };
   xdg.mime.enable = true;
