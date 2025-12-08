@@ -204,7 +204,7 @@
         not_executable_symbol = "";
         sigint_symbol = "";
         signal_symbol = "󱐋";
-        format = "[\\\\[$symbol$common_meaning$signal_name$maybe_int\\\\]]($style)";
+        format = "[\\[$symbol$common_meaning$signal_name$maybe_int\\]]($style)";
         map_symbol = true;
         disabled = false;
         style = "bold red";
