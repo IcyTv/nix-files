@@ -6,20 +6,7 @@
   ...
 }: {
   imports = [
-    ../../modules/home-manager/kitty.nix
-    ../../modules/home-manager/niri.nix
-    ../../modules/home-manager/waybar.nix
-    ../../modules/home-manager/zsh.nix
-    ../../modules/home-manager/nix.nix
-    ../../modules/home-manager/git.nix
-    ../../modules/home-manager/spotify.nix
-    ../../modules/home-manager/anyrun.nix
-    ../../modules/home-manager/swww.nix
-    ../../modules/home-manager/discord.nix
-    ../../modules/home-manager/bluetooth.nix
-    ../../modules/home-manager/audio.nix
-    ../../modules/home-manager/firefox.nix
-    ../../modules/home-manager/ssh.nix
+    ../../modules/home-manager/default.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nur.modules.homeManager.default

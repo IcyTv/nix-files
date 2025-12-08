@@ -12,6 +12,7 @@
     ./spotify.nix
     ./ssh.nix
     ./stylix.nix
+    ./tools.nix
     ./swww.nix
     ./waybar.nix
     ./zsh.nix
