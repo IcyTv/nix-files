@@ -145,6 +145,13 @@
     mode = "600";
   };
 
+  age.secrets.github-token = {
+    file = ../../secrets/github-token.age;
+  };
+  nix.extraOptions = ''
+    !include ${config.age.secrets.github-token.path}
+  '';
+
   home.file.".ssh/id_ed25519.pub".text = ''
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE7ZqNhzqRIfH0C9OOuGvJRxQSG1y5HX8RAH6FsF/V3R
   '';
