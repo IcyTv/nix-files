@@ -93,7 +93,6 @@
 
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
   boot.kernelParams = [
-    "mem_sleep_default=s2idle"
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
     "video=DP-2:1920x1080@60"
