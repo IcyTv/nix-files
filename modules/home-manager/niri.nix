@@ -57,9 +57,6 @@
       {
         sh = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri";
       }
-      # {
-      #   sh = "dex --autostart --environment Niri";
-      # }
     ];
     screenshot-path = "~/Pictures/Screenshots/screenshot-%Y%m%d-%H-%M-%S.png";
 
@@ -291,6 +288,14 @@
       };
     };
   };
+
+  xdg.configFile."autostart/gammastep-indicator.desktop".text = ''
+    [Desktop Entry]
+    Type = Application
+    Name = Gammastep Indicator
+    Exec = gammastep-indicator
+    Hidden = true
+  '';
 
   home.packages = [
     pkgs.xwayland-satellite
