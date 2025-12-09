@@ -48,7 +48,12 @@
     pkgs.uutils-coreutils-noprefix
     pkgs.gemini-cli-bin
 
-    inputs.neovim.packages.x86_64-linux.default
+    # inputs.neovim.packages.x86_64-linux.default
+    (inputs.neovim.lib.x86_64-linux.makeNeovimWithLanguages
+      {
+        inherit pkgs;
+        languages.nix.enable = true;
+      })
 
     # # You can also create simple shell scripts directly inside your
     # # configuration. For example, this adds a command 'my-hello' to your
