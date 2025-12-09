@@ -26,14 +26,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # nixvim = {
-    #   url = "github:nix-community/nixvim";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    nixvim = {
+      url = "github:nix-community/nixvim/nixos-25.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     neovim = {
       url = "github:IcyTv/nvim.nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixvim.follows = "nixvim";
     };
 
     stylix = {
