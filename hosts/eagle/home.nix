@@ -148,8 +148,9 @@
   age.secrets.github-token = {
     file = ../../secrets/github-token.age;
   };
+  # nix cannot expand ${XDG_RUNTIME_DIR}, which agenix adds...
   nix.extraOptions = ''
-    !include ${config.age.secrets.github-token.path}
+    !include /run/user/1000/agenix/github-token
   '';
 
   home.file.".ssh/id_ed25519.pub".text = ''
