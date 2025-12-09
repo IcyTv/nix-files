@@ -57,9 +57,9 @@
       {
         sh = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri";
       }
-      {
-        sh = "dex --autostart --environment Niri";
-      }
+      # {
+      #   sh = "dex --autostart --environment Niri";
+      # }
     ];
     screenshot-path = "~/Pictures/Screenshots/screenshot-%Y%m%d-%H-%M-%S.png";
 
