@@ -53,6 +53,7 @@
       {
         inherit pkgs;
         languages.nix.enable = true;
+        languages.shell.enable = true;
       })
 
     # # You can also create simple shell scripts directly inside your
