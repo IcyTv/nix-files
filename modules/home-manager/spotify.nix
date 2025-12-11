@@ -16,6 +16,7 @@ in {
       trashbin
     ];
   };
+  services.spotifyd.enable = true;
 
   xdg.configFile."autostart/spotify.desktop".source = "${pkgs.spotify}/share/applications/spotify.desktop";
 }
