@@ -7,5 +7,6 @@
 
   home.packages = [
     pkgs.openrgb
+    pkgs.yazi
   ];
 }
