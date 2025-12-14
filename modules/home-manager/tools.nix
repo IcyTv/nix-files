@@ -8,5 +8,8 @@
   home.packages = [
     pkgs.openrgb
     pkgs.yazi
+    pkgs.tldr
+    pkgs.wikiman
+    pkgs.typst
   ];
 }
