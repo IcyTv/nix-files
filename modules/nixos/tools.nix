@@ -6,4 +6,6 @@
     git
     wl-clipboard
   ];
+
+  services.flatpak.enable = true;
 }
