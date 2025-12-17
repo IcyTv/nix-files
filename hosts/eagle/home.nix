@@ -135,6 +135,9 @@
       "x-scheme-handler/http" = "firefox.desktop";
     };
   };
+  xdg.userDirs = {
+    enable = true;
+  };
 
   # TODO: I'm sure there is a way to extract this, I just don't know how...
   age.identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];
