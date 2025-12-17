@@ -282,10 +282,7 @@
     enableBashIntegration = true;
   };
 
-  programs.zellij = {
-    enable = true;
-    exitShellOnExit = true;
-  };
+  programs.zellij.enable = true;
 
   programs.direnv = {
     enable = true;

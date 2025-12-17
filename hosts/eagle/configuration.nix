@@ -99,6 +99,7 @@
     "initcall_blacklist=simpledrm_platform_driver_init"
     "video=DP-2:1920x1080@60"
     "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
+    "acpi_enforce_resources=lax"
   ];
   boot.blacklistedKernelModules = ["nouveau"];
 
