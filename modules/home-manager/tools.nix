@@ -11,5 +11,6 @@
     pkgs.tldr
     pkgs.wikiman
     pkgs.typst
+    pkgs.wl-gammarelay-rs
   ];
 }
