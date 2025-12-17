@@ -75,6 +75,8 @@
 
   boot.kernelPackages = pkgs.linuxPackages;
 
+  # hardware.fancontrol.enable = true;
+
   hardware.bluetooth.enable = true;
 
   hardware.graphics.enable = true;

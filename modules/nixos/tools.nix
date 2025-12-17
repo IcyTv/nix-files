@@ -5,6 +5,7 @@
     xdg-utils
     git
     wl-clipboard
+    lm_sensors
   ];
 
   services.flatpak.enable = true;
