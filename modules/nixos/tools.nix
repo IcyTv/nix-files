@@ -8,4 +8,5 @@
   ];
 
   services.flatpak.enable = true;
+  programs.coolercontrol.enable = true;
 }
