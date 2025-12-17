@@ -47,6 +47,7 @@
     pkgs.nerd-fonts.fantasque-sans-mono
     pkgs.uutils-coreutils-noprefix
     pkgs.gemini-cli-bin
+    pkgs.github-copilot-cli
 
     # inputs.neovim.packages.x86_64-linux.default
     (inputs.neovim.lib.x86_64-linux.makeNeovimWithLanguages
