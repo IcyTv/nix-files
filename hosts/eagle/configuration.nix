@@ -93,7 +93,7 @@
 
   services.xserver.videoDrivers = ["nvidia"];
 
-  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
+  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6683"];
   boot.kernelParams = [
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
