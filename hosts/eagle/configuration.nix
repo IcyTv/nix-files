@@ -93,7 +93,7 @@
 
   services.xserver.videoDrivers = ["nvidia"];
 
-  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6683"];
+  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6687"];
   boot.kernelParams = [
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
@@ -101,7 +101,37 @@
     "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
     "acpi_enforce_resources=lax"
   ];
-  boot.blacklistedKernelModules = ["nouveau"];
+  boot.blacklistedKernelModules = ["nouveau" "nct6683"];
+  boot.extraModulePackages = [
+    (config.boot.kernelPackages.callPackage ({
+      stdenv,
+      lib,
+      fetchFromGitHub,
+      kernel,
+    }:
+      stdenv.mkDerivation rec {
+        pname = "nct6687d";
+        version = "0.0.1";
+
+        src = fetchFromGitHub {
+          owner = "Fred78290";
+          repo = "nct6687d";
+          rev = "2f40c7e3cdbc634912cb569c451a4c0e37a50986"; # Check GitHub for latest hash if needed
+          sha256 = "sha256-ivKi4I68Azpzo9eeH4YeEOQmKiG6DQQVJPtCFmUQ7/A="; # You may need to update this hash
+        };
+
+        nativeBuildInputs = kernel.moduleBuildDependencies;
+        makeFlags = [
+          "-C"
+          "${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
+          "M=$(PWD)"
+        ];
+        buildFlags = ["modules"];
+        installPhase = ''
+          install -D nct6687.ko $out/lib/modules/${kernel.modDirVersion}/extra/nct6687.ko
+        '';
+      }) {})
+  ];
 
   boot.loader.limine.extraConfig = "RESOLUTION=2560x1440";
   boot.loader.limine.style.interface.resolution = "2560x1440";
