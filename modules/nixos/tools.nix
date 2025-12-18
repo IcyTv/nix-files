@@ -8,6 +8,8 @@
     lm_sensors
   ];
 
+  services.gvfs.enable = true;
+
   services.flatpak.enable = true;
   programs.coolercontrol.enable = true;
 }
