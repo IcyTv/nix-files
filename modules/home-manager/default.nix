@@ -8,6 +8,7 @@
     ./git.nix
     ./kitty.nix
     ./niri.nix
+    ./nushell.nix
     ./nix.nix
     ./spotify.nix
     ./ssh.nix

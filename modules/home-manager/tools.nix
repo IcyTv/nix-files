@@ -7,10 +7,15 @@
 
   home.packages = [
     pkgs.openrgb
-    pkgs.yazi
     pkgs.tldr
     pkgs.wikiman
     pkgs.typst
     pkgs.wl-gammarelay-rs
   ];
+
+  programs.yazi = {
+    enable = true;
+    enableZshIntegration = true;
+    enableNushellIntegration = true;
+  };
 }
