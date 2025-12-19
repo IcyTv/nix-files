@@ -98,7 +98,7 @@
 
   programs.pay-respects = {
     enable = true;
-    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.pay-respects;
+    enableNushellIntegration = true;
   };
 
   programs.fastfetch = {
