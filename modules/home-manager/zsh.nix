@@ -10,8 +10,6 @@
     l = "eza";
     lt = "eza -T --git-ignore";
     lT = "eza -T";
-    "l." = "eza -A | egrep '^\\.''";
-    "cd.." = "cd ..";
     cd = "z";
     sysfailed = "systenctl list-units --failed";
     man = "batman";
