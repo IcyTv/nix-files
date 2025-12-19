@@ -282,7 +282,7 @@
     enableZshIntegration = true;
     enableBashIntegration = true;
     enableNushellIntegration = true;
-    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.nix-index;
+    package = lib.mkForce inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.nix-index;
   };
 
   programs.zellij.enable = true;
