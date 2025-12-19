@@ -20,6 +20,10 @@
         };
       };
     };
+
+    shellAliases = {
+      nix-shell = "nix shell --command nu";
+    };
   };
 
   programs.carapace = {

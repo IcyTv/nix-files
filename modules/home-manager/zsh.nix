@@ -4,18 +4,11 @@
   ...
 }: {
   home.shellAliases = {
-    ls = "eza --color=auto";
-    la = "eza -a";
-    ll = "eza -alhF";
-    l = "eza";
-    lt = "eza -T --git-ignore";
-    lT = "eza -T";
     cd = "z";
     sysfailed = "systenctl list-units --failed";
     man = "batman";
     cat = "bat";
     bathelp = "bat --plain --language=help";
-    nix-shell = "nix-shell --run zsh";
     # TODO: This isn't great. Surely we can just send a signal or something...
     logout = "sudo systemctl restart greetd";
   };
@@ -57,6 +50,15 @@
     shellGlobalAliases = {
       "-h" = "-h 2>&1 | bathelp";
       "--help" = "--help 2>&1 | bathelp";
+    };
+    shellAliases = {
+      ls = "eza --color=auto";
+      la = "eza -a";
+      ll = "eza -alhF";
+      l = "eza";
+      lt = "eza -T --git-ignore";
+      lT = "eza -T";
+      nix-shell = "nix-shell --run zsh";
     };
 
     initContent = lib.mkOrder 1500 ''
