@@ -1,6 +1,7 @@
 {
   pkgs,
   lib,
+  inputs,
   ...
 }: {
   home.shellAliases = {
@@ -281,6 +282,7 @@
     enableZshIntegration = true;
     enableBashIntegration = true;
     enableNushellIntegration = true;
+    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.nix-index;
   };
 
   programs.zellij.enable = true;
