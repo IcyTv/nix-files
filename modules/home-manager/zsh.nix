@@ -98,6 +98,7 @@
 
   programs.pay-respects = {
     enable = true;
+    package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.pay-respects;
   };
 
   programs.fastfetch = {
@@ -282,7 +283,6 @@
     enableZshIntegration = true;
     enableBashIntegration = true;
     enableNushellIntegration = true;
-    package = lib.mkForce inputs.nixpkgs-unstable.legacyPackages.${pkgs.system}.nix-index;
   };
 
   programs.zellij.enable = true;
