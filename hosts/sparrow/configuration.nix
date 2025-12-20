@@ -21,7 +21,6 @@
     ../../modules/nixos/printing.nix
     ../../modules/nixos/openrgb.nix
     inputs.home-manager.nixosModules.default
-    inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
 
   nix.settings.experimental-features = [
@@ -81,22 +80,9 @@
 
   hardware.graphics.enable = true;
 
-  hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = true;
-    open = false;
-    package = config.boot.kernelPackages.nvidiaPackages.legacy_470;
-    nvidiaSettings = true;
-  };
-
-  services.xserver.videoDrivers = ["nvidia"];
-
-  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm"];
   boot.kernelParams = [
     "nouveau.modeset=0"
-    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
   ];
-  boot.blacklistedKernelModules = ["nouveau"];
 
   boot.loader.limine.extraConfig = "RESOLUTION=1920x1080";
   boot.loader.limine.style.interface.resolution = "1920x1080";

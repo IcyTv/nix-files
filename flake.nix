@@ -68,21 +68,21 @@
           overlays = [nur.overlays.default];
         }));
     sharedModules = [
-        (
-          {pkgs, ...}: {
-            nixpkgs.overlays = [
-              inputs.niri.overlays.niri
-              inputs.nur.overlays.default
-            ];
-          }
-        )
-        inputs.stylix.nixosModules.stylix
-        inputs.niri.nixosModules.niri
-        inputs.nix-index-database.nixosModules.nix-index
-        inputs.home-manager.nixosModules.default
-        inputs.nur.modules.nixos.default
-        inputs.agenix.nixosModules.default
-      ];
+      (
+        {pkgs, ...}: {
+          nixpkgs.overlays = [
+            inputs.niri.overlays.niri
+            inputs.nur.overlays.default
+          ];
+        }
+      )
+      inputs.stylix.nixosModules.stylix
+      inputs.niri.nixosModules.niri
+      inputs.nix-index-database.nixosModules.nix-index
+      inputs.home-manager.nixosModules.default
+      inputs.nur.modules.nixos.default
+      inputs.agenix.nixosModules.default
+    ];
   in {
     legacyPackages = forAllSystems (pkgs: pkgs);
 
@@ -90,15 +90,19 @@
     # it's a better practice than "default" shown in the video
     nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {
       specialArgs = {inherit inputs;};
-      modules = sharedModules ++ [
-        ./hosts/eagle/configuration.nix
-      ];
+      modules =
+        sharedModules
+        ++ [
+          ./hosts/eagle/configuration.nix
+        ];
     };
     nixosConfigurations.sparrow = nixpkgs.lib.nixosSystem {
       specialArgs = {inherit inputs;};
-      modules = sharedModules ++ [
-        ./hosts/sparrow/configuration.nix
-      ];
+      modules =
+        sharedModules
+        ++ [
+          ./hosts/sparrow/configuration.nix
+        ];
     };
   };
 }
