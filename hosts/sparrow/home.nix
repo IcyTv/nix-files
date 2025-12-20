@@ -67,25 +67,13 @@
 
   programs.niri = {
     settings.outputs = {
-      "DP-3" = {
-        enable = true;
-        mode = {
-          width = 1920;
-          height = 1080;
-          refresh = 60.;
-        };
-        position = {
-          x = 0;
-          y = 0;
-        };
-      };
-      "DP-2" = {
+      "DP-1" = {
         enable = true;
         focus-at-startup = true;
         mode = {
-          width = 2560;
-          height = 1440;
-          refresh = 239.97;
+          width = 1920;
+          height = 1090;
+          refresh = 60.;
         };
         position = {
           x = 1920;
@@ -100,7 +88,7 @@
           refresh = 60.;
         };
         position = {
-          x = 4480;
+          x = 0;
           y = 0;
         };
       };
