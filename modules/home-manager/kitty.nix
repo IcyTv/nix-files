@@ -10,7 +10,7 @@
       scrollback_lines = 1000000;
       scrollback_pager = "bat --color=always";
       scrollback_pager_history_size = 0;
-      shell = "zsh";
+      shell = "nu";
       confirm_os_window_close = 0;
     };
     shellIntegration = {
