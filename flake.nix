@@ -67,14 +67,7 @@
           config.allowUnfree = true;
           overlays = [nur.overlays.default];
         }));
-  in {
-    legacyPackages = forAllSystems (pkgs: pkgs);
-
-    # use "nixos", or your hostname as the name of the configuration
-    # it's a better practice than "default" shown in the video
-    nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {
-      specialArgs = {inherit inputs;};
-      modules = [
+    sharedModules = [
         (
           {pkgs, ...}: {
             nixpkgs.overlays = [
@@ -86,10 +79,25 @@
         inputs.stylix.nixosModules.stylix
         inputs.niri.nixosModules.niri
         inputs.nix-index-database.nixosModules.nix-index
-        ./hosts/eagle/configuration.nix
         inputs.home-manager.nixosModules.default
         inputs.nur.modules.nixos.default
         inputs.agenix.nixosModules.default
+      ];
+  in {
+    legacyPackages = forAllSystems (pkgs: pkgs);
+
+    # use "nixos", or your hostname as the name of the configuration
+    # it's a better practice than "default" shown in the video
+    nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {
+      specialArgs = {inherit inputs;};
+      modules = sharedModules ++ [
+        ./hosts/eagle/configuration.nix
+      ];
+    };
+    nixosConfigurations.sparrow = nixpkgs.lib.nixosSystem {
+      specialArgs = {inherit inputs;};
+      modules = sharedModules ++ [
+        ./hosts/sparrow/configuration.nix
       ];
     };
   };
