@@ -37,7 +37,12 @@
   i18n.defaultLocale = "en_US.UTF-8";
 
   services.xserver.enable = false;
+  services.xserver.videoDrivers = ["nouveau"];
   security.rtkit.enable = true;
+
+  environment.sessionVariables = {
+    NIRI_BACKEND = "vulkan";
+  };
 
   users.users.michael = {
     isNormalUser = true;
@@ -80,9 +85,7 @@
 
   hardware.graphics.enable = true;
 
-  boot.kernelParams = [
-    "nouveau.modeset=0"
-  ];
+  boot.blacklistedKernelModules = ["nvvidia" "nvidia_drm" "nvidia_modesett"];
 
   boot.loader.limine.extraConfig = "RESOLUTION=1920x1080";
   boot.loader.limine.style.interface.resolution = "1920x1080";
