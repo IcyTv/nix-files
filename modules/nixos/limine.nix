@@ -5,7 +5,7 @@
     enrollConfig = true;
     panicOnChecksumMismatch = true;
   };
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.efi.canTouchEfiVariables = false;
 
   environment.systemPackages = [
     pkgs.sbctl
