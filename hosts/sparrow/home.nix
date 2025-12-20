@@ -76,7 +76,7 @@
           refresh = 60.;
         };
         position = {
-          x = 1920;
+          x = 0;
           y = 0;
         };
       };
@@ -85,10 +85,10 @@
         mode = {
           width = 1920;
           height = 1080;
-          refresh = 60.;
+          refresh = 120.;
         };
         position = {
-          x = 0;
+          x = 1920;
           y = 0;
         };
       };
