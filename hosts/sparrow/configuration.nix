@@ -75,6 +75,13 @@
     randomizedDelaySec = "45min";
   };
 
+  swapDevices = [
+    {
+      device = "/swap/swapfile";
+      size = 24 * 1024;
+    }
+  ];
+
   # boot.loader.limine.secureBoot.enable = true;
   boot.loader.limine.efiSupport = true;
 
