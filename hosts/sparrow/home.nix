@@ -72,7 +72,7 @@
         focus-at-startup = true;
         mode = {
           width = 1920;
-          height = 1090;
+          height = 1080;
           refresh = 60.;
         };
         position = {
