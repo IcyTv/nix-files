@@ -5,6 +5,7 @@
     ./bluetooth.nix
     ./discord.nix
     ./firefox.nix
+    ./games.nix
     ./git.nix
     ./kitty.nix
     ./niri.nix
