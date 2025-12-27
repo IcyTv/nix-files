@@ -6,20 +6,7 @@
 }: {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/nixos/stylix.nix
-    ../../modules/nixos/tools.nix
-    ../../modules/nixos/keymap.nix
-    ../../modules/nixos/console-font.nix
-    ../../modules/nixos/zsh.nix
-    ../../modules/nixos/greetd.nix
-    ../../modules/nixos/rebuild.nix
-    ../../modules/nixos/limine.nix
-    ../../modules/nixos/plymouth.nix
-    ../../modules/nixos/sudo-rs.nix
-    ../../modules/nixos/ananicy.nix
-    ../../modules/nixos/bluetooth.nix
-    ../../modules/nixos/printing.nix
-    ../../modules/nixos/openrgb.nix
+    ../../modules/nixos/default.nix
     inputs.home-manager.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
