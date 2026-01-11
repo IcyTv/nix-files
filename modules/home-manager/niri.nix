@@ -209,7 +209,7 @@
         "Mod+K".action.focus-window-or-workspace-up = {};
 
         "Mod+Ctrl+Down".action.move-window-down-or-to-workspace-down = {};
-        "Mod+Ctrl+Up".action.move-window-down-or-to-workspace-down = {};
+        "Mod+Ctrl+Up".action.move-window-up-or-to-workspace-up = {};
         "Mod+Ctrl+J".action.move-window-up-or-to-workspace-up = {};
         "Mod+Ctrl+K".action.move-window-up-or-to-workspace-up = {};
 
