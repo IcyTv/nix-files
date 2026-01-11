@@ -5,7 +5,7 @@
 
     settings = {
       autoshare = false;
-      plugins = [
+      plugin = [
         "opencode-gemini-auth@latest"
       ];
     };
