@@ -11,7 +11,6 @@
     pkgs.wikiman
     pkgs.typst
     pkgs.wl-gammarelay-rs
-    pkgs.opencode
   ];
 
   programs.yazi = {

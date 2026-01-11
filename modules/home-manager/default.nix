@@ -1,5 +1,6 @@
 {...}: {
   imports = [
+    ./ai.nix
     ./anyrun.nix
     ./audio.nix
     ./bluetooth.nix
