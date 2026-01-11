@@ -22,7 +22,7 @@
     };
 
     shellAliases = {
-      nix-shell = "nix shell --command nu";
+      nix-shell = "nix-shell --command nu";
     };
   };
 
