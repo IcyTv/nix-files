@@ -359,11 +359,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767796151,
-        "narHash": "sha256-RSrkckAnbY9fECvH1CKJwgOCTR4g5qK3f2zjEvmTAYg=",
+        "lastModified": 1768145211,
+        "narHash": "sha256-gAli8Dgkkm0XMoWoJDd7HjWTLlz7yu6tJfGhVa/sLNg=",
         "owner": "IcyTv",
         "repo": "nvim.nix",
-        "rev": "2f8b9e82e7fbfac21784af715406b55f1afb77f1",
+        "rev": "ba5bc0e1fe79b0662aab70dfd25db10210f7f12c",
         "type": "github"
       },
       "original": {
