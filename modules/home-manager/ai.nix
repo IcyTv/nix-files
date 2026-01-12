@@ -1,7 +1,8 @@
-{...}: {
+{inputs, ...}: {
   programs.opencode = {
     enable = true;
     enableMcpIntegration = true;
+    package = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.opencode;
 
     settings = {
       autoshare = false;
