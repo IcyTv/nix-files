@@ -52,7 +52,14 @@
     # inputs.neovim.packages.x86_64-linux.default
     (inputs.neovim.lib.x86_64-linux.makeNeovimWithLanguages
       {
-        inherit pkgs;
+        pkgs = pkgs.extend (final: prev: {
+          opencode = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.opencode;
+          vimPlugins =
+            prev.vimPlugins
+            // {
+              opencode-nvim = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.vimPlugins.opencode-nvim;
+            };
+        });
         languages.nix.enable = true;
         languages.shell.enable = true;
       })

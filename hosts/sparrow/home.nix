@@ -55,6 +55,9 @@
         inherit pkgs;
         languages.nix.enable = true;
         languages.shell.enable = true;
+        extraConfig = {
+          plugins.opencode.package = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.vimPlugins.opencode-nvim;
+        };
       })
 
     # # You can also create simple shell scripts directly inside your
