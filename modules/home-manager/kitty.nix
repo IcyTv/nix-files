@@ -13,6 +13,7 @@
       shell = "nu";
       confirm_os_window_close = 0;
       allow_remote_control = "socket";
+      listen_on = ''unix:/$\{XDG_RUNTIME_DIR}/kitty/kitty-socket'';
     };
     shellIntegration = {
       enableBashIntegration = true;
