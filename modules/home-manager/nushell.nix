@@ -9,6 +9,7 @@
     ];
     settings = {
       show_banner = false;
+      edit_mode = "vi";
       completions = {
         case_sensitive = false;
         quick = true;
