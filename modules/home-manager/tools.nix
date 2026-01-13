@@ -12,6 +12,7 @@
     pkgs.typst
     pkgs.wl-gammarelay-rs
     pkgs.lsof
+    pkgs.crate2nix
   ];
 
   programs.yazi = {
