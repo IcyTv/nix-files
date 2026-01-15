@@ -13,6 +13,7 @@
     pkgs.wl-gammarelay-rs
     pkgs.lsof
     pkgs.crate2nix
+    pkgs.kdePackages.okular
   ];
 
   programs.yazi = {
