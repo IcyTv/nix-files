@@ -4,7 +4,7 @@
     runtimeInputs = [pkgs.swww pkgs.uutils-coreutils-noprefix pkgs.fd];
 
     text = ''
-      WALLPAPER_DIR="$HOME/Pictures/wallpapers"
+      WALLPAPER_DIR="$HOME/.dotfiles/nix/modules/home-manager/wallpapers"
 
       if [ ! -d "$WALLPAPER_DIR" ]; then
         echo "Error: Directory not found: $WALLPAPER_DIR" >&2
@@ -24,10 +24,10 @@
 in {
   services.swww.enable = true;
 
-  home.file."Pictures/wallpapers" = {
-    source = ./wallpapers;
-    recursive = false;
-  };
+  # home.file."Pictures/wallpapers" = {
+  #   source = ./wallpapers;
+  #   recursive = false;
+  # };
 
   home.packages = [random-wallpaper];
 
