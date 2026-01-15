@@ -14,6 +14,7 @@
     pkgs.lsof
     pkgs.crate2nix
     pkgs.kdePackages.okular
+    pkgs.btdu
   ];
 
   programs.yazi = {

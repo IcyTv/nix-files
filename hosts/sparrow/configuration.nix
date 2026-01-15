@@ -11,10 +11,16 @@
     inputs.home-manager.nixosModules.default
   ];
 
+  nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = [
     "nix-command"
     "flakes"
   ];
+  nix.gc = {
+    automatic = true;
+    dates = "daily";
+    options = "--delete-generations +5";
+  };
   networking.hostName = "sparrow";
 
   nixpkgs.config.allowUnfree = true;
