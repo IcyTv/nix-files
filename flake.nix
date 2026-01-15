@@ -106,7 +106,10 @@
     # use "nixos", or your hostname as the name of the configuration
     # it's a better practice than "default" shown in the video
     nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {
-      specialArgs = {inherit inputs;};
+      specialArgs = {
+        inherit inputs;
+        self = filtered-src;
+      };
       modules =
         sharedModules
         ++ [
@@ -114,7 +117,10 @@
         ];
     };
     nixosConfigurations.sparrow = nixpkgs.lib.nixosSystem {
-      specialArgs = {inherit inputs;};
+      specialArgs = {
+        inherit inputs;
+        self = filtered-src;
+      };
       modules =
         sharedModules
         ++ [
