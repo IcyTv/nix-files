@@ -52,12 +52,15 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nix-filter.url = "github:numtide/nix-filter";
   };
 
   outputs = {
     self,
     nixpkgs,
     nur,
+    nix-filter,
     ...
   } @ inputs: let
     systems = nixpkgs.lib.systems.flakeExposed;
@@ -84,6 +87,19 @@
       inputs.nur.modules.nixos.default
       inputs.agenix.nixosModules.default
     ];
+    filtered-src = nix-filter.lib {
+      root = ./.;
+      include = [
+        ./flake.nix
+        ./flake.lock
+        ./rebuild.sh
+        ./modules
+        ./scripts
+        ./secrets
+        ./hosts
+      ];
+      exclude = [./wallpapers];
+    };
   in {
     legacyPackages = forAllSystems (pkgs: pkgs);
 
@@ -94,7 +110,7 @@
       modules =
         sharedModules
         ++ [
-          ./hosts/eagle/configuration.nix
+          "${filtered-src}/hosts/eagle/configuration.nix"
         ];
     };
     nixosConfigurations.sparrow = nixpkgs.lib.nixosSystem {
@@ -102,7 +118,7 @@
       modules =
         sharedModules
         ++ [
-          ./hosts/sparrow/configuration.nix
+          "${filtered-src}/hosts/sparrow/configuration.nix"
         ];
     };
   };
