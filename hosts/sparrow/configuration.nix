@@ -60,14 +60,6 @@
 
   services.openssh.enable = true;
 
-  system.autoUpgrade = {
-    enable = true;
-    flake = inputs.self.outPath;
-    flags = ["-L"];
-    dates = "06:00";
-    randomizedDelaySec = "45min";
-  };
-
   swapDevices = [
     {
       device = "/swap/swapfile";
