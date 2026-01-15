@@ -4,7 +4,7 @@
     runtimeInputs = [pkgs.swww pkgs.uutils-coreutils-noprefix pkgs.fd];
 
     text = ''
-      WALLPAPER_DIR="$HOME/.dotfiles/nix/modules/home-manager/wallpapers"
+      WALLPAPER_DIR="$HOME/.dotfiles/nix/wallpapers"
 
       if [ ! -d "$WALLPAPER_DIR" ]; then
         echo "Error: Directory not found: $WALLPAPER_DIR" >&2
