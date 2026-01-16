@@ -17,6 +17,9 @@
     pkgs.btdu
     pkgs.jq
     pkgs.file
+
+    pkgs.man-pages
+    pkgs.man-pages-posix
   ];
 
   programs.yazi = {
