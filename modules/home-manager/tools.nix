@@ -20,6 +20,8 @@
 
     pkgs.man-pages
     pkgs.man-pages-posix
+
+    pkgs.zapzap
   ];
 
   programs.yazi = {
