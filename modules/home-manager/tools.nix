@@ -16,6 +16,7 @@
     pkgs.kdePackages.okular
     pkgs.btdu
     pkgs.jq
+    pkgs.file
   ];
 
   programs.yazi = {
