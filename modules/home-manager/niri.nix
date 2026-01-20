@@ -214,12 +214,12 @@
         "Mod+Ctrl+K".action.move-window-up-or-to-workspace-up = {};
 
         "Mod+Shift+Left".action.focus-monitor-left = {};
-        "Mod+Shift+Down".action.focus-monitor-down = {};
-        "Mod+Shift+Up".action.focus-monitor-up = {};
+        "Mod+Shift+Down".action.focus-workspace-down = {};
+        "Mod+Shift+Up".action.focus-workspace-up = {};
         "Mod+Shift+Right".action.focus-monitor-right = {};
         "Mod+Shift+H".action.focus-monitor-left = {};
-        "Mod+Shift+J".action.focus-monitor-down = {};
-        "Mod+Shift+K".action.focus-monitor-up = {};
+        "Mod+Shift+J".action.focus-workspace-down = {};
+        "Mod+Shift+K".action.focus-workspace-up = {};
         "Mod+Shift+L".action.focus-monitor-right = {};
 
         "Mod+BracketLeft".action.consume-or-expel-window-left = {};
