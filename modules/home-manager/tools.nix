@@ -106,6 +106,17 @@
           run = "plugin mount";
           desc = "mount / unmount";
         }
+
+        {
+          on = ["g" "i"];
+          run = "plugin lazygit";
+          desc = "lazygit";
+        }
+        {
+          on = ["g" "c"];
+          run = "plugin vcs-files";
+          desc = "Show Git files changed";
+        }
       ];
     };
 
