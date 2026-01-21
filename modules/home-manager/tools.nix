@@ -34,6 +34,20 @@
       pkgs.ouch
     ];
 
+    settings = {
+      mpr = {
+        show_hidden = true;
+        sort_dir_first = true;
+      };
+
+      plugin.prepend_previewers = [
+        {
+          run = "ouch";
+          mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}";
+        }
+      ];
+    };
+
     plugins = with pkgs.yaziPlugins; {
       inherit sudo ouch mount lazygit vcs-files full-border;
     };
