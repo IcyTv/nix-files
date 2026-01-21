@@ -123,5 +123,11 @@
     plugins = with pkgs.yaziPlugins; {
       inherit sudo ouch mount lazygit vcs-files full-border;
     };
+
+    initLua =
+      #lua
+      ''
+        require("full-border"):setup()
+      '';
   };
 }
