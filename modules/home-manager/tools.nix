@@ -150,6 +150,9 @@
         require("full-border"):setup()
         require("git"):setup()
         require("starship"):setup()
+        require("zoxide"):setup {
+          update_db = true,
+        }
 
         -- show disk in status bar
         Status:children_add(function()
