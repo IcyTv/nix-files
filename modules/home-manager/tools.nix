@@ -134,7 +134,7 @@
           desc = "Show Git files changed";
         }
         {
-          on = ["Return"];
+          on = ["<Enter>"];
           run = "plugin smart-enter";
         }
       ];
