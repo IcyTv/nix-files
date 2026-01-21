@@ -32,6 +32,7 @@
 
     extraPackages = [
       pkgs.ouch
+      pkgs.lazygit
     ];
 
     settings = {
@@ -40,12 +41,26 @@
         sort_dir_first = true;
       };
 
-      plugin.prepend_previewers = [
-        {
-          run = "ouch";
-          mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}";
-        }
-      ];
+      plugin = {
+        prepend_fetchers = [
+          {
+            id = "git";
+            url = "*";
+            run = "git";
+          }
+          {
+            id = "git";
+            url = "*/";
+            run = "git";
+          }
+        ];
+        prepend_previewers = [
+          {
+            run = "ouch";
+            mime = "application/{*zip,tar,bzip2,7z*,rar,xz,zstd,java-archive}";
+          }
+        ];
+      };
     };
 
     keymap = {
@@ -121,13 +136,21 @@
     };
 
     plugins = with pkgs.yaziPlugins; {
-      inherit sudo ouch mount lazygit vcs-files full-border;
+      inherit sudo ouch mount git lazygit vcs-files full-border;
     };
 
     initLua =
       #lua
       ''
         require("full-border"):setup()
+        require("git"):setup()
+
+        -- show disk in status bar
+        Status:children_add(function()
+            local command = "df -kh .|awk '!/^Filesystem/{printf \" %s FREE \", $(NF-2)}'"
+            local info = ui.Span(io.popen(command):read('*a')):fg("green")
+            return info
+        end, 1500, Header.RIGHT)
       '';
   };
 }
