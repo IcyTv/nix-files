@@ -48,6 +48,61 @@
       ];
     };
 
+    keymap = {
+      mgr.prepend_keymap = [
+        {
+          on = ["R" "p" "p"];
+          run = "plugin sudo -- paste";
+          desc = "sudo paste";
+        }
+        {
+          on = ["R" "P"];
+          run = "plugin sudo -- paste --force";
+          desc = "sudo paste (force)";
+        }
+        {
+          on = ["R" "r"];
+          run = "plugin sudo -- rename";
+          desc = "sudo rename";
+        }
+        {
+          on = ["R" "p" "l"];
+          run = "plugin sudo -- link";
+          desc = "sudo link (absolute path)";
+        }
+        {
+          on = ["R" "p" "r"];
+          run = "plugin sudo -- link --relative";
+          desc = "sudo link (relative path)";
+        }
+        {
+          on = ["R" "p" "L"];
+          run = "plugin sudo -- hardlink";
+          desc = "sudo hardlink";
+        }
+        {
+          on = ["R" "a"];
+          run = "plugin sudo -- create";
+          desc = "sudo create file";
+        }
+        {
+          on = ["R" "d"];
+          run = "plugin sudo -- remove";
+          desc = "sudo delete file";
+        }
+        {
+          on = ["R" "d"];
+          run = "plugin sudo -- remove --permanently";
+          desc = "sudo delete file (permanently)";
+        }
+        {
+          on = ["R" "m"];
+          run = "plugin sudo -- chmod";
+          desc = "sudo move";
+        }
+      ];
+    };
+
     plugins = with pkgs.yaziPlugins; {
       inherit sudo ouch mount lazygit vcs-files full-border;
     };
