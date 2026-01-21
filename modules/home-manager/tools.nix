@@ -17,6 +17,7 @@
     pkgs.btdu
     pkgs.jq
     pkgs.file
+    pkgs._7zz
 
     pkgs.man-pages
     pkgs.man-pages-posix
