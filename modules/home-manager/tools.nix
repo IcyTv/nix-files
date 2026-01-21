@@ -98,7 +98,13 @@
         {
           on = ["R" "m"];
           run = "plugin sudo -- chmod";
-          desc = "sudo move";
+          desc = "sudo chmod";
+        }
+
+        {
+          on = ["M"];
+          run = "plugin mount";
+          desc = "mount / unmount";
         }
       ];
     };
