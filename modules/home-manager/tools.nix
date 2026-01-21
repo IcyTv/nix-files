@@ -29,5 +29,13 @@
     enable = true;
     enableZshIntegration = true;
     enableNushellIntegration = true;
+
+    extraPackages = [
+      pkgs.ouch
+    ];
+
+    plugins = with pkgs.yaziPlugins; {
+      inherit sudo ouch mount lazygit vcs-files full-border;
+    };
   };
 }
