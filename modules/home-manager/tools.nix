@@ -18,6 +18,7 @@
     pkgs.jq
     pkgs.file
     pkgs._7zz
+    pkgs.lazygit
 
     pkgs.man-pages
     pkgs.man-pages-posix
@@ -132,11 +133,15 @@
           run = "plugin vcs-files";
           desc = "Show Git files changed";
         }
+        {
+          on = ["Return"];
+          run = "plugin smart-enter";
+        }
       ];
     };
 
     plugins = with pkgs.yaziPlugins; {
-      inherit sudo ouch mount git lazygit vcs-files full-border;
+      inherit smart-enter sudo starship ouch mount git lazygit vcs-files full-border;
     };
 
     initLua =
@@ -144,6 +149,7 @@
       ''
         require("full-border"):setup()
         require("git"):setup()
+        require("starship"):setup()
 
         -- show disk in status bar
         Status:children_add(function()
