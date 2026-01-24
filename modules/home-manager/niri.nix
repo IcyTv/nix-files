@@ -34,12 +34,12 @@
       empty-workspace-above-first = true;
 
       preset-column-widths = [
-        {proportion = 1. / 3.;}
-        {proportion = 1. / 2.;}
-        {proportion = 2. / 3.;}
-        {proportion = 1.;}
+        {proportion = 1.0 / 3.0;}
+        {proportion = 1.0 / 2.0;}
+        {proportion = 2.0 / 3.0;}
+        {proportion = 1.0;}
       ];
-      default-column-width.proportion = 2. / 3.;
+      default-column-width.proportion = 2.0 / 3.0;
 
       focus-ring = {
         enable = true;
@@ -72,10 +72,10 @@
       }
       {
         geometry-corner-radius = {
-          bottom-left = 12.;
-          bottom-right = 12.;
-          top-left = 12.;
-          top-right = 12.;
+          bottom-left = 12.0;
+          bottom-right = 12.0;
+          top-left = 12.0;
+          top-right = 12.0;
         };
         clip-to-geometry = true;
       }
@@ -221,6 +221,11 @@
         "Mod+Shift+J".action.focus-workspace-down = {};
         "Mod+Shift+K".action.focus-workspace-up = {};
         "Mod+Shift+L".action.focus-monitor-right = {};
+
+        "Mod+Alt+Up".action.move-workspace-up = {};
+        "Mod+Alt+Down".action.move-workspace-down = {};
+        "Mod+Alt+K".action.move-workspace-up = {};
+        "Mod+Alt+J".action.move-workspace-down = {};
 
         "Mod+BracketLeft".action.consume-or-expel-window-left = {};
         "Mod+BracketRight".action.consume-or-expel-window-right = {};
