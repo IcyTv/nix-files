@@ -24,6 +24,8 @@
     pkgs.man-pages-posix
 
     pkgs.zapzap
+
+    pkgs.simple-scan
   ];
 
   programs.yazi = {
