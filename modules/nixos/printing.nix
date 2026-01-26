@@ -12,4 +12,9 @@
       cups-browsed
     ];
   };
+
+  hardware.sane = {
+    enable = true;
+    extraBackends = with pkgs; [hplipWithPlugin];
+  };
 }

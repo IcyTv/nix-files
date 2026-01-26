@@ -9,7 +9,6 @@
   ];
 
   services.gvfs.enable = true;
-  hardware.sane.enable = true;
 
   services.flatpak.enable = true;
   programs.coolercontrol.enable = true;
