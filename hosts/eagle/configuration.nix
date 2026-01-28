@@ -75,6 +75,10 @@
   };
 
   services.udev.packages = [config.boot.kernelPackages.nvidiaPackages.production];
+  services.udev.extraRules = ''
+    # NS PRO Controller USB
+    KERNEL=="hidraw*", ATTRS{idVendor}=="20d6", ATTRS{idProduct}=="a711", MODE="0660", TAG+="uaccess", GROUP="input"
+  '';
 
   services.xserver.videoDrivers = ["nvidia"];
 
