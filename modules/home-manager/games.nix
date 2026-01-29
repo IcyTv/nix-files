@@ -9,8 +9,4 @@
       pkgs.gamemode
     ];
   };
-
-  home.packages = [
-    pkgs.python313Packages.ds4drv
-  ];
 }
