@@ -26,6 +26,8 @@
     pkgs.zapzap
 
     pkgs.simple-scan
+
+    pkgs.ausweisapp
   ];
 
   programs.yazi = {
