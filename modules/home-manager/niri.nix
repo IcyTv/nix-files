@@ -193,10 +193,10 @@
           repeat = false;
         };
 
-        "Mod+Left".action.focus-column-or-monitor-left = {};
-        "Mod+Right".action.focus-column-or-monitor-right = {};
-        "Mod+H".action.focus-column-or-monitor-left = {};
-        "Mod+L".action.focus-column-or-monitor-right = {};
+        "Mod+Left".action.focus-column-left = {};
+        "Mod+Right".action.focus-column-right = {};
+        "Mod+H".action.focus-column-left = {};
+        "Mod+L".action.focus-column-right = {};
 
         "Mod+Ctrl+Left".action.move-column-left-or-to-monitor-left = {};
         "Mod+Ctrl+Right".action.move-column-right-or-to-monitor-right = {};
