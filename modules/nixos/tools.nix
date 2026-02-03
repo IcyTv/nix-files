@@ -6,6 +6,7 @@
     git
     wl-clipboard
     lm_sensors
+    inxi
   ];
 
   services.gvfs.enable = true;
