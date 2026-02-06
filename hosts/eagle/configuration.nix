@@ -85,6 +85,7 @@
 
   services.xserver.videoDrivers = ["nvidia"];
 
+  boot.resumeDevice = "/dev/disk/by-uuid/82a0bbc7-5d26-44a4-b288-711cc2e40a8c";
   boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6687"];
   boot.extraModprobeConfig = ''
     options bluetooth disable_ertm=1
@@ -95,6 +96,7 @@
     "video=DP-2:1920x1080@60"
     "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
     "acpi_enforce_resources=lax"
+    "resume_offset=9563072"
   ];
   boot.blacklistedKernelModules = ["nouveau" "nct6683"];
   boot.extraModulePackages = [
