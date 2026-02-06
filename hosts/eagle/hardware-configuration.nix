@@ -60,11 +60,18 @@
     ];
   };
 
-  # TODO: move to swap file in btrfs partition
+  fileSystems."/swap" = {
+    device = "/dev/disk/by-uuid/82a0bbc7-5d26-44a4-b288-711cc2e40a8c";
+    fsType = "btrfs";
+    options = [
+      "subvol=swap"
+      "compress=zstd"
+      "noatime"
+      "nodatacow"
+    ];
+  };
+
   swapDevices = [
-    {
-      device = "/dev/disk/by-uuid/c85ef8b0-8dfa-4aea-aa9c-c2ab13955989";
-    }
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
