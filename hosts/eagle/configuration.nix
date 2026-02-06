@@ -97,6 +97,7 @@
     "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
     "acpi_enforce_resources=lax"
     "resume_offset=9563072"
+    "mem_sleep_default=deep"
   ];
   boot.blacklistedKernelModules = ["nouveau" "nct6683"];
   boot.extraModulePackages = [
