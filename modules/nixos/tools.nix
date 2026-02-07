@@ -7,6 +7,7 @@
     wl-clipboard
     lm_sensors
     inxi
+    unar
   ];
 
   services.gvfs.enable = true;
