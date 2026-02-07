@@ -10,7 +10,11 @@
     settings = {
       show_banner = false;
       edit_mode = "vi";
-      sync_history_on_enter = false;
+      history = {
+        isolation = true;
+        sync_on_enter = false;
+        file_format = "sqlite";
+      };
       completions = {
         case_sensitive = false;
         quick = true;
