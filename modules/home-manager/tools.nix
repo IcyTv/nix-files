@@ -28,6 +28,8 @@
     pkgs.simple-scan
 
     pkgs.ausweisapp
+
+    pkgs.blender
   ];
 
   programs.yazi = {
