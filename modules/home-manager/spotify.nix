@@ -1,7 +1,6 @@
 {
   pkgs,
   inputs,
-  config,
   ...
 }: let
   spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};
@@ -14,9 +13,13 @@ in {
       shuffle
       bookmark
       trashbin
+      hidePodcasts
+    ];
+    enabledCustomApps = with spicePkgs.apps; [
+      marketplace
+      newReleases
     ];
   };
-  services.spotifyd.enable = true;
 
   xdg.configFile."autostart/spotify.desktop".source = "${pkgs.spotify}/share/applications/spotify.desktop";
 }
