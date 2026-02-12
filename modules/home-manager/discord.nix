@@ -2,8 +2,14 @@
   programs.nixcord = {
     enable = true;
 
-    discord.vencord.enable = false;
-    discord.equicord.enable = true;
+    discord = {
+      enable = true;
+      autoscroll.enable = true;
+      branch = "stable";
+
+      vencord.enable = false;
+      equicord.enable = true;
+    };
 
     config = {
       frameless = true;
