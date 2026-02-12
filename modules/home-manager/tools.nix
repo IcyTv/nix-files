@@ -32,7 +32,7 @@
     pkgs.blender
   ];
 
-  xdg.configFile."autostart/zapzap.desktop".source = "${pkgs.zapzap}/share/applications/zapzap.desktop";
+  xdg.configFile."autostart/zapzap.desktop".source = "${pkgs.zapzap}/share/applications/com.rtosta.zapzap.desktop";
 
   programs.yazi = {
     enable = true;
