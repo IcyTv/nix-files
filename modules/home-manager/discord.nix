@@ -1,4 +1,9 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  inputs,
+  config,
+  ...
+}: {
   programs.nixcord = {
     enable = true;
 
@@ -55,5 +60,5 @@
     };
   };
 
-  xdg.configFile."autostart/vesktop.desktop".source = "${pkgs.vesktop}/share/applications/vesktop.desktop";
+  xdg.configFile."autostart/discord.desktop".source = "${config.programs.nixcord.finalPackage.discord}/share/applications/discord.desktop";
 }
