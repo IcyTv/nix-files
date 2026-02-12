@@ -32,6 +32,8 @@
     pkgs.blender
   ];
 
+  xdg.configFile."autostart/zapzap.desktop".source = "${pkgs.zapzap}/share/applications/zapzap.desktop";
+
   programs.yazi = {
     enable = true;
     enableZshIntegration = true;
