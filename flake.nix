@@ -54,6 +54,8 @@
     };
 
     nix-filter.url = "github:numtide/nix-filter";
+
+    nixcord.url = "github:FlameFlag/nixcord";
   };
 
   outputs = {

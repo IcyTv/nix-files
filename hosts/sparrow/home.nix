@@ -11,6 +11,7 @@
     inputs.spicetify-nix.homeManagerModules.default
     inputs.nur.modules.homeManager.default
     inputs.agenix.homeManagerModules.default
+    inputs.nixcord.homeModules.nixcord
   ];
 
   nixpkgs.config.allowUnfree = true;
