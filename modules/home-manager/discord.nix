@@ -40,7 +40,6 @@
         homeTyping.enable = true;
         imageZoom.enable = true;
         implicitRelationships.enable = true;
-        keyboardNavigation.enable = true;
         mediaPlaybackSpeed.enable = true;
         memberCount.enable = true;
         mentionAvatars.enable = true;
