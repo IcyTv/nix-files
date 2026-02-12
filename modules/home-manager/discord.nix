@@ -1,17 +1,22 @@
 {pkgs, ...}: {
   programs.vesktop = {
     enable = true;
-    vencord.settings = {
+    settings = {
+      discordBranch = "stable";
+      tray = true;
+      minimizeToTray = false;
       appBadge = true;
       arRPC = true;
+      hardwareAcceleration = true;
+      disableMinSize = true;
+    };
+    vencord.settings = {
       checkUpdates = false;
       autoUpdate = false;
       autoUpdateNotification = false;
       notifyAboutUpdates = false;
       customTitleBar = false;
       tray = true;
-      hardwareAcceleration = true;
-      discordBranch = "stable";
       vesktop.settings = {
         autoUpdate = false;
         autoUpdateNotification = false;
