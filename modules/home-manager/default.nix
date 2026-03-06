@@ -17,7 +17,8 @@
     ./stylix.nix
     ./tools.nix
     ./swww.nix
-    ./waybar.nix
+    # ./waybar.nix
+    ./niribar.nix
     ./zsh.nix
   ];
 }

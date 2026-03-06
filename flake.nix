@@ -56,6 +56,11 @@
     nix-filter.url = "github:numtide/nix-filter";
 
     nixcord.url = "github:FlameFlag/nixcord";
+
+    niribar = {
+      url = "github:IcyTv/niribar";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
