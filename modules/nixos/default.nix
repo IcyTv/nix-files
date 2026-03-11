@@ -1,4 +1,4 @@
-{...}: {
+{inputs, ...}: {
   imports = [
     ./ananicy.nix
     ./bluetooth.nix
@@ -7,6 +7,7 @@
     ./greetd.nix
     ./keymap.nix
     ./limine.nix
+    ./niri.nix
     ./openrgb.nix
     ./plymouth.nix
     ./printing.nix

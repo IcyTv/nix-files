@@ -15,6 +15,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nirinit = {
+      url = "github:amaanq/nirinit";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -93,6 +98,7 @@
       inputs.home-manager.nixosModules.default
       inputs.nur.modules.nixos.default
       inputs.agenix.nixosModules.default
+      inputs.nirinit.nixosModules.default
     ];
     filtered-src = nix-filter.lib {
       root = ./.;

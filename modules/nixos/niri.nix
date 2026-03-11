@@ -1,0 +1,3 @@
+{...}: {
+  services.nirinit.enable = true;
+}
