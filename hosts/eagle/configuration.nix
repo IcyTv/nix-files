@@ -86,9 +86,10 @@
   services.xserver.videoDrivers = ["nvidia"];
 
   boot.resumeDevice = "/dev/disk/by-uuid/82a0bbc7-5d26-44a4-b288-711cc2e40a8c";
-  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6687"];
+  boot.initrd.kernelModules = ["nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" "nct6687" "v4l2loopback"];
   boot.extraModprobeConfig = ''
     options bluetooth disable_ertm=1
+    options v4l2loopback exclusive_caps=1 card_label="Virtual Camera"
   '';
   boot.kernelParams = [
     "nouveau.modeset=0"
@@ -129,6 +130,7 @@
           install -D nct6687.ko $out/lib/modules/${kernel.modDirVersion}/extra/nct6687.ko
         '';
       }) {})
+    config.boot.kernelPackages.v4l2loopback.out
   ];
 
   boot.loader.limine.extraConfig = "RESOLUTION=2560x1440";
