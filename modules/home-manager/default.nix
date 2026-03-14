@@ -12,6 +12,7 @@
     ./niri.nix
     ./nushell.nix
     ./nix.nix
+    ./obs.nix
     ./spotify.nix
     ./ssh.nix
     ./stylix.nix
