@@ -32,6 +32,7 @@
     pkgs.blender
 
     pkgs.anki-bin
+    pkgs.mpv
   ];
 
   xdg.configFile."autostart/zapzap.desktop".source = "${pkgs.zapzap}/share/applications/com.rtosta.zapzap.desktop";
