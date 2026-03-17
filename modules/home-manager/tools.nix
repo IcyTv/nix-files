@@ -30,6 +30,8 @@
     pkgs.ausweisapp
 
     pkgs.blender
+
+    pkgs.anki-bin
   ];
 
   xdg.configFile."autostart/zapzap.desktop".source = "${pkgs.zapzap}/share/applications/com.rtosta.zapzap.desktop";
