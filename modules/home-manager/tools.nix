@@ -152,7 +152,7 @@
     };
 
     plugins = with pkgs.yaziPlugins; {
-      inherit smart-enter sudo starship ouch mount git lazygit vcs-files full-border;
+      inherit smart-enter sudo starship ouch mount git lazygit vcs-files full-border rsync;
     };
 
     initLua =
