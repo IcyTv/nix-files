@@ -14,4 +14,6 @@
 
   services.flatpak.enable = true;
   programs.coolercontrol.enable = true;
+
+  virtualisation.waydroid.enable = true;
 }
