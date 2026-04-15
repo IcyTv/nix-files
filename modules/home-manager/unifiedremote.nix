@@ -7,7 +7,10 @@
       After = ["network.target"];
     };
     Service = {
-      ExecStart = "${pkgs.urserver}/bin/urserver";
+      Type = "forking";
+      ExecStart = "${pkgs.urserver}/bin/urserver --daemon --pidfile=urserver.pid";
+      ExecStop = "kill -TERM $(cat urserver.pid)";
+      PIDFile = "urserver.pid";
       Restart = "on-failure";
     };
     Install = {
