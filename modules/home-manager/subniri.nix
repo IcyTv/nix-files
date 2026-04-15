@@ -14,17 +14,17 @@ in {
     enable = true;
     text = ''
       [Desktop Entry]
-      Name=Niribar
+      Name=SubNiri
       Exec=${subniri}/bin/subniri
       Type=Application
       Categories=Utility;
     '';
   };
 
-  systemd.user.services.niribar = {
+  systemd.user.services.subniri = {
     Unit = {
       Description = "Shell for niri, written using Rust, Gtk and Astal 4";
-      Documentation = "https://github.com/IcyTv/niribar";
+      Documentation = "https://github.com/IcyTv/subniri";
       PartOf = [
         "tray.target"
         config.wayland.systemd.target
@@ -36,7 +36,7 @@ in {
     };
 
     Service = {
-      ExecStart = "${subniri}/bin/niribar";
+      ExecStart = "${subniri}/bin/subniri";
       Restart = "on-failure";
     };
 
