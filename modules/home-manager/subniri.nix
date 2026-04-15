@@ -4,18 +4,18 @@
   inputs,
   ...
 }: let
-  niribar = inputs.niribar.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  subniri = inputs.subniri.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in {
   home.packages = [
-    niribar
+    subniri
   ];
 
-  xdg.dataFile."applications/niribar.desktop" = {
+  xdg.dataFile."applications/subniri.desktop" = {
     enable = true;
     text = ''
       [Desktop Entry]
       Name=Niribar
-      Exec=${niribar}/bin/niribar
+      Exec=${subniri}/bin/subniri
       Type=Application
       Categories=Utility;
     '';
@@ -23,7 +23,7 @@ in {
 
   systemd.user.services.niribar = {
     Unit = {
-      Description = "Bar for niri, written using Rust, Gtk and Astal 4";
+      Description = "Shell for niri, written using Rust, Gtk and Astal 4";
       Documentation = "https://github.com/IcyTv/niribar";
       PartOf = [
         "tray.target"
@@ -36,7 +36,7 @@ in {
     };
 
     Service = {
-      ExecStart = "${niribar}/bin/niribar";
+      ExecStart = "${subniri}/bin/niribar";
       Restart = "on-failure";
     };
 

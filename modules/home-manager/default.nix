@@ -19,7 +19,7 @@
     ./tools.nix
     ./swww.nix
     # ./waybar.nix
-    ./niribar.nix
+    ./subniri.nix
     ./zsh.nix
   ];
 }

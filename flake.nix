@@ -62,8 +62,8 @@
 
     nixcord.url = "github:FlameFlag/nixcord";
 
-    niribar = {
-      url = "github:IcyTv/niribar";
+    subniri = {
+      url = "github:IcyTv/subniri";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
