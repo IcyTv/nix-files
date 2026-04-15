@@ -20,6 +20,7 @@
     ./swww.nix
     # ./waybar.nix
     ./subniri.nix
+    ./unifiedremote.nix
     ./zsh.nix
   ];
 }
