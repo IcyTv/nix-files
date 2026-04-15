@@ -23,7 +23,8 @@
   };
   networking.hostName = "eagle";
 
-  networking.firewall.allowedUDPPorts = [24727];
+  networking.firewall.allowedTCPPorts = [9512];
+  networking.firewall.allowedUDPPorts = [24727 9511 9512];
 
   nixpkgs.config.allowUnfree = true;
 
