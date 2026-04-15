@@ -38,7 +38,7 @@
   users.users.michael = {
     isNormalUser = true;
     extraGroups = ["wheel"];
-    shell = pkgs.zsh;
+    shell = pkgs.nushell;
   };
 
   home-manager = {
