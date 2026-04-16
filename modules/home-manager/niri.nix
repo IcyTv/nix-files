@@ -167,21 +167,21 @@
         };
         "XF86AudioNext" = {
           action.spawn = [
-            "playerctl"
+            "${pkgs.playerctl}"
             "next"
           ];
           allow-when-locked = true;
         };
         "XF86AudioPrev" = {
           action.spawn = [
-            "playerctl"
+            "${pkgs.playerctl}"
             "previous"
           ];
           allow-when-locked = true;
         };
         "XF86AudioPlay" = {
           action.spawn = [
-            "playerctl"
+            "${pkgs.playerctl}"
             "play-pause"
           ];
           allow-when-locked = true;
