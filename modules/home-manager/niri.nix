@@ -168,6 +168,8 @@
         "XF86AudioNext" = {
           action.spawn = [
             "${pkgs.playerctl}"
+            "-p"
+            "spotify,firefox"
             "next"
           ];
           allow-when-locked = true;
@@ -175,6 +177,8 @@
         "XF86AudioPrev" = {
           action.spawn = [
             "${pkgs.playerctl}"
+            "-p"
+            "spotify,firefox"
             "previous"
           ];
           allow-when-locked = true;
@@ -182,6 +186,8 @@
         "XF86AudioPlay" = {
           action.spawn = [
             "${pkgs.playerctl}"
+            "-p"
+            "spotify,firefox"
             "play-pause"
           ];
           allow-when-locked = true;
