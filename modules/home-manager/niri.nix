@@ -127,11 +127,11 @@
         "Mod+Space".action.spawn = ["anyrun"];
         "Mod+B".action.spawn = ["firefox"];
         "Mod+E".action.spawn = ["thunar"];
-        "Mod+Alt+L".action.spawn = ["swaylock"];
+        "Mod+Alt+L".action.spawn = ["${pkgs.swaylock}/bin/swaylock"];
 
         "XF86AudioRaiseVolume" = {
           action.spawn = [
-            "wpctl"
+            "${pkgs.wireplumber}/bin/wpctl"
             "set-volume"
             "@DEFAULT_AUDIO_SINK@"
             "0.01+"
@@ -140,7 +140,7 @@
         };
         "XF86AudioLowerVolume" = {
           action.spawn = [
-            "wpctl"
+            "${pkgs.wireplumber}/bin/wpctl"
             "set-volume"
             "@DEFAULT_AUDIO_SINK@"
             "0.01-"
@@ -149,7 +149,7 @@
         };
         "XF86AudioMute" = {
           action.spawn = [
-            "wpctl"
+            "${pkgs.wireplumber}/bin/wpctl"
             "set-mute"
             "@DEFAULT_AUDIO_SINK@"
             "toggle"
@@ -158,7 +158,7 @@
         };
         "XF86AudioMicMute" = {
           action.spawn = [
-            "wpctl"
+            "${pkgs.wireplumber}/bin/wpctl"
             "set-mute"
             "@DEFAULT_AUDIO_SOURCE@"
             "toggle"
@@ -304,7 +304,7 @@
     [Desktop Entry]
     Type = Application
     Name = Gammastep Indicator
-    Exec = gammastep-indicator
+    Exec = ${pkgs.gammastep}/bin/gammastep-indicator
     Hidden = true
   '';
 
