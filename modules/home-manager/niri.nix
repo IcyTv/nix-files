@@ -167,7 +167,7 @@
         };
         "XF86AudioNext" = {
           action.spawn = [
-            "${pkgs.playerctl}"
+            "${pkgs.playerctl}/bin/playerctl"
             "-p"
             "spotify,firefox"
             "next"
@@ -176,7 +176,7 @@
         };
         "XF86AudioPrev" = {
           action.spawn = [
-            "${pkgs.playerctl}"
+            "${pkgs.playerctl}/bin/playerctl"
             "-p"
             "spotify,firefox"
             "previous"
@@ -185,7 +185,7 @@
         };
         "XF86AudioPlay" = {
           action.spawn = [
-            "${pkgs.playerctl}"
+            "${pkgs.playerctl}/bin/playerctl"
             "-p"
             "spotify,firefox"
             "play-pause"
