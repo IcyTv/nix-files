@@ -21,6 +21,7 @@
     # ./waybar.nix
     ./subniri.nix
     ./unifiedremote.nix
+    ./yazi.nix
     ./zsh.nix
   ];
 }
