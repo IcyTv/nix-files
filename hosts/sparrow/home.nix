@@ -12,9 +12,8 @@
     inputs.nur.modules.homeManager.default
     inputs.agenix.homeManagerModules.default
     inputs.nixcord.homeModules.nixcord
+    inputs.subniri.homeModules.subniri
   ];
-
-  nixpkgs.config.allowUnfree = true;
 
   # Home Manager needs a bit of information about you and the paths it should
   # manage.

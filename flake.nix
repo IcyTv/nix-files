@@ -73,6 +73,7 @@
     nixpkgs,
     nur,
     nix-filter,
+    subniri,
     ...
   } @ inputs: let
     systems = nixpkgs.lib.systems.flakeExposed;
@@ -81,7 +82,7 @@
         function (import nixpkgs {
           inherit system;
           config.allowUnfree = true;
-          overlays = [nur.overlays.default];
+          overlays = [nur.overlays.default subniri.overlays.default];
         }));
     sharedModules = [
       (

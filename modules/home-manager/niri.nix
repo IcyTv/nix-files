@@ -167,27 +167,24 @@
         };
         "XF86AudioNext" = {
           action.spawn = [
-            "${pkgs.playerctl}/bin/playerctl"
-            "-p"
-            "spotify,firefox"
+            "${pkgs.subniri}/bin/subniri"
+            "player"
             "next"
           ];
           allow-when-locked = true;
         };
         "XF86AudioPrev" = {
           action.spawn = [
-            "${pkgs.playerctl}/bin/playerctl"
-            "-p"
-            "spotify,firefox"
-            "previous"
+            "${pkgs.subniri}/bin/subniri"
+            "player"
+            "cycle"
           ];
           allow-when-locked = true;
         };
         "XF86AudioPlay" = {
           action.spawn = [
-            "${pkgs.playerctl}/bin/playerctl"
-            "-p"
-            "spotify,firefox"
+            "${pkgs.subniri}/bin/subniri"
+            "player"
             "play-pause"
           ];
           allow-when-locked = true;
