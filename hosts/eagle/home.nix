@@ -12,6 +12,7 @@
     inputs.nur.modules.homeManager.default
     inputs.agenix.homeManagerModules.default
     inputs.nixcord.homeModules.nixcord
+    inputs.subniri.homeModules.subniri
   ];
 
   nixpkgs.config.allowUnfree = true;
