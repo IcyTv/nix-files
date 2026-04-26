@@ -1,5 +1,17 @@
 {pkgs, ...}: {
   programs.nushell = {
+    extraConfig = ''
+      def --wrapped niri [...rest] {
+          if ($rest | is-empty) and ("WAYLAND_DISPLAY" in $env) {
+              print "🚨 Prevented accidental nested Niri launch!"
+              print "💡 Did you mean \"niri msg ...\" or \"niri --help\"?"
+              print "   (To intentionally force a nested launch, run: ^niri)"
+              error make {msg: "Nested launch prevented"}
+          } else {
+              ^niri ...$rest
+          }
+      }
+    '';
     enable = true;
     plugins = with pkgs.nushellPlugins; [
       skim
