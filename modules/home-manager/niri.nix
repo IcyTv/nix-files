@@ -109,6 +109,21 @@
         ];
         open-maximized = true;
       }
+      {
+        matches = [
+          {
+            app-id = "^steam$";
+            title = "^notificationtoasts";
+          }
+        ];
+        open-focused = false;
+        default-floating-position = {
+          x = 8;
+          y = 8;
+          relative-to = "top-right";
+        };
+        block-out-from = "screencast";
+      }
     ];
     layer-rules = [
       {

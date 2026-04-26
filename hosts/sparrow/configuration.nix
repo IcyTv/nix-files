@@ -55,11 +55,6 @@
     };
   };
 
-  programs.niri = {
-    enable = true;
-    package = pkgs.niri;
-  };
-
   services.openssh.enable = true;
 
   swapDevices = [

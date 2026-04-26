@@ -1,3 +1,6 @@
-{...}: {
-  services.nirinit.enable = true;
+{pkgs, ...}: {
+  programs.niri = {
+    enable = true;
+    package = pkgs.niri;
+  };
 }

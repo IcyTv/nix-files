@@ -53,11 +53,6 @@
     };
   };
 
-  programs.niri = {
-    enable = true;
-    package = pkgs.niri;
-  };
-
   services.openssh.enable = true;
 
   boot.loader.limine.secureBoot.enable = true;
