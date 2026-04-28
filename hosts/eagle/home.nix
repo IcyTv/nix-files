@@ -191,6 +191,8 @@
   #
   home.sessionVariables = {
     EDITOR = "nvim";
+    NIXOS_OZONE_WL = "1";
+    ELECTRON_OZONE_PLATFORM_HINT = "wayland";
   };
 
   # Let Home Manager install and manage itself.
