@@ -1,4 +1,25 @@
-{inputs, ...}: {
+{
+  inputs,
+  pkgs,
+  ...
+}: let
+  crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
+    pname = "crates-mcp";
+    version = "0.1.0";
+
+    src = pkgs.fetchCrate {
+      inherit pname version;
+      hash = "sha256-nHiDHc2VG5VUAIwoHdReQmDqBt6MENdGKXeps5oO6B0=";
+    };
+
+    nativeBuildInputs = [pkgs.pkg-config];
+    buildInputs = [pkgs.openssl];
+
+    cargoHash = "sha256-NV8ewbAqMerH+AMU5IBR+OINaZ0oyxgE2wxQXbhI7j4=";
+
+    doCheck = false;
+  };
+in {
   programs.opencode = {
     enable = true;
     enableMcpIntegration = true;
@@ -42,6 +63,9 @@
           "github:utensils/mcp-nixos"
           "--"
         ];
+      };
+      crates-mcp = {
+        command = "${crates-mcp}/bin/crates-mcp";
       };
     };
   };
