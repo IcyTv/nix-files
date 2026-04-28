@@ -3,6 +3,7 @@
   pkgs,
   ...
 }: let
+  pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux;
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -19,11 +20,27 @@
 
     doCheck = false;
   };
+  docsrs-mcp = pkgs-unstable.rustPlatform.buildRustPackage rec {
+    pname = "docsrs-mcp";
+    version = "0.1.0";
+
+    src = pkgs.fetchCrate {
+      inherit pname version;
+      hash = "sha256-yEkNYxA/dv2KFY6u5yuxgUq1LnWNPM/HeT0E3sJw39I=";
+    };
+
+    nativeBuildInputs = [pkgs.pkg-config];
+    buildInputs = [pkgs.openssl];
+
+    cargoHash = "sha256-2TwNuXzqDr5H87RJyu4/0OSaGr3a6WnleCUTou9U2Ck=";
+
+    doCheck = false;
+  };
 in {
   programs.opencode = {
     enable = true;
     enableMcpIntegration = true;
-    package = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.opencode;
+    package = pkgs-unstable.opencode;
 
     agents = {
       code-fixer = ''
@@ -66,6 +83,9 @@ in {
       };
       crates-mcp = {
         command = "${crates-mcp}/bin/crates-mcp";
+      };
+      rust-docs = {
+        command = "${docsrs-mcp}/bin/docsrs-mcp";
       };
     };
   };
