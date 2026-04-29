@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{ pkgs, config, lib, ... }: let
   niri-taskbar = pkgs.rustPlatform.buildRustPackage rec {
     pname = "niri-taskbar";
     version = "0.3.0";
@@ -57,210 +53,214 @@
     ];
   } (builtins.readFile ../../scripts/btctl.py);
 in {
-  programs.waybar = {
-    enable = true;
-    systemd.enable = true;
+  options.my.hm.waybar.enable = lib.mkEnableOption "Waybar configuration";
 
-    style =
-      /*
-      css
-      */
-      ''
-        @define-color base @base00;
-        @define-color mantle @base01;
-        @define-color surface0 @base02;
-        @define-color surface1 @base03;
-        @define-color surface2 @base04;
-        @define-color text @base05;
-        @define-color rosewater @base06;
-        @define-color lavender @base07;
-        @define-color red @base08;
-        @define-color peach @base09;
-        @define-color yellow @base0A;
-        @define-color green @base0B;
-        @define-color teal @base0C;
-        @define-color blue @base0D;
-        @define-color mauve @base0E;
-        @define-color flamingo @base0F;
+  config = lib.mkIf config.my.hm.waybar.enable {
+    programs.waybar = {
+      enable = true;
+      systemd.enable = true;
 
-        * {
-          font-size: 17px;
-          min-height: 0;
-          border: none;
-          border-radius: 0;
-        }
+      style =
+        /*
+        css
+        */
+        ''
+          @define-color base @base00;
+          @define-color mantle @base01;
+          @define-color surface0 @base02;
+          @define-color surface1 @base03;
+          @define-color surface2 @base04;
+          @define-color text @base05;
+          @define-color rosewater @base06;
+          @define-color lavender @base07;
+          @define-color red @base08;
+          @define-color peach @base09;
+          @define-color yellow @base0A;
+          @define-color green @base0B;
+          @define-color teal @base0C;
+          @define-color blue @base0D;
+          @define-color mauve @base0E;
+          @define-color flamingo @base0F;
 
-        window#waybar {
-          background-color: transparent;
-          transition-property: background-color;
-          transition-duration: 0.5s;
-        }
+          * {
+            font-size: 17px;
+            min-height: 0;
+            border: none;
+            border-radius: 0;
+          }
 
-        window#waybar.hidden {
-          opacity: 0.5;
-        }
+          window#waybar {
+            background-color: transparent;
+            transition-property: background-color;
+            transition-duration: 0.5s;
+          }
 
-        .niri-taskbar {
-          border-radius: 4px;
-          margin: 2px;
-          margin-left: 8px;
-        }
+          window#waybar.hidden {
+            opacity: 0.5;
+          }
 
-        .niri-taskbar button {
-          border-radius: 4px;
-          padding: 2px;
-        }
+          .niri-taskbar {
+            border-radius: 4px;
+            margin: 2px;
+            margin-left: 8px;
+          }
 
-        .niri-taskbar button.active {
-          background-color: @mauve;
-        }
+          .niri-taskbar button {
+            border-radius: 4px;
+            padding: 2px;
+          }
 
-        .niri-taskbar button:hover {
-          background-color: @mauve;
-        }
+          .niri-taskbar button.active {
+            background-color: @mauve;
+          }
 
-        #memory,
-        #custom-power,
-        #custom-music,
-        #wireplumber,
-        #network,
-        #clock,
-        #bluetooth,
-        #tray {
-          border-radius: 4px;
-          margin: 6px 3px;
-          padding: 6px 12px;
-          background-color: @base;
-          color: @text;
-        }
+          .niri-taskbar button:hover {
+            background-color: @mauve;
+          }
 
-        .niri-taskbar {
-          margin-left: 5px;
-          color: @sky;
-        }
+          #memory,
+          #custom-power,
+          #custom-music,
+          #wireplumber,
+          #network,
+          #clock,
+          #bluetooth,
+          #tray {
+            border-radius: 4px;
+            margin: 6px 3px;
+            padding: 6px 12px;
+            background-color: @base;
+            color: @text;
+          }
 
-        #custom-music {
-          background-color: @surface1;
-        }
+          .niri-taskbar {
+            margin-left: 5px;
+            color: @sky;
+          }
 
-        #memory {
-          background-color: @peach;
-          color: @base;
-        }
+          #custom-music {
+            background-color: @surface1;
+          }
 
-        #wireplumber {
-          background-color: @yellow;
-          color: @base;
-        }
+          #memory {
+            background-color: @peach;
+            color: @base;
+          }
 
-        #bluetooth {
-          background-color: @blue;
-          color: @base;
-        }
+          #wireplumber {
+            background-color: @yellow;
+            color: @base;
+          }
 
-        #network {
-          padding-right: 17px;
-          background-color: @teal;
-          color: @base
-        }
+          #bluetooth {
+            background-color: @blue;
+            color: @base;
+          }
 
-        #clock {
-          background-color: @mauve;
-          color: @base;
-        }
+          #network {
+            padding-right: 17px;
+            background-color: @teal;
+            color: @base
+          }
 
-        #custom-power {
-          background-color: @flamingo;
-          color: @base;
-          margin-right: 16px;
-        }
+          #clock {
+            background-color: @mauve;
+            color: @base;
+          }
 
-        tooltip {
-          border-radius: 8px;
-          padding: 15px;
-          background-color: @surface0;
-        }
+          #custom-power {
+            background-color: @flamingo;
+            color: @base;
+            margin-right: 16px;
+          }
 
-        tooltip label {
-          padding: 5px;
-          background-color: @surface0;
-          color: @text;
-        }
-      '';
+          tooltip {
+            border-radius: 8px;
+            padding: 15px;
+            background-color: @surface0;
+          }
 
-    settings.main = {
-      layer = "top";
-      position = "top";
+          tooltip label {
+            padding: 5px;
+            background-color: @surface0;
+            color: @text;
+          }
+        '';
 
-      modules-left = [
-        "cffi/niri-taskbar"
-      ];
+      settings.main = {
+        layer = "top";
+        position = "top";
 
-      modules-center = [
-        "custom/music"
-      ];
+        modules-left = [
+          "cffi/niri-taskbar"
+        ];
 
-      modules-right = [
-        "clock"
-        "tray"
-        "memory"
-        "wireplumber"
-        "bluetooth"
-        "network"
-        "custom/power"
-      ];
+        modules-center = [
+          "custom/music"
+        ];
 
-      "cffi/niri-taskbar" = {
-        module_path = "${niri-taskbar}/lib/libniri_taskbar.so";
-      };
+        modules-right = [
+          "clock"
+          "tray"
+          "memory"
+          "wireplumber"
+          "bluetooth"
+          "network"
+          "custom/power"
+        ];
 
-      "custom/music" = {
-        format = "{}";
-        interval = 5;
-        tooltip = false;
-        on-click = "playerctl play-pause";
-        max-length = 50;
-        exec = "${player-script}/bin/playerctl-waybar-script";
-      };
-
-      "custom/power" = {
-        format = "⏻";
-        tooltip = false;
-        on-click = "wlogout";
-      };
-
-      wireplumber = {
-        format = "{icon}  {volume}%";
-        format-muted = "";
-        format-icons = {
-          default = ["" "" ""];
+        "cffi/niri-taskbar" = {
+          module_path = "${niri-taskbar}/lib/libniri_taskbar.so";
         };
-        on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
-      };
 
-      bluetooth = {
-        format-off = "󰂲";
-        format-disabled = "";
-        format-on = "";
-        format-connected = "󰂱";
-        on-click = "${btctl}/bin/btctl connect";
+        "custom/music" = {
+          format = "{}";
+          interval = 5;
+          tooltip = false;
+          on-click = "playerctl play-pause";
+          max-length = 50;
+          exec = "${player-script}/bin/playerctl-waybar-script";
+        };
+
+        "custom/power" = {
+          format = "⏻";
+          tooltip = false;
+          on-click = "wlogout";
+        };
+
+        wireplumber = {
+          format = "{icon}  {volume}%";
+          format-muted = "";
+          format-icons = {
+            default = ["" "" ""];
+          };
+          on-click = "${pkgs.pavucontrol}/bin/pavucontrol";
+        };
+
+        bluetooth = {
+          format-off = "󰂲";
+          format-disabled = "";
+          format-on = "";
+          format-connected = "󰂱";
+          on-click = "${btctl}/bin/btctl connect";
+        };
       };
     };
+
+    xdg.configFile."btctl/config.toml" = {
+      enable = true;
+      text =
+        #toml
+        ''
+          [launcher]
+          command = ["${lib.getExe pkgs.anyrun}", "--plugins", "libstdin.so", "--show-results-immediately", "true", "--max-entries", "10"]
+        '';
+    };
+
+    programs.wlogout.enable = true;
+
+    home.packages = [
+      pkgs.playerctl
+    ];
   };
-
-  xdg.configFile."btctl/config.toml" = {
-    enable = true;
-    text =
-      #toml
-      ''
-        [launcher]
-        command = ["${lib.getExe pkgs.anyrun}", "--plugins", "libstdin.so", "--show-results-immediately", "true", "--max-entries", "10"]
-      '';
-  };
-
-  programs.wlogout.enable = true;
-
-  home.packages = [
-    pkgs.playerctl
-  ];
 }

@@ -118,29 +118,40 @@
   in {
     legacyPackages = forAllSystems (pkgs: pkgs);
 
-    # use "nixos", or your hostname as the name of the configuration
-    # it's a better practice than "default" shown in the video
-    nixosConfigurations.eagle = nixpkgs.lib.nixosSystem {
-      specialArgs = {
-        inherit inputs;
-        self = filtered-src;
+    packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
+
+    nixosConfigurations = {
+      eagle = nixpkgs.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          self = filtered-src;
+        };
+        modules =
+          sharedModules
+          ++ [
+            ./hosts/eagle/configuration.nix
+          ];
       };
-      modules =
-        sharedModules
-        ++ [
-          "${filtered-src}/hosts/eagle/configuration.nix"
-        ];
-    };
-    nixosConfigurations.sparrow = nixpkgs.lib.nixosSystem {
-      specialArgs = {
-        inherit inputs;
-        self = filtered-src;
+      sparrow = nixpkgs.lib.nixosSystem {
+        specialArgs = {
+          inherit inputs;
+          self = filtered-src;
+        };
+        modules =
+          sharedModules
+          ++ [
+            ./hosts/sparrow/configuration.nix
+          ];
       };
-      modules =
-        sharedModules
-        ++ [
-          "${filtered-src}/hosts/sparrow/configuration.nix"
-        ];
+      iso = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs;
+          self = filtered-src;
+        };
+
+        modules = sharedModules ++ [./hosts/iso/configuration.nix];
+      };
     };
   };
 }

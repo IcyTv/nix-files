@@ -4,6 +4,7 @@
     ./anyrun.nix
     ./audio.nix
     ./bluetooth.nix
+    ./core.nix
     ./discord.nix
     ./firefox.nix
     ./games.nix

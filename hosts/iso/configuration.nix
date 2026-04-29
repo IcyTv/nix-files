@@ -2,16 +2,17 @@
   config,
   pkgs,
   inputs,
+  modulesPath,
   ...
 }: {
   imports = [
-    ./hardware-configuration.nix
+    (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
     ../../modules/nixos/default.nix
     inputs.home-manager.nixosModules.default
-    inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
 
-  networking.hostName = "eagle";
+  networking.hostName = "mayfly";
+  security.sudo.enable = false;
 
   my.nixos.core.enable = true;
   my.nixos.ananicy.enable = true;

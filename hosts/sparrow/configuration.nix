@@ -11,37 +11,30 @@
     inputs.home-manager.nixosModules.default
   ];
 
-  nix.settings.auto-optimise-store = true;
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-  ];
-  nix.gc = {
-    automatic = true;
-    dates = "daily";
-    options = "--delete-older-than 7d";
-  };
   networking.hostName = "sparrow";
 
-  nixpkgs.config.allowUnfree = true;
+  my.nixos.core.enable = true;
+  my.nixos.ananicy.enable = true;
+  my.nixos.bluetooth.enable = true;
+  my.nixos.console-font.enable = true;
+  my.nixos.games.enable = true;
+  my.nixos.greetd.enable = true;
+  my.nixos.keymap.enable = true;
+  my.nixos.limine.enable = true;
+  my.nixos.niri.enable = true;
+  my.nixos.openrgb.enable = true;
+  my.nixos.plymouth.enable = true;
+  my.nixos.printing.enable = true;
+  my.nixos.rebuild.enable = true;
+  my.nixos.stylix.enable = true;
+  my.nixos.sudo-rs.enable = true;
+  my.nixos.tools.enable = true;
+  my.nixos.zsh.enable = true;
 
-  networking.networkmanager.enable = true;
-
-  time.timeZone = "Europe/Berlin";
-  i18n.defaultLocale = "en_US.UTF-8";
-
-  services.xserver.enable = false;
   services.xserver.videoDrivers = ["nouveau"];
-  security.rtkit.enable = true;
 
   environment.sessionVariables = {
     NIRI_BACKEND = "vulkan";
-  };
-
-  users.users.michael = {
-    isNormalUser = true;
-    extraGroups = ["wheel"];
-    shell = pkgs.nushell;
   };
 
   home-manager = {
@@ -55,8 +48,6 @@
     };
   };
 
-  services.openssh.enable = true;
-
   swapDevices = [
     {
       device = "/swap/swapfile";
@@ -64,14 +55,9 @@
     }
   ];
 
-  # boot.loader.limine.secureBoot.enable = true;
   boot.loader.limine.efiSupport = true;
 
   boot.kernelPackages = pkgs.linuxPackages;
-
-  # hardware.fancontrol.enable = true;
-
-  hardware.bluetooth.enable = true;
 
   hardware.graphics.enable = true;
 

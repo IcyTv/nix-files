@@ -1,39 +1,43 @@
-{pkgs, ...}: {
-  programs.git = {
-    enable = true;
-    lfs.enable = true;
-    settings = {
-      init = {
-        defaultBranch = "main";
-      };
+{ pkgs, config, lib, ... }: {
+  options.my.hm.git.enable = lib.mkEnableOption "Git and GitHub CLI configuration";
 
-      push = {
-        autoSetupRemote = true;
-      };
+  config = lib.mkIf config.my.hm.git.enable {
+    programs.git = {
+      enable = true;
+      lfs.enable = true;
+      settings = {
+        init = {
+          defaultBranch = "main";
+        };
 
-      user = {
-        name = "Michael Finger";
-        email = "michael.finger@icytv.de";
-      };
+        push = {
+          autoSetupRemote = true;
+        };
 
-      url = {
-        "https://github.com/" = {
-          insteadOf = [
-            "gh:"
-            "github:"
-          ];
+        user = {
+          name = "Michael Finger";
+          email = "michael.finger@icytv.de";
+        };
+
+        url = {
+          "https://github.com/" = {
+            insteadOf = [
+              "gh:"
+              "github:"
+            ];
+          };
         };
       };
     };
-  };
 
-  programs.gh = {
-    enable = true;
-    gitCredentialHelper.enable = true;
-    settings.git_protocol = "ssh";
-  };
+    programs.gh = {
+      enable = true;
+      gitCredentialHelper.enable = true;
+      settings.git_protocol = "ssh";
+    };
 
-  home.packages = [
-    pkgs.git-crypt
-  ];
+    home.packages = [
+      pkgs.git-crypt
+    ];
+  };
 }

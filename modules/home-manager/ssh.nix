@@ -1,29 +1,29 @@
-{
-  pkgs,
-  lib,
-  ...
-}: {
-  services.ssh-agent.enable = true;
+{ pkgs, config, lib, ... }: {
+  options.my.hm.ssh.enable = lib.mkEnableOption "SSH client configuration";
 
-  programs.ssh = {
-    enable = true;
-    enableDefaultConfig = false;
+  config = lib.mkIf config.my.hm.ssh.enable {
+    services.ssh-agent.enable = true;
 
-    matchBlocks = {
-      "server-local" = lib.hm.dag.entryBefore ["server"] {
-        match = "host server exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
-        hostname = "192.168.1.28";
-      };
+    programs.ssh = {
+      enable = true;
+      enableDefaultConfig = false;
 
-      "server" = {
-        hostname = "ssh.icytv.de";
-        forwardAgent = true;
-      };
+      matchBlocks = {
+        "server-local" = lib.hm.dag.entryBefore ["server"] {
+          match = "host server exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
+          hostname = "192.168.1.28";
+        };
 
-      "seedbox" = {
-        hostname = "icytv.cloud.seedboxes.cc";
-        port = 3232;
-        user = "icytv";
+        "server" = {
+          hostname = "ssh.icytv.de";
+          forwardAgent = true;
+        };
+
+        "seedbox" = {
+          hostname = "icytv.cloud.seedboxes.cc";
+          port = 3232;
+          user = "icytv";
+        };
       };
     };
   };

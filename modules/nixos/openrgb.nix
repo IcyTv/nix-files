@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}: let
+{ config, lib, pkgs, ... }: let
   no-rgb = pkgs.writeScriptBin "no-rgb" ''
     #!/bin/sh
     NUM_DEVICES=$(${pkgs.openrgb}/bin/openrgb --noautoconnect --list-devices | grep -E '^[0-9]+: ' | wc -l)
@@ -12,16 +8,20 @@
     done
   '';
 in {
-  services.udev.packages = [pkgs.openrgb];
-  boot.kernelModules = ["i2c-dev"];
-  hardware.i2c.enable = true;
+  options.my.nixos.openrgb.enable = lib.mkEnableOption "OpenRGB (disable RGB)";
 
-  systemd.services.no-rgb = {
-    description = "Disable all RGB";
-    serviceConfig = {
-      ExecStart = "${no-rgb}/bin/no-rgb";
-      Type = "oneshot";
+  config = lib.mkIf config.my.nixos.openrgb.enable {
+    services.udev.packages = [pkgs.openrgb];
+    boot.kernelModules = ["i2c-dev"];
+    hardware.i2c.enable = true;
+
+    systemd.services.no-rgb = {
+      description = "Disable all RGB";
+      serviceConfig = {
+        ExecStart = "${no-rgb}/bin/no-rgb";
+        Type = "oneshot";
+      };
+      wantedBy = ["multi-user.target"];
     };
-    wantedBy = ["multi-user.target"];
   };
 }

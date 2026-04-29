@@ -3,6 +3,7 @@
     ./ananicy.nix
     ./bluetooth.nix
     ./console-font.nix
+    ./core.nix
     ./games.nix
     ./greetd.nix
     ./keymap.nix

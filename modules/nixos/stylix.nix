@@ -1,32 +1,36 @@
-{pkgs, ...}: {
-  stylix = {
-    enable = true;
-    base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
-    polarity = "dark";
+{ config, lib, pkgs, ... }: {
+  options.my.nixos.stylix.enable = lib.mkEnableOption "Stylix system theming";
 
-    cursor.package = pkgs.whitesur-cursors;
-    cursor.name = "WhiteSur-cursors";
-    cursor.size = 16;
+  config = lib.mkIf config.my.nixos.stylix.enable {
+    stylix = {
+      enable = true;
+      base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+      polarity = "dark";
 
-    fonts = {
-      monospace = {
-        package = pkgs.nerd-fonts.jetbrains-mono;
-        name = "JetBrainsMono Nerd Font";
-      };
-      sansSerif = {
-        package = pkgs.dejavu_fonts;
-        name = "DejaVu Sans";
-      };
-      serif = {
-        package = pkgs.dejavu_fonts;
-        name = "DejaVu Serif";
-      };
-      emoji = {
-        package = pkgs.noto-fonts-color-emoji;
-        name = "Noto Color Emoji";
-      };
-      sizes = {
-        terminal = 10;
+      cursor.package = pkgs.whitesur-cursors;
+      cursor.name = "WhiteSur-cursors";
+      cursor.size = 16;
+
+      fonts = {
+        monospace = {
+          package = pkgs.nerd-fonts.jetbrains-mono;
+          name = "JetBrainsMono Nerd Font";
+        };
+        sansSerif = {
+          package = pkgs.dejavu_fonts;
+          name = "DejaVu Sans";
+        };
+        serif = {
+          package = pkgs.dejavu_fonts;
+          name = "DejaVu Serif";
+        };
+        emoji = {
+          package = pkgs.noto-fonts-color-emoji;
+          name = "Noto Color Emoji";
+        };
+        sizes = {
+          terminal = 10;
+        };
       };
     };
   };

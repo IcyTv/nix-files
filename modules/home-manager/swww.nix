@@ -1,4 +1,4 @@
-{pkgs, ...}: let
+{ pkgs, config, lib, ... }: let
   random-wallpaper = pkgs.writeShellApplication rec {
     name = "random-wallpaper";
     runtimeInputs = [pkgs.swww pkgs.uutils-coreutils-noprefix pkgs.fd];
@@ -22,43 +22,47 @@
     '';
   };
 in {
-  services.swww.enable = true;
+  options.my.hm.swww.enable = lib.mkEnableOption "SWWW wallpaper daemon and random wallpaper script";
 
-  # home.file."Pictures/wallpapers" = {
-  #   source = ./wallpapers;
-  #   recursive = false;
-  # };
+  config = lib.mkIf config.my.hm.swww.enable {
+    services.swww.enable = true;
 
-  home.packages = [random-wallpaper];
+    # home.file."Pictures/wallpapers" = {
+    #   source = ./wallpapers;
+    #   recursive = false;
+    # };
 
-  systemd.user.services.random-wallpaper = {
-    Unit = {
-      Description = "Change swww to random wallpaper";
-      After = ["graphical-session.target" "swww.service"];
-      Requires = ["swww.service"];
+    home.packages = [random-wallpaper];
+
+    systemd.user.services.random-wallpaper = {
+      Unit = {
+        Description = "Change swww to random wallpaper";
+        After = ["graphical-session.target" "swww.service"];
+        Requires = ["swww.service"];
+      };
+
+      Service = {
+        ExecStart = "${random-wallpaper}/bin/random-wallpaper";
+        Type = "oneshot";
+      };
+
+      Install = {
+        WantedBy = ["swww.service"];
+      };
     };
 
-    Service = {
-      ExecStart = "${random-wallpaper}/bin/random-wallpaper";
-      Type = "oneshot";
-    };
+    systemd.user.timers.random-wallpaper = {
+      Unit = {
+        Description = "Change wallpaper every 15 minutes";
+      };
 
-    Install = {
-      WantedBy = ["swww.service"];
-    };
-  };
+      Timer = {
+        OnUnitActiveSec = "15m";
+        OnBootSec = "15m";
+        Unit = "random-wallpaper.service";
+      };
 
-  systemd.user.timers.random-wallpaper = {
-    Unit = {
-      Description = "Change wallpaper every 15 minutes";
+      Install.WantedBy = ["timers.target"];
     };
-
-    Timer = {
-      OnUnitActiveSec = "15m";
-      OnBootSec = "15m";
-      Unit = "random-wallpaper.service";
-    };
-
-    Install.WantedBy = ["timers.target"];
   };
 }

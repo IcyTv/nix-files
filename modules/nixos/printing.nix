@@ -1,20 +1,24 @@
-{pkgs, ...}: {
-  services.avahi = {
-    enable = true;
-    nssmdns4 = true;
-    openFirewall = true;
-  };
+{ config, lib, pkgs, ... }: {
+  options.my.nixos.printing.enable = lib.mkEnableOption "Printing and scanning support";
 
-  services.printing = {
-    enable = true;
-    drivers = with pkgs; [
-      cups-filters
-      cups-browsed
-    ];
-  };
+  config = lib.mkIf config.my.nixos.printing.enable {
+    services.avahi = {
+      enable = true;
+      nssmdns4 = true;
+      openFirewall = true;
+    };
 
-  hardware.sane = {
-    enable = true;
-    extraBackends = with pkgs; [hplipWithPlugin];
+    services.printing = {
+      enable = true;
+      drivers = with pkgs; [
+        cups-filters
+        cups-browsed
+      ];
+    };
+
+    hardware.sane = {
+      enable = true;
+      extraBackends = with pkgs; [hplipWithPlugin];
+    };
   };
 }
