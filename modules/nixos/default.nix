@@ -4,8 +4,10 @@
     ./bluetooth.nix
     ./console-font.nix
     ./core.nix
+    ./disko.nix
     ./games.nix
     ./greetd.nix
+    ./installer.nix
     ./keymap.nix
     ./limine.nix
     ./niri.nix
