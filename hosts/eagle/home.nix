@@ -9,7 +9,6 @@
     ../../modules/home-manager/default.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
-    inputs.nur.modules.homeManager.default
     inputs.agenix.homeManagerModules.default
     inputs.nixcord.homeModules.nixcord
     inputs.subniri.homeModules.subniri
