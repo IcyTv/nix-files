@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.tools.enable = lib.mkEnableOption "Basic home-manager tools";
 
   config = lib.mkIf config.my.hm.tools.enable {

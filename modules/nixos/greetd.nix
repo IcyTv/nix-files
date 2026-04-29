@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.greetd.enable = lib.mkEnableOption "Greetd minimal greeter";
 
   config = lib.mkIf config.my.nixos.greetd.enable {

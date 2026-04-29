@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.games.enable = lib.mkEnableOption "Gaming support (Steam, Gamemode)";
 
   config = lib.mkIf config.my.nixos.games.enable {

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.printing.enable = lib.mkEnableOption "Printing and scanning support";
 
   config = lib.mkIf config.my.nixos.printing.enable {

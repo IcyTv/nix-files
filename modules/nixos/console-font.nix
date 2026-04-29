@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.console-font.enable = lib.mkEnableOption "Custom console font";
 
   config = lib.mkIf config.my.nixos.console-font.enable {

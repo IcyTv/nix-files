@@ -1,4 +1,10 @@
-{ inputs, pkgs, config, lib, ... }: let
+{
+  inputs,
+  pkgs,
+  config,
+  lib,
+  ...
+}: let
   pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux;
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";

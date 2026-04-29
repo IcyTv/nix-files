@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.stylix.enable = lib.mkEnableOption "Stylix home-manager theming";
 
   config = lib.mkIf config.my.hm.stylix.enable {

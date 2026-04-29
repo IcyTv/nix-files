@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.stylix.enable = lib.mkEnableOption "Stylix system theming";
 
   config = lib.mkIf config.my.nixos.stylix.enable {

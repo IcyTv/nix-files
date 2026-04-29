@@ -1,4 +1,10 @@
-{ pkgs, inputs, config, lib, ... }: {
+{
+  pkgs,
+  inputs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.discord.enable = lib.mkEnableOption "Discord (via nixcord)";
 
   config = lib.mkIf config.my.hm.discord.enable {

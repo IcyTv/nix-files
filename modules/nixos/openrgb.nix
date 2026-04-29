@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   no-rgb = pkgs.writeScriptBin "no-rgb" ''
     #!/bin/sh
     NUM_DEVICES=$(${pkgs.openrgb}/bin/openrgb --noautoconnect --list-devices | grep -E '^[0-9]+: ' | wc -l)

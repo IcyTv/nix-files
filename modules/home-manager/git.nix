@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.git.enable = lib.mkEnableOption "Git and GitHub CLI configuration";
 
   config = lib.mkIf config.my.hm.git.enable {

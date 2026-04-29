@@ -41,5 +41,4 @@
   my.hm.zsh.enable = true;
 
   # No specific display outputs are predefined for ISO.
-
 }

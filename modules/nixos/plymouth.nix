@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.plymouth.enable = lib.mkEnableOption "Plymouth boot splash";
 
   config = lib.mkIf config.my.nixos.plymouth.enable {

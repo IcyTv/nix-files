@@ -1,4 +1,10 @@
-{ config, lib, pkgs, inputs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  inputs,
+  ...
+}: {
   options.my.nixos.core.enable = lib.mkEnableOption "Core NixOS configuration";
 
   config = lib.mkIf config.my.nixos.core.enable {

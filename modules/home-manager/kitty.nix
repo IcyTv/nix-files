@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.kitty.enable = lib.mkEnableOption "Kitty terminal";
 
   config = lib.mkIf config.my.hm.kitty.enable {

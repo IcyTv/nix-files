@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.ssh.enable = lib.mkEnableOption "SSH client configuration";
 
   config = lib.mkIf config.my.hm.ssh.enable {

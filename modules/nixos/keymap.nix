@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.keymap.enable = lib.mkEnableOption "Custom keymap (us altgr-intl)";
 
   config = lib.mkIf config.my.nixos.keymap.enable {

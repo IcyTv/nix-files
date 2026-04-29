@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.nushell.enable = lib.mkEnableOption "Nushell configuration";
 
   config = lib.mkIf config.my.hm.nushell.enable {

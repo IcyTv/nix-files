@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.sudo-rs.enable = lib.mkEnableOption "Sudo-rs replacement for sudo";
 
   config = lib.mkIf config.my.nixos.sudo-rs.enable {

@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.unifiedremote.enable = lib.mkEnableOption "Unified Remote server";
 
   config = lib.mkIf config.my.hm.unifiedremote.enable {

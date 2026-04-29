@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.yazi.enable = lib.mkEnableOption "Yazi file manager";
 
   config = lib.mkIf config.my.hm.yazi.enable {

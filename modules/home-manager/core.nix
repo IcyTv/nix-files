@@ -1,4 +1,10 @@
-{ config, pkgs, lib, inputs, ... }: {
+{
+  config,
+  pkgs,
+  lib,
+  inputs,
+  ...
+}: {
   options.my.hm.core.enable = lib.mkEnableOption "Core Home Manager configuration";
 
   config = lib.mkIf config.my.hm.core.enable {

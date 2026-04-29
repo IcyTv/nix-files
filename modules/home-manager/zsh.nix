@@ -1,4 +1,10 @@
-{ pkgs, inputs, config, lib, ... }: {
+{
+  pkgs,
+  inputs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.zsh.enable = lib.mkEnableOption "Zsh shell configuration and CLI tools";
 
   config = lib.mkIf config.my.hm.zsh.enable {

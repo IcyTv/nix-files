@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.bluetooth.enable = lib.mkEnableOption "Bluetooth support";
 
   config = lib.mkIf config.my.nixos.bluetooth.enable {

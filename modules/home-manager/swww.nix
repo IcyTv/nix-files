@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: let
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: let
   random-wallpaper = pkgs.writeShellApplication rec {
     name = "random-wallpaper";
     runtimeInputs = [pkgs.swww pkgs.uutils-coreutils-noprefix pkgs.fd];

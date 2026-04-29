@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.anyrun.enable = lib.mkEnableOption "Anyrun application launcher";
 
   config = lib.mkIf config.my.hm.anyrun.enable {

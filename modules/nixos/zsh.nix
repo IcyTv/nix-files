@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.zsh.enable = lib.mkEnableOption "Zsh shell";
 
   config = lib.mkIf config.my.nixos.zsh.enable {

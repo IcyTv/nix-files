@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: {
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: {
   options.my.hm.niri.enable = lib.mkEnableOption "Niri Wayland compositor home-manager configuration";
 
   config = lib.mkIf config.my.hm.niri.enable {

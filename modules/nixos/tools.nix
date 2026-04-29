@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.tools.enable = lib.mkEnableOption "Basic system tools and flatpak";
 
   config = lib.mkIf config.my.nixos.tools.enable {

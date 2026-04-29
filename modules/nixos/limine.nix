@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: {
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: {
   options.my.nixos.limine.enable = lib.mkEnableOption "Limine bootloader";
 
   config = lib.mkIf config.my.nixos.limine.enable {

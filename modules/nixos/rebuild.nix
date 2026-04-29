@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }: let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}: let
   user = "michael";
   flakeDir = ".dotfiles/nix";
 in {

@@ -1,4 +1,10 @@
-{ pkgs, inputs, config, lib, ... }: let
+{
+  pkgs,
+  inputs,
+  config,
+  lib,
+  ...
+}: let
   spicePkgs = inputs.spicetify-nix.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 in {
   options.my.hm.spotify.enable = lib.mkEnableOption "Spotify (via spicetify-nix)";

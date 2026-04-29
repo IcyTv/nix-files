@@ -1,4 +1,9 @@
-{ pkgs, config, lib, ... }: let
+{
+  pkgs,
+  config,
+  lib,
+  ...
+}: let
   niri-taskbar = pkgs.rustPlatform.buildRustPackage rec {
     pname = "niri-taskbar";
     version = "0.3.0";
