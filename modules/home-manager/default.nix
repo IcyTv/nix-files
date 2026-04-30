@@ -1,5 +1,11 @@
 {inputs, ...}: {
   imports = [
+    inputs.nix-index-database.homeModules.nix-index
+    inputs.spicetify-nix.homeManagerModules.default
+    inputs.agenix.homeManagerModules.default
+    inputs.nixcord.homeModules.nixcord
+    inputs.subniri.homeModules.subniri
+
     ./ai.nix
     ./anyrun.nix
     ./audio.nix

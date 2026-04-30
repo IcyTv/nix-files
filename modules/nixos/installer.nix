@@ -11,9 +11,11 @@
       pkgs.gum
       pkgs.git
       pkgs.curl
+      pkgs.git-crypt
+      pkgs.util-linux
       (pkgs.writeShellApplication {
         name = "run-installer";
-        runtimeInputs = [pkgs.gum pkgs.git pkgs.curl pkgs.nixos-install-tools];
+        runtimeInputs = [pkgs.gum pkgs.git pkgs.curl pkgs.nixos-install-tools pkgs.git-crypt pkgs.util-linux];
         text = builtins.readFile ../../scripts/installer.sh;
       })
     ];

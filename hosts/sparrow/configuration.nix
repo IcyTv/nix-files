@@ -8,7 +8,6 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/default.nix
-    inputs.home-manager.nixosModules.default
   ];
 
   networking.hostName = "sparrow";

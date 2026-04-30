@@ -122,13 +122,13 @@
       ];
       exclude = [./wallpapers];
     };
+    hosts = builtins.attrNames (nixpkgs.lib.filterAttrs (name: type: type == "directory" && name != "iso") (builtins.readDir ./hosts));
   in {
     legacyPackages = forAllSystems (pkgs: pkgs);
 
     packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
 
-    nixosConfigurations = {
-      eagle = nixpkgs.lib.nixosSystem {
+    nixosConfigurations = (nixpkgs.lib.genAttrs hosts (host: nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs;
           self = filtered-src;
@@ -136,20 +136,9 @@
         modules =
           sharedModules
           ++ [
-            ./hosts/eagle/configuration.nix
+            ./hosts/${host}/configuration.nix
           ];
-      };
-      sparrow = nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          self = filtered-src;
-        };
-        modules =
-          sharedModules
-          ++ [
-            ./hosts/sparrow/configuration.nix
-          ];
-      };
+      })) // {
       iso = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = {

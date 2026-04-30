@@ -7,7 +7,6 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/default.nix
-    inputs.home-manager.nixosModules.default
     inputs.hardware.nixosModules.common-gpu-nvidia-nonprime
   ];
 

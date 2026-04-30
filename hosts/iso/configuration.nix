@@ -13,6 +13,13 @@
   networking.hostName = "mayfly";
   security.sudo.enable = false;
 
+  users.motd = ''
+    ========================================================================
+     Welcome to the Custom NixOS Installer!
+     Type `run-installer` and press Enter to start the interactive setup.
+    ========================================================================
+  '';
+
   my.nixos.core.enable = true;
   my.nixos.installer.enable = true;
 

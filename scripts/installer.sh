@@ -3,8 +3,17 @@ set -e
 
 export GUM_SPIN_SPINNER="dot"
 
+DRY_RUN=0
+if [ "$1" == "--dry-run" ]; then
+    DRY_RUN=1
+fi
+
 clear
 gum style --border normal --margin "1" --padding "1" --border-foreground 212 "Welcome to the NixOS TUI Installer"
+
+if [ $DRY_RUN -eq 1 ]; then
+    gum style --foreground 214 "DRY RUN MODE ENABLED. No changes will be applied to the system."
+fi
 
 # 1. Ask for hostname
 HOSTNAME=$(gum input --placeholder "Enter new hostname (e.g. falcon)..." --prompt "Hostname: ")
@@ -67,6 +76,51 @@ HM_FEATURES=$(gum choose --no-limit --header "Select HOME-MANAGER features to en
     "yazi" \
     "zsh")
 
+# 5. Ask for git-crypt key
+GIT_CRYPT_KEY=""
+if gum confirm "Do you have a git-crypt symmetric key to unlock secrets?"; then
+    DETECTED_KEYS=()
+    
+    # 1. Check local home directory
+    if [ -f "$HOME/.keys/git-crypt" ]; then
+        DETECTED_KEYS+=("$HOME/.keys/git-crypt")
+    fi
+    
+    # 2. Try to find and mount Ventoy to check for keys
+    VENTOY_DEV=$(blkid -L Ventoy || true)
+    if [ -n "$VENTOY_DEV" ]; then
+        mkdir -p /tmp/ventoy
+        mount -o ro "$VENTOY_DEV" /tmp/ventoy 2>/dev/null || true
+        # Look for files containing 'git-crypt' in the name in the root of Ventoy
+        for k in /tmp/ventoy/*git-crypt*; do
+            if [ -f "$k" ]; then
+                DETECTED_KEYS+=("$k")
+            fi
+        done
+    fi
+
+    if [ ${#DETECTED_KEYS[@]} -gt 0 ]; then
+        echo "Auto-detected potential git-crypt keys:"
+        OPTIONS=("Enter path manually")
+        for k in "${DETECTED_KEYS[@]}"; do
+            OPTIONS+=("$k")
+        done
+        CHOSEN_KEY=$(gum choose --header "Select a key or choose to enter manually:" "${OPTIONS[@]}")
+        if [ "$CHOSEN_KEY" != "Enter path manually" ]; then
+            GIT_CRYPT_KEY="$CHOSEN_KEY"
+        fi
+    fi
+
+    if [ -z "$GIT_CRYPT_KEY" ]; then
+        GIT_CRYPT_KEY=$(gum input --placeholder "Enter path to key file (e.g. /mnt/usb/key)..." --prompt "Key path: ")
+    fi
+
+    if [ -n "$GIT_CRYPT_KEY" ] && [ ! -f "$GIT_CRYPT_KEY" ] && [ $DRY_RUN -eq 0 ]; then
+        gum style --foreground 196 "Warning: Key file not found at $GIT_CRYPT_KEY. Secrets will not be unlocked."
+        GIT_CRYPT_KEY=""
+    fi
+fi
+
 echo "Starting installation for host: $HOSTNAME on disk: $DISK"
 
 gum confirm "This will ERASE ALL DATA on $DISK. Are you sure?" || exit 0
@@ -74,13 +128,38 @@ gum confirm "This will ERASE ALL DATA on $DISK. Are you sure?" || exit 0
 mkdir -p /mnt
 DOTFILES_DIR="/mnt/home/michael/.dotfiles/nix"
 
+if [ $DRY_RUN -eq 1 ]; then
+    DOTFILES_DIR="/tmp/nixos-dry-run-dotfiles"
+    mkdir -p "$DOTFILES_DIR"
+    echo "Dry run: using $DOTFILES_DIR instead of /mnt/..."
+fi
+
 # Clone dotfiles to target location
-gum spin --title "Cloning dotfiles to $DOTFILES_DIR..." -- \
-    git clone https://github.com/IcyTv/nix-files.git "$DOTFILES_DIR"
+if [ $DRY_RUN -eq 0 ]; then
+    gum spin --title "Cloning dotfiles to $DOTFILES_DIR..." -- \
+        git clone https://github.com/IcyTv/nix-files.git "$DOTFILES_DIR"
+else
+    gum spin --title "[DRY RUN] Cloning dotfiles to $DOTFILES_DIR..." -- \
+        cp -r /home/michael/.dotfiles/nix/. "$DOTFILES_DIR"
+fi
+
+# Unlock secrets
+if [ -n "$GIT_CRYPT_KEY" ]; then
+    if [ $DRY_RUN -eq 0 ]; then
+        gum spin --title "Unlocking git-crypt secrets..." -- \
+            bash -c "cd $DOTFILES_DIR && git-crypt unlock $GIT_CRYPT_KEY"
+    else
+        echo "[DRY RUN] Would unlock git-crypt secrets using key $GIT_CRYPT_KEY."
+    fi
+fi
 
 # Partition disk using disko
-gum spin --title "Partitioning disk $DISK using disko..." -- \
-    nix run github:nix-community/disko -- --mode disko "$DOTFILES_DIR/modules/nixos/disko.nix" --argstr device "$DISK"
+if [ $DRY_RUN -eq 0 ]; then
+    gum spin --title "Partitioning disk $DISK using disko..." -- \
+        nix run github:nix-community/disko -- --mode disko "$DOTFILES_DIR/modules/nixos/disko.nix" --argstr device "$DISK"
+else
+    echo "[DRY RUN] Would partition $DISK using disko."
+fi
 
 # Create host directories
 mkdir -p "$DOTFILES_DIR/hosts/$HOSTNAME"
@@ -91,7 +170,6 @@ cat > "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
   imports = [
     ./hardware-configuration.nix
     ../../modules/nixos/default.nix
-    inputs.home-manager.nixosModules.default
   ];
 
   networking.hostName = "$HOSTNAME";
@@ -119,6 +197,9 @@ cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
   # Make sure the kernel supports the hardware
   boot.kernelPackages = pkgs.linuxPackages;
 
+  my.nixos.disko.enable = true;
+  my.nixos.disko.device = "$DISK";
+
   system.stateVersion = "25.11";
 }
 EOF
@@ -128,11 +209,6 @@ cat > "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
 { config, pkgs, lib, inputs, ... }: {
   imports = [
     ../../modules/home-manager/default.nix
-    inputs.nix-index-database.homeModules.nix-index
-    inputs.spicetify-nix.homeManagerModules.default
-    inputs.agenix.homeManagerModules.default
-    inputs.nixcord.homeModules.nixcord
-    inputs.subniri.homeModules.subniri
   ];
 
   my.hm.core.enable = true;
@@ -147,9 +223,14 @@ cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
 EOF
 
 # Generate hardware-configuration.nix
-gum spin --title "Generating hardware-configuration.nix..." -- \
-    nixos-generate-config --root /mnt --dir /tmp/nixos-config
-cp /tmp/nixos-config/hardware-configuration.nix "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+if [ $DRY_RUN -eq 0 ]; then
+    gum spin --title "Generating hardware-configuration.nix..." -- \
+        nixos-generate-config --root /mnt --dir /tmp/nixos-config
+    cp /tmp/nixos-config/hardware-configuration.nix "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+else
+    echo "[DRY RUN] Would generate hardware-configuration.nix."
+    echo "{ config, lib, pkgs, modulesPath, ... }: {}" > "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+fi
 
 # We must remove the fileSystems declarations from the generated config since disko handles it
 sed -i '/fileSystems."\/" =/,+12d' "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix" || true
@@ -162,35 +243,19 @@ sed -i '/swapDevices =/d' "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.
 # Ensure the disko module is imported
 sed -i "s|imports = \[|imports = [\n    ../../modules/nixos/disko.nix|g" "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
 
-# Tell the new host to enable the disko module and set the correct target disk
-cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
-
-  my.nixos.disko.enable = true;
-  my.nixos.disko.device = "$DISK";
-EOF
-
-# Add the new host to flake.nix dynamically
-# We match 'nixosConfigurations = {' and append our host inside
-gum spin --title "Updating flake.nix..." -- \
-    sed -i "/nixosConfigurations = {/a \\
-      $HOSTNAME = nixpkgs.lib.nixosSystem { \\
-        specialArgs = { \\
-          inherit inputs; \\
-          self = filtered-src; \\
-        }; \\
-        modules = \\
-          sharedModules \\
-          ++ [ \\
-            ./hosts/$HOSTNAME/configuration.nix \\
-          ]; \\
-      };" "$DOTFILES_DIR/flake.nix"
+# Flake is dynamically updated now, so we don't need to manually inject it!
+echo "Flake reads directories dynamically! The new host will automatically be included."
 
 # Stage all files
 pushd "$DOTFILES_DIR" > /dev/null
 git add .
 popd > /dev/null
 
-gum spin --title "Installing NixOS..." -- \
-    nixos-install --root /mnt --flake "$DOTFILES_DIR#$HOSTNAME" --no-root-passwd
-
-gum style --foreground 212 "Installation Complete! You can now reboot."
+if [ $DRY_RUN -eq 0 ]; then
+    gum spin --title "Installing NixOS..." -- \
+        nixos-install --root /mnt --flake "$DOTFILES_DIR#$HOSTNAME" --no-root-passwd
+    gum style --foreground 212 "Installation Complete! You can now reboot."
+else
+    echo "[DRY RUN] Would run: nixos-install --root /mnt --flake \"$DOTFILES_DIR#$HOSTNAME\" --no-root-passwd"
+    gum style --foreground 214 "Dry run complete. Check $DOTFILES_DIR/hosts/$HOSTNAME to see the generated files."
+fi
