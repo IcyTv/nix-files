@@ -5,6 +5,7 @@
     ./console-font.nix
     ./core.nix
     ./disko.nix
+    ./docker.nix
     ./games.nix
     ./greetd.nix
     ./installer.nix

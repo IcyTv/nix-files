@@ -16,6 +16,7 @@
   my.nixos.ananicy.enable = true;
   my.nixos.bluetooth.enable = true;
   my.nixos.console-font.enable = true;
+  my.nixos.docker.enable = true;
   my.nixos.games.enable = true;
   my.nixos.greetd.enable = true;
   my.nixos.keymap.enable = true;
