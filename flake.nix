@@ -128,26 +128,29 @@
 
     packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
 
-    nixosConfigurations = (nixpkgs.lib.genAttrs hosts (host: nixpkgs.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs;
-          self = filtered-src;
-        };
-        modules =
-          sharedModules
-          ++ [
-            ./hosts/${host}/configuration.nix
-          ];
-      })) // {
-      iso = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        specialArgs = {
-          inherit inputs;
-          self = filtered-src;
-        };
+    nixosConfigurations =
+      (nixpkgs.lib.genAttrs hosts (host:
+        nixpkgs.lib.nixosSystem {
+          specialArgs = {
+            inherit inputs;
+            self = filtered-src;
+          };
+          modules =
+            sharedModules
+            ++ [
+              ./hosts/${host}/configuration.nix
+            ];
+        }))
+      // {
+        iso = nixpkgs.lib.nixosSystem {
+          system = "x86_64-linux";
+          specialArgs = {
+            inherit inputs;
+            self = filtered-src;
+          };
 
-        modules = sharedModules ++ [./hosts/iso/configuration.nix];
+          modules = sharedModules ++ [./hosts/iso/configuration.nix];
+        };
       };
-    };
   };
 }
