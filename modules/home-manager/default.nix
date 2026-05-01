@@ -6,6 +6,7 @@
     inputs.nixcord.homeModules.nixcord
     inputs.subniri.homeModules.subniri
 
+    ./waybar.nix
     ./ai.nix
     ./anyrun.nix
     ./audio.nix
@@ -17,16 +18,16 @@
     ./git.nix
     ./kitty.nix
     ./niri.nix
-    ./nushell.nix
     ./nix.nix
+    ./nushell.nix
     ./obs.nix
     ./spotify.nix
     ./ssh.nix
+    ./starship.nix
     ./stylix.nix
-    ./tools.nix
-    ./swww.nix
-    # ./waybar.nix
     ./subniri.nix
+    ./swww.nix
+    ./tools.nix
     ./unifiedremote.nix
     ./yazi.nix
     ./zsh.nix

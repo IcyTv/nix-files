@@ -26,12 +26,12 @@
   my.hm.obs.enable = true;
   my.hm.spotify.enable = true;
   my.hm.ssh.enable = true;
+  my.hm.starship.enable = true;
   my.hm.stylix.enable = true;
   my.hm.subniri.enable = true;
   my.hm.swww.enable = true;
   my.hm.tools.enable = true;
   my.hm.unifiedremote.enable = true;
-  # my.hm.waybar.enable = true; # It was commented out in original default.nix, but wait, the module waybar was commented out in `default.nix` so I'll leave it disabled
   my.hm.yazi.enable = true;
   my.hm.zsh.enable = true;
 
