@@ -26,6 +26,11 @@
           pkgs.gemini-cli-bin
           pkgs.github-copilot-cli
 
+          (pkgs.catppuccin-kvantum.override {
+            accent = "mauve";
+            variant = "mocha";
+          })
+
           (inputs.neovim.lib.x86_64-linux.makeNeovimWithLanguages
             {
               pkgs = pkgs.extend (_final: prev: {
