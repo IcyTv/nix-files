@@ -25,10 +25,10 @@
 
       iconTheme = {
         enable = true;
-        package = pkgs.qlementine-icons;
+        package = pkgs.papirus-icon-theme;
 
-        dark = "Qlementine";
-        light = "Qlementine";
+        dark = "Papirus-Dark";
+        light = "Papirus-Light";
       };
     };
   };
