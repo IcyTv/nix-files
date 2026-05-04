@@ -27,8 +27,8 @@
         enable = true;
         package = pkgs.qlementine-icons;
 
-        dark = "qlementine";
-        light = "qlementine";
+        dark = "Qlementine";
+        light = "Qlementine";
       };
     };
   };
