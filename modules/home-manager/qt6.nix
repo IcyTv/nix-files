@@ -1,0 +1,3 @@
+{pkgs, ...}: {
+  qt.enable = true;
+}

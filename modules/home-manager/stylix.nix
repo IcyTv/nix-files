@@ -22,6 +22,14 @@
           name = "JetBrainsMono Nerd Font";
         };
       };
+
+      iconTheme = {
+        enable = true;
+        package = pkgs.qlementine-icons;
+
+        dark = "qlementine";
+        light = "qlementine";
+      };
     };
   };
 }

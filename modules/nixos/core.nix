@@ -44,21 +44,6 @@
     security.rtkit.enable = true;
     services.openssh.enable = true;
 
-    # TODO: Move
-    environment.systemPackages = [
-      pkgs.qlementine
-      pkgs.qlementine-icons
-      pkgs.qt6Packages.qt6ct
-    ];
-    nixpkgs.config.qt6 = {
-      enable = true;
-      platformTheme = "qt6ct";
-      style = {
-        package = pkgs.qlementine;
-        name = "Qlementine";
-      };
-    };
-
     users.users.michael = {
       isNormalUser = true;
       extraGroups = ["wheel"];
