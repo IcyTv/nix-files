@@ -24,6 +24,28 @@
     Value = true;
     Status = "locked";
   };
+  rycee = pkgs.nur.repos.rycee.firefox-addons;
+  buildFirefoxXpiAddon =
+    if rycee ? buildFirefoxXpiAddon
+    then rycee.buildFirefoxXpiAddon
+    else if rycee ? lib && rycee.lib ? buildFirefoxXpiAddon
+    then rycee.lib.buildFirefoxXpiAddon
+    else if pkgs ? firefox-addons && pkgs.firefox-addons ? buildFirefoxXpiAddon
+    then pkgs.firefox-addons.buildFirefoxXpiAddon
+    else throw "buildFirefoxXpiAddon not found; check NUR import/overlay";
+  image-zoom = buildFirefoxXpiAddon {
+    pname = "image-zoom";
+    version = "0.2.0";
+    addonId = "image-zoom@basiphobe";
+    sha256 = "sha256-xKqmpGYitePyjOR4jVk600Slk0f3x8l2vAeqQHSQ7Yk=";
+    url = "https://addons.mozilla.org/firefox/downloads/latest/image-zoom/latest.xpi";
+    meta = with pkgs.lib; {
+      description = "Zoom images with the mouse wheel";
+      homepage = "https://github.com/basiphobe/image-zoom-extension";
+      license = licenses.mpl20;
+      platforms = platforms.all;
+    };
+  };
   defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
   yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
 in {
@@ -178,6 +200,7 @@ in {
               behind-the-overlay-revival
               videospeed
               catppuccin-web-file-icons
+              image-zoom
             ];
           };
 
