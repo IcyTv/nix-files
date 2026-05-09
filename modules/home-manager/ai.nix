@@ -71,6 +71,7 @@ in {
         autoshare = false;
         plugin = [
           "opencode-gemini-auth@latest"
+          "opencode-openai-codex-auth@latest"
         ];
       };
     };
