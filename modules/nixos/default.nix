@@ -7,6 +7,7 @@
     ./disko.nix
     ./docker.nix
     ./games.nix
+    ./geoclue.nix
     ./greetd.nix
     ./installer.nix
     ./keymap.nix

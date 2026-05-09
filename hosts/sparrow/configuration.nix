@@ -12,24 +12,26 @@
 
   networking.hostName = "sparrow";
 
-  my.nixos.core.enable = true;
-  my.nixos.ananicy.enable = true;
-  my.nixos.bluetooth.enable = true;
-  my.nixos.console-font.enable = true;
-  my.nixos.docker.enable = true;
-  my.nixos.games.enable = true;
-  my.nixos.greetd.enable = true;
-  my.nixos.keymap.enable = true;
-  my.nixos.limine.enable = true;
-  my.nixos.niri.enable = true;
-  my.nixos.openrgb.enable = true;
-  my.nixos.plymouth.enable = true;
-  my.nixos.printing.enable = true;
-  my.nixos.rebuild.enable = true;
-  my.nixos.stylix.enable = true;
-  my.nixos.sudo-rs.enable = true;
-  my.nixos.tools.enable = true;
-  my.nixos.zsh.enable = true;
+  my.nixos = {
+    core.enable = true;
+    ananicy.enable = true;
+    bluetooth.enable = true;
+    console-font.enable = true;
+    games.enable = true;
+    geoclue.enable = true;
+    greetd.enable = true;
+    keymap.enable = true;
+    limine.enable = true;
+    niri.enable = true;
+    openrgb.enable = true;
+    plymouth.enable = true;
+    printing.enable = true;
+    rebuild.enable = true;
+    stylix.enable = true;
+    sudo-rs.enable = true;
+    tools.enable = true;
+    zsh.enable = true;
+  };
 
   services.xserver.videoDrivers = ["nouveau"];
 
