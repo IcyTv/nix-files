@@ -46,6 +46,19 @@
       platforms = platforms.all;
     };
   };
+  yt-player-fix = buildFirefoxXpiAddon {
+    pname = "youtube-mpris-fix";
+    version = "1.2";
+    addonId = "youtube-mpris-fix@deni111bg";
+    sha256 = "sha256-CkvGMV0uTqJtPDKDcmFhl2lONBkmVuLz86V8UtXjoN8=";
+    url = "https://addons.mozilla.org/firefox/downloads/latest/youtube-mpris-fix/latest.xpi";
+    meta = with pkgs.lib; {
+      description = "Zoom images with the mouse wheel";
+      homepage = "https://addons.mozilla.org/en-US/firefox/addon/youtube-mpris-fix/";
+      platforms = platforms.all;
+    };
+  };
+
   defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
   yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
 in {
@@ -201,6 +214,7 @@ in {
               videospeed
               catppuccin-web-file-icons
               image-zoom
+              yt-player-fix
             ];
           };
 
