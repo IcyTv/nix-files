@@ -72,6 +72,8 @@ in {
         plugin = [
           "opencode-gemini-auth@latest"
           "opencode-openai-codex-auth@latest"
+          "opencode-websearch-cited@1.2.0"
+          "opencode-dynamic-context-pruning@latest"
         ];
       };
     };

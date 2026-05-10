@@ -15,6 +15,8 @@
     ./discord.nix
     ./firefox.nix
     ./games.nix
+    ./gammarelay.nix
+    ./gammastep.nix
     ./git.nix
     ./kitty.nix
     ./niri.nix
