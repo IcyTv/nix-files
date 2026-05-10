@@ -63,6 +63,22 @@ in {
   options.my.hm.gammarelay.enable = lib.mkEnableOption "Gaming tools (Lutris, Proton)";
 
   config = lib.mkIf config.my.hm.gammarelay.enable {
-    home.packages = [wl-gammarelay];
+    systemd.user.services.wl-gammarelay = {
+      Unit = {
+        Description = "Gammarelay for controling brightness and temerature via dbus";
+        After = ["graphical-session.target"];
+        PartOf = ["graphical-session.target"];
+      };
+      Service = {
+        ExecStart = "${wl-gammarelay}/bin/wl-gammarelay";
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install = {
+        # This is the magic line that "enables" it by default
+        # when you log into your Wayland session.
+        WantedBy = ["graphical-session.target"];
+      };
+    };
   };
 }
