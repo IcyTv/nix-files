@@ -184,30 +184,30 @@
             ];
             allow-when-locked = true;
           };
-          "XF86AudioNext" = {
-            action.spawn = [
-              "${pkgs.subniri}/bin/subniri"
-              "player"
-              "next"
-            ];
-            allow-when-locked = true;
-          };
-          "XF86AudioPrev" = {
-            action.spawn = [
-              "${pkgs.subniri}/bin/subniri"
-              "player"
-              "cycle"
-            ];
-            allow-when-locked = true;
-          };
-          "XF86AudioPlay" = {
-            action.spawn = [
-              "${pkgs.subniri}/bin/subniri"
-              "player"
-              "play-pause"
-            ];
-            allow-when-locked = true;
-          };
+          # "XF86AudioNext" = {
+          #   action.spawn = [
+          #     "${pkgs.subniri}/bin/subniri"
+          #     "player"
+          #     "next"
+          #   ];
+          #   allow-when-locked = true;
+          # };
+          # "XF86AudioPrev" = {
+          #   action.spawn = [
+          #     "${pkgs.subniri}/bin/subniri"
+          #     "player"
+          #     "cycle"
+          #   ];
+          #   allow-when-locked = true;
+          # };
+          # "XF86AudioPlay" = {
+          #   action.spawn = [
+          #     "${pkgs.subniri}/bin/subniri"
+          #     "player"
+          #     "play-pause"
+          #   ];
+          #   allow-when-locked = true;
+          # };
 
           "Mod+O".action.toggle-overview = {};
           "Mod+Q" = {
