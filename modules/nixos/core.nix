@@ -26,6 +26,8 @@
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "icytv.cachix.org-1:epXlDqA5apfoHPIc+Z7Vx6aPN7Tsz2hzik62V5Rs5sQ="
       ];
+
+      trusted-users = ["root" "michael"];
     };
     nix.gc = {
       automatic = true;

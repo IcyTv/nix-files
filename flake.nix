@@ -64,7 +64,7 @@
 
     subniri = {
       url = "github:IcyTv/subniri";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     disko = {
