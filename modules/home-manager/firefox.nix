@@ -55,6 +55,7 @@
     meta = with pkgs.lib; {
       description = "Zoom images with the mouse wheel";
       homepage = "https://addons.mozilla.org/en-US/firefox/addon/youtube-mpris-fix/";
+      license = licenses.mit;
       platforms = platforms.all;
     };
   };
