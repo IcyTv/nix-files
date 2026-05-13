@@ -10,6 +10,8 @@
   config = lib.mkIf config.my.nixos.core.enable {
     nix.settings = {
       auto-optimise-store = true;
+      max-jobs = 2;
+      cores = 8;
       experimental-features = [
         "nix-command"
         "flakes"
@@ -33,6 +35,14 @@
 
       trusted-users = ["root" "michael"];
     };
+    nix.daemonCPUSchedPolicy = "idle";
+    nix.daemonIOSchedClass = "idle";
+
+    systemd.services.nix-daemon.serviceConfig = {
+      CPUWeight = 20;
+      IOWeight = 20;
+    };
+
     nix.gc = {
       automatic = true;
       dates = "daily";
