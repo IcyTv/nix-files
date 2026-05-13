@@ -22,6 +22,46 @@
       # };
       settings = {
         scrollback-limit = 1000000;
+        confirm-close-surface = false;
+        clipboard-read = "allow";
+
+        # --- Entry Point ---
+        # "keybind" = [
+        #   # Entry Point
+        #   "ctrl+space=activate_key_table:vim"
+        #
+        #   # Navigation
+        #   "vim/j=scroll_page_lines:1"
+        #   "vim/k=scroll_page_lines:-1"
+        #   "vim/ctrl+d=scroll_page_down"
+        #   "vim/ctrl+u=scroll_page_up"
+        #   "vim/shift+j=scroll_page_down"
+        #   "vim/shift+k=scroll_page_up"
+        #
+        #   # Jumps
+        #   "vim/g>g=scroll_to_top"
+        #   "vim/shift+g=scroll_to_bottom"
+        #
+        #   # Search
+        #   "vim/slash=start_search"
+        #   "vim/n=navigate_search:next"
+        #   "vim/shift+n=navigate_search:prev"
+        #
+        #   # Clipboard & Splits
+        #   "vim/y=copy_to_clipboard"
+        #   "vim/ctrl+h=goto_split:left"
+        #   "vim/ctrl+j=goto_split:bottom"
+        #   "vim/ctrl+k=goto_split:top"
+        #   "vim/ctrl+l=goto_split:right"
+        #
+        #   # Exit Mode
+        #   "vim/escape=deactivate_key_table"
+        #   "vim/i=deactivate_key_table"
+        #   "vim/a=deactivate_key_table"
+        #
+        #   # Safety
+        #   "vim/catch_all=ignore"
+        # ];
       };
       enableBashIntegration = true;
       enableZshIntegration = true;

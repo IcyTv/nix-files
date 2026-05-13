@@ -109,7 +109,7 @@
         }
         {
           matches = [
-            {app-id = "^ghostty$";}
+            {app-id = "^com.mitchellh.ghostty$";}
           ];
           open-maximized = true;
         }
