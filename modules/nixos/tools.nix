@@ -9,7 +9,6 @@
   config = lib.mkIf config.my.nixos.tools.enable {
     environment.systemPackages = with pkgs; [
       neovim
-      kitty
       xdg-utils
       git
       wl-clipboard

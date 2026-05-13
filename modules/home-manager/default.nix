@@ -17,6 +17,7 @@
     ./games.nix
     ./gammarelay.nix
     ./gammastep.nix
+    ./ghostty.nix
     ./git.nix
     ./kitty.nix
     ./niri.nix

@@ -3,7 +3,14 @@
   config,
   lib,
   ...
-}: {
+}: let
+  terminal =
+    if config.my.hm.ghostty.enable
+    then "ghostty"
+    else if config.my.hm.kitty.enable
+    then "kitty"
+    else throw "Configuration Error: Either kitty or ghostty need to be enabled";
+in {
   options.my.hm.anyrun.enable = lib.mkEnableOption "Anyrun application launcher";
 
   config = lib.mkIf config.my.hm.anyrun.enable {
@@ -38,7 +45,7 @@
           max_entries: 5,
           hide_description: true,
           terminal: Some(Terminal(
-            command: "kitty",
+            command: "${terminal}",
             args: "-e {}",
           ))
         )

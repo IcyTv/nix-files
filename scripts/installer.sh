@@ -61,6 +61,7 @@ HM_FEATURES=$(gum choose --no-limit --header "Select HOME-MANAGER features to en
     "games" \
     "git" \
     "kitty" \
+    "ghostty" \
     "niri" \
     "nix" \
     "nushell" \
@@ -80,12 +81,12 @@ HM_FEATURES=$(gum choose --no-limit --header "Select HOME-MANAGER features to en
 GIT_CRYPT_KEY=""
 if gum confirm "Do you have a git-crypt symmetric key to unlock secrets?"; then
     DETECTED_KEYS=()
-    
+
     # 1. Check local home directory
     if [ -f "$HOME/.keys/git-crypt" ]; then
         DETECTED_KEYS+=("$HOME/.keys/git-crypt")
     fi
-    
+
     # 2. Try to find and mount Ventoy to check for keys
     VENTOY_DEV=$(blkid -L Ventoy || true)
     if [ -n "$VENTOY_DEV" ]; then
@@ -165,7 +166,7 @@ fi
 mkdir -p "$DOTFILES_DIR/hosts/$HOSTNAME"
 
 # Generate configuration.nix
-cat > "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
+cat >"$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
 { config, pkgs, inputs, lib, ... }: {
   imports = [
     ./hardware-configuration.nix
@@ -178,10 +179,10 @@ cat > "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
 EOF
 
 for feature in $SYSTEM_FEATURES; do
-    echo "  my.nixos.$feature.enable = true;" >> "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix"
+    echo "  my.nixos.$feature.enable = true;" >>"$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix"
 done
 
-cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
+cat >>"$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
 
   home-manager = {
     useGlobalPkgs = true;
@@ -205,7 +206,7 @@ cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/configuration.nix" <<EOF
 EOF
 
 # Generate home.nix
-cat > "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
+cat >"$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
 { config, pkgs, lib, inputs, ... }: {
   imports = [
     ../../modules/home-manager/default.nix
@@ -215,10 +216,10 @@ cat > "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
 EOF
 
 for feature in $HM_FEATURES; do
-    echo "  my.hm.$feature.enable = true;" >> "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix"
+    echo "  my.hm.$feature.enable = true;" >>"$DOTFILES_DIR/hosts/$HOSTNAME/home.nix"
 done
 
-cat >> "$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
+cat >>"$DOTFILES_DIR/hosts/$HOSTNAME/home.nix" <<EOF
 }
 EOF
 
@@ -229,7 +230,7 @@ if [ $DRY_RUN -eq 0 ]; then
     cp /tmp/nixos-config/hardware-configuration.nix "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
 else
     echo "[DRY RUN] Would generate hardware-configuration.nix."
-    echo "{ config, lib, pkgs, modulesPath, ... }: {}" > "$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
+    echo "{ config, lib, pkgs, modulesPath, ... }: {}" >"$DOTFILES_DIR/hosts/$HOSTNAME/hardware-configuration.nix"
 fi
 
 # We must remove the fileSystems declarations from the generated config since disko handles it
@@ -247,9 +248,9 @@ sed -i "s|imports = \[|imports = [\n    ../../modules/nixos/disko.nix|g" "$DOTFI
 echo "Flake reads directories dynamically! The new host will automatically be included."
 
 # Stage all files
-pushd "$DOTFILES_DIR" > /dev/null
+pushd "$DOTFILES_DIR" >/dev/null
 git add .
-popd > /dev/null
+popd >/dev/null
 
 if [ $DRY_RUN -eq 0 ]; then
     gum spin --title "Installing NixOS..." -- \

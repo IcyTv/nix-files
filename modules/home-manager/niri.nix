@@ -109,6 +109,12 @@
         }
         {
           matches = [
+            {app-id = "^ghostty$";}
+          ];
+          open-maximized = true;
+        }
+        {
+          matches = [
             {app-id = "^firefox-yes$";}
           ];
           open-maximized = true;
@@ -142,7 +148,12 @@
         {
           "Mod+Shift+Slash".action.show-hotkey-overlay = {};
 
-          "Mod+Return".action.spawn = ["kitty"];
+          "Mod+Return".action.spawn =
+            if config.my.hm.ghostty.enable
+            then ["ghostty"]
+            else if config.my.hm.kitty.enable
+            then ["kitty"]
+            else throw "Configuration Error: Either kitty or ghostty need to be enabled";
           "Mod+Space".action.spawn = ["anyrun"];
           "Mod+B".action.spawn = ["firefox"];
           "Mod+E".action.spawn = ["thunar"];
