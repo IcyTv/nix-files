@@ -26,7 +26,7 @@
           pkgs.gemini-cli-bin
           pkgs.github-copilot-cli
 
-          (inputs.neovim.lib.x86_64-linux.makeNeovimWithLanguages
+          (inputs.neovim.lib.makeNeovimWithLanguages
             {
               pkgs = pkgs.extend (_final: prev: {
                 inherit (inputs.nixpkgs-unstable.legacyPackages.x86_64-linux) opencode;
@@ -36,6 +36,7 @@
                     inherit (inputs.nixpkgs-unstable.legacyPackages.x86_64-linux.vimPlugins) opencode-nvim;
                   };
               });
+              system = "x86_64-linux";
               languages.nix.enable = true;
               languages.shell.enable = true;
               extraConfig = {
