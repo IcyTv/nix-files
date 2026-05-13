@@ -11,6 +11,12 @@
       enable = true;
       package = pkgs.ananicy-cpp;
       rulesProvider = pkgs.ananicy-rules-cachyos;
+      settings = {
+        apply_cgroup = false;
+        cgroup_load = false;
+        check_freq = 5;
+        log_applied_rule = true;
+      };
 
       extraTypes = [
         {
