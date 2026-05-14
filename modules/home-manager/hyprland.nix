@@ -29,10 +29,6 @@
           layout = "scrolling";
         };
 
-        cursors = {
-          no_hardware_cursors = false;
-        };
-
         decoration = {
           rounding = 12;
         };
