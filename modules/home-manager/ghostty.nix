@@ -21,7 +21,7 @@
       #   listen_on = ''unix:$XDG_RUNTIME_DIR/kitty-socket-{kitty_pid}'';
       # };
       settings = {
-        scrollback-limit = 1000000;
+        scrollback-limit = 50000000;
         confirm-close-surface = false;
         clipboard-read = "allow";
 
