@@ -48,7 +48,7 @@
         services.gnome-keyring.enable = true;
         xdg = {
           portal = {
-            enable = true;
+            enable = lib.mkForce true;
             xdgOpenUsePortal = true;
             extraPortals = [
               pkgs.xdg-desktop-portal-gtk

@@ -9,6 +9,10 @@
   config = lib.mkIf config.my.hm.hyprland.enable {
     wayland.windowManager.hyprland = {
       enable = true;
+
+      package = null;
+      portalPackage = null;
+
       settings = {
         input = {
           kb_layout = "us";
@@ -23,6 +27,10 @@
           gaps_out = 4;
           border_size = 2;
           layout = "scrolling";
+        };
+
+        cursors = {
+          no_hardware_cursors = false;
         };
 
         decoration = {
@@ -123,6 +131,7 @@
         env = [
           "XCURSOR_THEME,WhiteSur-cursors"
           "XCURSOR_SIZE,16"
+          "HYPRCURSOR_SIZE,16"
         ];
       };
     };
