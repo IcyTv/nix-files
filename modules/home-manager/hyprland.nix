@@ -118,12 +118,12 @@
           "$mod,mouse:273,resizewindow"
         ];
 
-        windowrulev2 = [
-          "float, class:^(firefox)$, title:^(Picture-in-Picture)$"
-          "workspace 9 silent, class:^(Spotify)$"
-          "workspace 9 silent, class:^(vesktop)$"
-          "suppressevent maximize, class:.*"
-        ];
+        # windowrulev2 = [
+        #   "float, class:^(firefox)$, title:^(Picture-in-Picture)$"
+        #   "workspace 9 silent, class:^(Spotify)$"
+        #   "workspace 9 silent, class:^(vesktop)$"
+        #   "suppressevent maximize, class:.*"
+        # ];
 
         env = [
           "XCURSOR_THEME,WhiteSur-cursors"
