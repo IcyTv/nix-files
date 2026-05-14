@@ -13,7 +13,7 @@
 
       discord = {
         enable = true;
-        autoscroll.enable = true;
+        # autoscroll.enable = true;
         branch = "stable";
 
         vencord.enable = false;

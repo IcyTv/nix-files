@@ -64,6 +64,7 @@
 
     subniri = {
       url = "github:IcyTv/subniri";
+      # url = "git+file:///home/michael/projects/subniri-qt";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
