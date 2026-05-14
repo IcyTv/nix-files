@@ -13,6 +13,7 @@
     ./keymap.nix
     ./limine.nix
     ./niri.nix
+    ./hyprland.nix
     ./openrgb.nix
     ./plymouth.nix
     ./printing.nix

@@ -23,6 +23,7 @@
     keymap.enable = true;
     limine.enable = true;
     niri.enable = true;
+    hyprland.enable = true;
     openrgb.enable = true;
     plymouth.enable = true;
     printing.enable = true;

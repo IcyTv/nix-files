@@ -21,6 +21,7 @@
     ./git.nix
     ./kitty.nix
     ./niri.nix
+    ./hyprland.nix
     ./nix.nix
     ./nushell.nix
     ./obs.nix

@@ -127,6 +127,7 @@
       # my.hm.kitty.enable = true;
       my.hm.ghostty.enable = true;
       my.hm.niri.enable = true;
+      my.hm.hyprland.enable = true;
       my.hm.nix.enable = true;
       my.hm.nushell.enable = true;
       my.hm.obs.enable = true;

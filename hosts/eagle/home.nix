@@ -20,7 +20,7 @@
         mode = {
           width = 1920;
           height = 1080;
-          refresh = 60.;
+          refresh = 60.0;
         };
         position = {
           x = 0;
@@ -45,7 +45,7 @@
         mode = {
           width = 1920;
           height = 1080;
-          refresh = 60.;
+          refresh = 60.0;
         };
         position = {
           x = 4480;
@@ -53,5 +53,16 @@
         };
       };
     };
+  };
+
+  wayland.windowManager.hyprland.settings = {
+    monitor = [
+      "DP-3,1920x1080@60,0x0,1"
+      "DP-2,2560x1440@239.97,1920x0,1"
+      "HDMI-A-1,1920x1080@60,4480x0,1"
+    ];
+    workspace = [
+      "9, monitor:HDMI-A-1"
+    ];
   };
 }
