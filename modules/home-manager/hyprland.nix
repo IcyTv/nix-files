@@ -29,6 +29,14 @@
           layout = "scrolling";
         };
 
+        scrolling = {
+          column_width = 0.666667;
+          explicit_column_widths = "0.333333, 0.500000, 0.666667, 1.000000";
+          focus_fit_method = 1;
+          fullsreen_on_one_column = true;
+          direction = "right";
+        };
+
         decoration = {
           rounding = 12;
         };
@@ -41,7 +49,26 @@
         exec-once = [
           "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=hyprland"
           "spotify"
-          "vesktop"
+        ];
+
+        windowrule = [
+          "float on, match:class ^(firefox)$ match:title ^(Picture-in-Picture)$"
+
+          "maximize on, match:class ^(kitty)$"
+          "maximize on, match:class ^(com.mitchellh.ghostty)$"
+          "maximize on, match:class ^(firefox-yes)$"
+
+          "monitor HDMI-A-1, match:class ^(Spotify)$"
+          "monitor HDMI-A-1, match:class ^(discord)$"
+
+          "float on, match:class ^(steam)$, match:title ^(notificationtoasts)"
+          "no_initial_focus on, match:class ^(steam)$, match:title ^(notificationtoasts)"
+          "no_screen_share on, match:class ^(steam)$, match:title ^(notificationtoasts)"
+          "move (monitor_w-window_w-8) 8, match:class ^(steam)$, match:title ^(notificationtoasts)"
+        ];
+
+        layerrule = [
+          "order -1, match:namespace ^(swww-daemon)$"
         ];
 
         "$mod" = "SUPER";
@@ -63,28 +90,48 @@
             "$mod, V, togglefloating,"
             "$mod, M, fullscreen, 1"
 
-            "$mod, Left, movefocus, l"
-            "$mod, Right, movefocus, r"
-            "$mod, Up, movefocus, u"
-            "$mod, Down, movefocus, d"
-            "$mod, H, movefocus, l"
-            "$mod, L, movefocus, r"
+            # Column Focus (Traps focus within layout)
+            "$mod, H, layoutmsg, focus l"
+            "$mod, L, layoutmsg, focus r"
+            "$mod, Left, layoutmsg, focus l"
+            "$mod, Right, layoutmsg, focus r"
+
+            # Window Focus (Up/Down within stack)
             "$mod, K, movefocus, u"
             "$mod, J, movefocus, d"
+            "$mod, Up, movefocus, u"
+            "$mod, Down, movefocus, d"
 
-            "$mod CTRL, Left, movewindow, l"
-            "$mod CTRL, Right, movewindow, r"
-            "$mod CTRL, Up, movewindow, u"
-            "$mod CTRL, Down, movewindow, d"
-            "$mod CTRL, H, movewindow, l"
-            "$mod CTRL, L, movewindow, r"
-            "$mod CTRL, K, movewindow, u"
+            # Moving Columns & Windows
+            "$mod CTRL, H, layoutmsg, swapcol l"
+            "$mod CTRL, L, layoutmsg, swapcol r"
+            "$mod CTRL, Left, layoutmsg, swapcol l"
+            "$mod CTRL, Right, layoutmsg, swapcol r"
             "$mod CTRL, J, movewindow, d"
+            "$mod CTRL, K, movewindow, u"
 
-            "$mod SHIFT, Left, focusmonitor, l"
-            "$mod SHIFT, Right, focusmonitor, r"
+            # Expel/Consume logic
+            "$mod, BracketLeft, movewindow, l"
+            "$mod, BracketRight, movewindow, r"
+            "$mod SHIFT, BracketRight, layoutmsg, promote"
+
+            # Column Resizing & Presets
+            "$mod, Plus, layoutmsg, colresize +0.1"
+            "$mod, Minus, layoutmsg, colresize -0.1"
+            "$mod, R, layoutmsg, colresize +conf"
+            "$mod SHIFT, R, layoutmsg, colresize -conf"
+
+            # Centering/Fit Control
+            "$mod, C, layoutmsg, togglefit"
+            "$mod CTRL, C, layoutmsg, fit visible"
+
+            # Monitor Focus Movement
             "$mod SHIFT, H, focusmonitor, l"
             "$mod SHIFT, L, focusmonitor, r"
+            "$mod SHIFT, Left, focusmonitor, l"
+            "$mod SHIFT, Right, focusmonitor, r"
+
+            # System Actions
 
             "$mod ALT, Up, workspace, e-1"
             "$mod ALT, Down, workspace, e+1"
@@ -106,11 +153,13 @@
               10)
           );
 
+        bindel = [
+          ", XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.01+"
+          ", XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.01-"
+        ];
         bindl = [
-          ", XF86AudioRaiseVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.01+"
-          ", XF86AudioLowerVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.01-"
-          ", XF86AudioMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
-          ", XF86AudioMicMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+          ", XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+          ", XF86AudioMicMute, exec, wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
         ];
 
         bindm = [
