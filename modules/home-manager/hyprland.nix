@@ -22,7 +22,7 @@
           gaps_in = 2;
           gaps_out = 4;
           border_size = 2;
-          layout = "dwindle";
+          layout = "scrolling";
         };
 
         decoration = {
@@ -106,6 +106,11 @@
           ", XF86AudioLowerVolume, exec, ${pkgs.wireplumber}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.01-"
           ", XF86AudioMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
           ", XF86AudioMicMute, exec, ${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
+        ];
+
+        bindm = [
+          "$mod,mouse:272,movewindow"
+          "$mod,mouse:273,resizewindow"
         ];
 
         windowrulev2 = [
