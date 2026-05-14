@@ -124,7 +124,7 @@
       my.hm.firefox.enable = true;
       my.hm.games.enable = true;
       my.hm.git.enable = true;
-      # my.hm.kitty.enable = true;
+      my.hm.kitty.enable = true;
       my.hm.ghostty.enable = true;
       my.hm.niri.enable = true;
       my.hm.hyprland.enable = true;
