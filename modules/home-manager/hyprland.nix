@@ -33,7 +33,7 @@
           column_width = 0.666667;
           explicit_column_widths = "0.333333, 0.500000, 0.666667, 1.000000";
           focus_fit_method = 1;
-          fullsreen_on_one_column = true;
+          fullscreen_on_one_column = true;
           direction = "right";
         };
 
