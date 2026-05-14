@@ -27,7 +27,6 @@
 
         decoration = {
           rounding = 12;
-          drop_shadow = false;
         };
 
         dwindle = {
