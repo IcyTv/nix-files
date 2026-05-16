@@ -65,6 +65,7 @@
 
   boot.loader.limine.extraConfig = "RESOLUTION=1920x1080";
   boot.loader.limine.style.interface.resolution = "1920x1080";
+  boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
 
   system.stateVersion = "25.11";
 }
