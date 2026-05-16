@@ -7,7 +7,7 @@
   options.my.hm.bluetooth.enable = lib.mkEnableOption "Bluetooth configuration (bluetuith, mpris)";
 
   config = lib.mkIf config.my.hm.bluetooth.enable {
-    services.mpris-proxy.enable = true;
+    services.mpris-proxy.enable = false;
 
     home.packages = [
       pkgs.bluetuith
