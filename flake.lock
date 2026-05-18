@@ -888,11 +888,11 @@
         "nixvim": "nixvim_2"
       },
       "locked": {
-        "lastModified": 1777896688,
-        "narHash": "sha256-HULrOz4EJWfbyWp+zuVePpLP1qexDMwK1uoZ4Xm+rYc=",
+        "lastModified": 1778803884,
+        "narHash": "sha256-MgV8oLFJpuRU1xa2vFKcU6s75WkkCB3rnbatX96RvwA=",
         "owner": "IcyTv",
         "repo": "nvim.nix",
-        "rev": "363a4e5ce43f6861e76be93847d7bd643c57bd94",
+        "rev": "52444fdb6ab8ac473fb3c25dfe9d910be76d7246",
         "type": "github"
       },
       "original": {
@@ -1027,11 +1027,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1778712855,
-        "narHash": "sha256-WFLC9oqIEBuo/HWogol8dUjfutU+MvMVsk5iqZAkK3M=",
+        "lastModified": 1778969139,
+        "narHash": "sha256-w5hX4IbLkpJnbjheLEqD1Bq9SfzVmtYDpogjW/7q2sc=",
         "owner": "IcyTv",
         "repo": "subniri",
-        "rev": "611fbce8363518111529355c96fbd9db01a46eda",
+        "rev": "1735447ee5452090be5cae499e49ed505e03dfd7",
         "type": "github"
       },
       "original": {
