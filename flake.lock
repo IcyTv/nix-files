@@ -1030,13 +1030,13 @@
         "lastModified": 1778969139,
         "narHash": "sha256-w5hX4IbLkpJnbjheLEqD1Bq9SfzVmtYDpogjW/7q2sc=",
         "owner": "IcyTv",
-        "repo": "subniri",
+        "repo": "subniri-qt",
         "rev": "1735447ee5452090be5cae499e49ed505e03dfd7",
         "type": "github"
       },
       "original": {
         "owner": "IcyTv",
-        "repo": "subniri",
+        "repo": "subniri-qt",
         "type": "github"
       }
     },
