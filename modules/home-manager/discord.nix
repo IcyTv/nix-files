@@ -55,7 +55,6 @@
           messageLoggerEnhanced.enable = true;
           noF1.enable = true;
           noNitroUpsell.enable = true;
-          petpet.enable = true;
           readAllNotificationsButton.enable = true;
           youtubeAdblock.enable = true;
           volumeBooster.enable = true;

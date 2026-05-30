@@ -6,7 +6,7 @@
   ...
 }: let
   unstable = import inputs.nixpkgs-unstable {
-    inherit (pkgs) system;
+    inherit (pkgs.stdenv.hostPlatform) system;
     config.allowUnfree = true; # optional
   };
 in {

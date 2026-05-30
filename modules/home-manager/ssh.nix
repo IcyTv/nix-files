@@ -13,21 +13,21 @@
       enable = true;
       enableDefaultConfig = false;
 
-      matchBlocks = {
+      settings = {
         "server-local" = lib.hm.dag.entryBefore ["server"] {
-          match = "host server exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
-          hostname = "192.168.1.28";
+          header = "Match host server exec \"${pkgs.netcat}/bin/nc -z -w 1 192.168.1.28 22\"";
+          HostName = "192.168.1.28";
         };
 
         "server" = {
-          hostname = "ssh.icytv.de";
-          forwardAgent = true;
+          HostName = "ssh.icytv.de";
+          ForwardAgent = true;
         };
 
         "seedbox" = {
-          hostname = "icytv.cloud.seedboxes.cc";
-          port = 3232;
-          user = "icytv";
+          HostName = "icytv.cloud.seedboxes.cc";
+          Port = 3232;
+          User = "icytv";
         };
       };
     };

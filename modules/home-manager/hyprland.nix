@@ -9,6 +9,7 @@
   config = lib.mkIf config.my.hm.hyprland.enable {
     wayland.windowManager.hyprland = {
       enable = true;
+      configType = "lua";
 
       package = null;
       portalPackage = null;

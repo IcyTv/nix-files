@@ -6,7 +6,7 @@
 }: let
   random-wallpaper = pkgs.writeShellApplication rec {
     name = "random-wallpaper";
-    runtimeInputs = [pkgs.swww pkgs.uutils-coreutils-noprefix pkgs.fd];
+    runtimeInputs = [pkgs.awww pkgs.uutils-coreutils-noprefix pkgs.fd];
 
     text = ''
       WALLPAPER_DIR="$HOME/.dotfiles/nix/wallpapers"
@@ -19,7 +19,7 @@
       wallpaper=$(fd . "$WALLPAPER_DIR" -d 1 -t f | shuf -n 1)
 
       if [ -n "$wallpaper" ]; then
-        swww img "$wallpaper"
+        awww img "$wallpaper"
       else
         echo "No files found in $WALLPAPER_DIR" >&2
         exit 1
@@ -30,7 +30,7 @@ in {
   options.my.hm.swww.enable = lib.mkEnableOption "SWWW wallpaper daemon and random wallpaper script";
 
   config = lib.mkIf config.my.hm.swww.enable {
-    services.swww.enable = true;
+    services.awww.enable = true;
 
     # home.file."Pictures/wallpapers" = {
     #   source = ./wallpapers;
@@ -41,9 +41,9 @@ in {
 
     systemd.user.services.random-wallpaper = {
       Unit = {
-        Description = "Change swww to random wallpaper";
-        After = ["graphical-session.target" "swww.service"];
-        Requires = ["swww.service"];
+        Description = "Change awww to random wallpaper";
+        After = ["graphical-session.target" "awww.service"];
+        Requires = ["awww.service"];
       };
 
       Service = {
@@ -52,7 +52,7 @@ in {
       };
 
       Install = {
-        WantedBy = ["swww.service"];
+        WantedBy = ["awww.service"];
       };
     };
 

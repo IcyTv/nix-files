@@ -77,8 +77,11 @@
           };
           userDirs = {
             enable = true;
+            setSessionVariables = false;
           };
         };
+
+        gtk.gtk4.theme = null;
 
         age = {
           identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];

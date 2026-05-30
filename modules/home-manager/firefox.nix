@@ -70,6 +70,7 @@ in {
     stylix.targets.firefox.colorTheme.enable = true;
     programs.firefox = {
       enable = true;
+      configPath = "${config.xdg.configHome}/mozilla/firefox";
       languagePacks = ["en-US"];
 
       policies = {
