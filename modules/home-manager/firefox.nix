@@ -174,7 +174,7 @@ in {
             force = true;
             engines = {
               "Nix Packages" = {
-                urls = [{template = "https://search.nixos.org/packages?channel=25.11&query={searchTerms}";}];
+                urls = [{template = "https://search.nixos.org/packages?channel=26.05&query={searchTerms}";}];
                 icon = "file://${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
                 definedAlias = ["nixpkgs"];
               };

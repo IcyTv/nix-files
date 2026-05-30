@@ -25,7 +25,6 @@
         skim
         query
         gstat
-        highlight
       ];
       settings = {
         show_banner = false;
