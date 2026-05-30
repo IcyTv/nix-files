@@ -5,6 +5,7 @@
 
   my.hm.core.enable = true;
   my.hm.default.enable = true;
+  my.hm.gammarelay.enable = true;
 
   programs.niri = {
     settings.outputs = {

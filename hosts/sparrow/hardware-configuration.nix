@@ -23,6 +23,12 @@
     options = ["subvol=@" "compress=zstd"];
   };
 
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/5938-A330";
+    fsType = "vfat";
+    options = ["fmask=0022" "dmask=0022"];
+  };
+
   fileSystems."/nix" = {
     device = "/dev/disk/by-uuid/0c09761c-bd1b-4f18-a491-c2e23d340394";
     fsType = "btrfs";

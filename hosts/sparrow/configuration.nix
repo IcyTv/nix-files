@@ -65,10 +65,10 @@
   hardware.graphics.enable = true;
 
   boot.blacklistedKernelModules = ["nvvidia" "nvidia_drm" "nvidia_modesett"];
+  boot.kernelParams = ["pcie_aspm=off"];
 
   boot.loader.limine.extraConfig = "RESOLUTION=1920x1080";
   boot.loader.limine.style.interface.resolution = "1920x1080";
-  boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
   boot.loader.limine.panicOnChecksumMismatch = lib.mkForce false;
 
   system.stateVersion = "25.11";
