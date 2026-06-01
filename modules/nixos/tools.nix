@@ -23,5 +23,7 @@
     programs.coolercontrol.enable = true;
 
     virtualisation.waydroid.enable = true;
+
+    services.upower.enable = true;
   };
 }
