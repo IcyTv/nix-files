@@ -95,7 +95,7 @@
         {
           matches = [
             {
-              app-id = "^vesktop$";
+              app-id = "^discord$";
               at-startup = true;
             }
           ];
