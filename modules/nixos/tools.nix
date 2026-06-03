@@ -21,6 +21,7 @@
     ];
 
     services.gvfs.enable = true;
+    services.logiops.enable = true;
 
     services.flatpak.enable = true;
     programs.coolercontrol.enable = true;
