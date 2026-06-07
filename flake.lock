@@ -1006,7 +1006,7 @@
         "cargo2nix": "cargo2nix",
         "flake-utils": "flake-utils_2",
         "nixpkgs": [
-          "nixpkgs-unstable"
+          "nixpkgs"
         ],
         "nvim": "nvim",
         "rust-overlay": "rust-overlay"
