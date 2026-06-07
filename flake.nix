@@ -63,9 +63,8 @@
     nixcord.url = "github:FlameFlag/nixcord";
 
     subniri = {
-      url = "github:IcyTv/subniri-qt";
-      # url = "git+file:///home/michael/projects/subniri-qt";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:IcyTv/subniri";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     disko = {
