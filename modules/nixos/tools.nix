@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }: {
   options.my.nixos.tools.enable = lib.mkEnableOption "Basic system tools and flatpak";
@@ -27,6 +28,9 @@
 
     services.upower.enable = true;
     services.solaar.enable = true;
-    services.ratbagd.enable = true;
+    services.ratbagd = {
+      enable = true;
+      package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.libratbag;
+    };
   };
 }
