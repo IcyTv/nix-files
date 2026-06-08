@@ -15,6 +15,7 @@
       lm_sensors
       inxi
       unar
+      piper
     ];
 
     services.gvfs.enable = true;
@@ -26,5 +27,6 @@
 
     services.upower.enable = true;
     services.solaar.enable = true;
+    services.ratbagd.enable = true;
   };
 }
