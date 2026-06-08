@@ -25,5 +25,6 @@
     virtualisation.waydroid.enable = true;
 
     services.upower.enable = true;
+    services.solaar.enable = true;
   };
 }

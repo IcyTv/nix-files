@@ -71,6 +71,11 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    solaar = {
+      url = "github:Svenum/Solaar-Flake/0.1.7";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = {
@@ -79,7 +84,6 @@
     nur,
     nix-filter,
     subniri,
-    disko,
     ...
   } @ inputs: let
     systems = nixpkgs.lib.systems.flakeExposed;
@@ -108,6 +112,7 @@
       inputs.agenix.nixosModules.default
       inputs.nirinit.nixosModules.default
       inputs.disko.nixosModules.disko
+      inputs.solaar.nixosModules.default
     ];
     filtered-src = nix-filter.lib {
       root = ./.;
