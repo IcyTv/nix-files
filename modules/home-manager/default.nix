@@ -12,6 +12,7 @@
     ./audio.nix
     ./bluetooth.nix
     ./core.nix
+    ./daw.nix
     ./discord.nix
     ./firefox.nix
     ./games.nix
