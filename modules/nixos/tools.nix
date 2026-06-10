@@ -17,6 +17,7 @@
       inxi
       unar
       piper
+      pipewire.jack
     ];
 
     services.gvfs.enable = true;
