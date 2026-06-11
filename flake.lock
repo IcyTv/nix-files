@@ -1053,11 +1053,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1781128366,
-        "narHash": "sha256-mbkDiRse/40pnOlM8NG8E5Glo0oRxuXRPoqNDffJj8c=",
+        "lastModified": 1781138598,
+        "narHash": "sha256-4XNzGykGawWB+yIII8ucENHoxPw1uJD9f6lorZAgGsU=",
         "owner": "IcyTv",
         "repo": "subniri",
-        "rev": "6bcc858b1f8f34a903523864a25bfc63c5c82738",
+        "rev": "8efc0169427b69061911bef7b6db5413d582640d",
         "type": "github"
       },
       "original": {
