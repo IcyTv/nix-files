@@ -154,7 +154,7 @@
             else if config.my.hm.kitty.enable
             then ["kitty"]
             else throw "Configuration Error: Either kitty or ghostty need to be enabled";
-          "Mod+Space".action.spawn = ["anyrun"];
+          "Mod+Space".action.spawn = ["subniri" "launcher" "open"];
           "Mod+B".action.spawn = ["firefox"];
           "Mod+E".action.spawn = ["thunar"];
           "Mod+Alt+L".action.spawn = ["${pkgs.swaylock}/bin/swaylock"];
