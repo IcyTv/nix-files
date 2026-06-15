@@ -9,16 +9,17 @@
     ./games.nix
     ./geoclue.nix
     ./greetd.nix
+    ./hyprland.nix
     ./installer.nix
     ./keymap.nix
     ./limine.nix
     ./niri.nix
-    ./hyprland.nix
     ./openrgb.nix
     ./plymouth.nix
     ./printing.nix
     ./rebuild.nix
     ./stylix.nix
+    ./subniri.nix
     ./sudo-rs.nix
     ./tools.nix
     ./zsh.nix

@@ -113,6 +113,7 @@
       inputs.nirinit.nixosModules.default
       inputs.disko.nixosModules.disko
       inputs.solaar.nixosModules.default
+      inputs.subniri.nixosModules.subniri
     ];
     filtered-src = nix-filter.lib {
       root = ./.;
