@@ -16,9 +16,9 @@
       };
       Service = {
         Type = "forking";
-        ExecStart = "${pkgs.urserver}/bin/urserver --daemon --pidfile=urserver.pid";
-        ExecStop = "kill -TERM $(cat urserver.pid)";
-        PIDFile = "urserver.pid";
+        ExecStart = "${pkgs.urserver}/bin/urserver --daemon --pidfile=\"/run/user/1000/urserver.pid\"";
+        ExecStop = "kill -TERM $(cat /run/user/1000/urserver.pid)";
+        PIDFile = "/run/user/1000/urserver.pid";
         Restart = "on-failure";
       };
       Install = {
