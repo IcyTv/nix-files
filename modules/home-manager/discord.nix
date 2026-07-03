@@ -35,8 +35,8 @@
           betterSessions.enable = true;
           betterSettings.enable = true;
           callTimer.enable = true;
-          ClearURLs.enable = true;
-          CustomRPC.enable = true;
+          clearUrls.enable = true;
+          customRpc.enable = true;
           customIdle.enable = true;
           disableCallIdle.enable = true;
           favoriteEmojiFirst.enable = true;

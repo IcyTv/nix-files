@@ -134,6 +134,15 @@
           };
           block-out-from = "screencast";
         }
+        {
+          matches = [
+            {
+              app-id = "^steam_app.*";
+              is-floating = false;
+            }
+          ];
+          open-fullscreen = true;
+        }
       ];
       layer-rules = [
         {

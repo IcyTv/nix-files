@@ -171,7 +171,7 @@ in {
           name = "default";
           isDefault = true;
           search = {
-            order = ["google"];
+            order = ["duckduckgo"];
             force = true;
             engines = {
               "Nix Packages" = {
@@ -208,7 +208,7 @@ in {
               bitwarden
               return-youtube-dislikes
               sponsorblock
-              tabliss
+              pkgs.nur.repos.crazazy.firefox-addons.tabliss
               tab-stash
               auto-tab-discard
               istilldontcareaboutcookies

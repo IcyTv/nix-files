@@ -40,7 +40,7 @@ else
 	TEMP_COMMIT_CREATED=1
 fi
 
-if ! nixos-rebuild build --flake ".#$HOST"; then
+if ! nixos-rebuild build -j 12 --flake ".#$HOST"; then
 	echo " Build failed!"
 	exit 1
 fi

@@ -81,7 +81,7 @@
           };
         };
 
-        gtk.gtk4.theme = null;
+        gtk.gtk4.theme = lib.mkForce null;
 
         age = {
           identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];
