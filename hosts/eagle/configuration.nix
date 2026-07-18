@@ -64,7 +64,6 @@
     nvidiaSettings = true;
   };
 
-  services.udev.packages = [config.boot.kernelPackages.nvidiaPackages.production];
   services.udev.extraRules = ''
     # NS PRO Controller USB
     KERNEL=="hidraw*", ATTRS{idVendor}=="20d6", ATTRS{idProduct}=="a711", MODE="0660", TAG+="uaccess", GROUP="input"
@@ -81,8 +80,6 @@
   boot.kernelParams = [
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
-    "video=DP-2:1920x1080@60"
-    "nvidia.NVreg_PreserveVideoMemoryAllocations=1"
     "acpi_enforce_resources=lax"
     "resume_offset=9563072"
     "mem_sleep_default=deep"
