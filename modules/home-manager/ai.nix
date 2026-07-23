@@ -47,6 +47,97 @@ in {
       enableMcpIntegration = true;
       package = pkgs-unstable.opencode;
 
+      context = ''
+        # General Development Rules
+
+        ## Removal of files and directories
+
+        CRITICAL: Never, ever run `rm -rf` to delete files or directories. This command is extremely dangerous and can lead to irreversible data loss. Instead, use safer alternatives like `${pkgs.trash-cli}/bin/trash` to move files to the trash.
+
+        ```
+        usage: ${pkgs.trash-cli}/bin/trash [OPTION]... FILE...
+
+        Put files in trash
+
+        positional arguments:
+          files
+
+        options:
+          -h, --help            show this help message and exit
+          --print-completion {bash,zsh,tcsh}
+                                print shell completion script
+          -d, --directory       ignored (for GNU rm compatibility)
+          -f, --force           silently ignore nonexistent files
+          -i, --interactive     prompt before every removal
+          -r, -R, --recursive   ignored (for GNU rm compatibility)
+          --trash-dir TRASHDIR  use TRASHDIR as trash folder
+          -v, --verbose         explain what is being done
+          --version             show program's version number and exit
+
+        all trash-cli commands:
+          trash-put             trash files and directories.
+          trash-list            list trashed files.
+          trash-restore         restore a trashed file.
+
+        To remove a file whose name starts with a '-', for example '-foo',
+        use one of these commands:
+
+            trash -- -foo
+
+            trash ./-foo
+        ```
+
+        Other options include:
+        - If the target is a symlink, use `unlink` to remove it.
+        - Checking the target thoroughly before running `rm` (no `-f` and no `-r`), deleting files individually.
+        - Using `rmdir` to delete empty directories.
+
+        It is only ever acceptible to delete files or directories, if *you* created them in this session.
+        It is generally unacceptible to delete any non-generated code files.
+
+        If you're unsure about whether a file or directory can be deleted, ask for clarification before proceeding. It's better to be safe than sorry.
+        If the `trash` cli fails to execute, ask for clarification before proceeding.
+
+        ## Searching for files or file contents
+
+        Prefer the use of builtin tools (like glob or grep) to find files.
+        Disfavor the use of command-lines or shells to find files or file contents.
+
+        NEVER use tools like glob or grep on filesystem root(s).
+
+        ## Longer/Multistep implementations
+
+        When doing long or multistep implementations, break them down into smaller, more manageable tasks before starting.
+        Try to figure out the roadblocks, and how to resolve them ahead of time, using websearches, code searches or by asking the user.
+        Before doing any code changes, use the todos tool to write a step-by-step plan. Try to include as much detail as necessary, including the solutions to possible roadblocks you've found.
+        Present that plan to the user for review and approval before proceeding with any code changes.
+
+        ### Compaction
+
+        Longer-term implementations will likely exceed any context window you have. That is, when you will need to compact the previous context to make room for new context.
+        You will be prompted for compaction automatically, and you won't have to do that yourself.
+        When you do this, you should try to compact the context in a way that preserves as much relevant information as possible, while removing irrelevant or redundant information, like old or finished tasks.
+        If you need to mention finished tasks in the compaction, try to keep it as short as possible.
+        If you need more space, for example to explain roadblocks you've overcome, for a finished task, write them to /tmp/opencode/<UNIQUE_TASK_NAME>.md and in the compacted context, write:
+          "Did <Task description>. For more details see /tmp/opencode/<UNIQUE_TASK_NAME>.md"
+
+        You should also try to preserve the structure of the context, so that it is still easy to read and understand.
+        During compaction, make sure you are aware, what the current state of the project is, what the blockers are and what is already done and relay that as concicely as possible.
+
+        ### Roadblocks
+
+        If you encounter roadblocks during your efforts, there is a multistep process you should follow (in that order):
+
+        1. Try to find a solution by doing a websearch. Oftentimes roadblocks you encounter will have been solved by someone else before.
+           You will at least be able to find some terminology and ideas for further research.
+        2. Read local code. If you are unable to find a promising solution using websearches, the next step is to look at the locally installed code and dependencies.
+           Use the glob and grep tools to find code relevant to the blocker. Try to trace any codepaths that are relevant.
+           Use the GNU `binutils` tools to explore binary files only if needed.
+        3. Ask the user for guidance. Explain the blocker you've encountered in detail.
+           Then explain to them, what research you've done, what has panned out and what hasn't.
+           Link them to relevant issues (GitHub issues preferred, other git-provider issues work as well, forums are acceptible, but not preferred).
+      '';
+
       agents = {
         code-fixer = ''
           # Code Fixer Agent
@@ -74,6 +165,14 @@ in {
           "opencode-websearch-cited@1.2.0"
           "opencode-dynamic-context-pruning@latest"
         ];
+
+        provider = {
+          openai.options = {
+            websearch_cited = {
+              model = "gpt-5.4-mini-fast";
+            };
+          };
+        };
       };
     };
 
