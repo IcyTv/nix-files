@@ -136,6 +136,20 @@ in {
         3. Ask the user for guidance. Explain the blocker you've encountered in detail.
            Then explain to them, what research you've done, what has panned out and what hasn't.
            Link them to relevant issues (GitHub issues preferred, other git-provider issues work as well, forums are acceptible, but not preferred).
+
+        ## Commands
+
+        You will generally be acting on NixOS, inside an isolated environment, generally defined at @flake.nix.
+        If any tools you expect to see, based on the flake, are missing either:
+        - Prompt the user to restart your shell (preferred)
+        - Run commands using `nix develop`.
+
+        If you need tools not specified in the flake, you should ask the user for permission to install them, and then install them using `nix-shell -p <package>`.
+        Use the nixos mcp (if available) to check the naming of packages.
+
+        If you can't find certain tools, libraries or packages you need, you can either use `nix-locate` to find them, or ask the user for guidance.
+
+        If you update the @flake.nix yourself, always prompt the user for a shell restart. Only fall back on `nix develop` if the user declines.
       '';
 
       agents = {
