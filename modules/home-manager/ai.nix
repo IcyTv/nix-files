@@ -5,7 +5,10 @@
   lib,
   ...
 }: let
-  pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.x86_64-linux;
+  pkgs-unstable = import inputs.nixpkgs-unstable {
+    system = "x86_64-linux";
+    config.allowUnfree = true;
+  };
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -188,6 +191,11 @@ in {
           };
         };
       };
+    };
+
+    programs.antigravity-cli = {
+      enable = true;
+      package = pkgs-unstable.antigravity-cli;
     };
 
     programs.mcp = {
