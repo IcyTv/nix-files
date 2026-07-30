@@ -30,6 +30,7 @@
     stylix.enable = true;
     sudo-rs.enable = true;
     tools.enable = true;
+    virtualbox.enable = true;
     zsh.enable = true;
   };
 

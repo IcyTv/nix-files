@@ -22,6 +22,7 @@
     ./subniri.nix
     ./sudo-rs.nix
     ./tools.nix
+    ./virtualbox.nix
     ./zsh.nix
   ];
 }

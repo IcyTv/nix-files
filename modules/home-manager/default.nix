@@ -29,11 +29,11 @@
     ./spotify.nix
     ./ssh.nix
     ./starship.nix
+    ./qt6.nix
     ./stylix.nix
     ./subniri.nix
     ./swww.nix
     ./tools.nix
-    ./qt6.nix
     ./unifiedremote.nix
     ./yazi.nix
     ./zsh.nix
