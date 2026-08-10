@@ -37,6 +37,15 @@
   networking.firewall.allowedTCPPorts = [9512];
   networking.firewall.allowedUDPPorts = [24727 9511 9512];
 
+  environment.systemPackages = with pkgs; [
+    jmtpfs
+    simple-mtpfs
+    mtpfs
+    libmtp
+  ];
+
+  services.gvfs.enable = true;
+
   home-manager = {
     useGlobalPkgs = true;
     useUserPackages = true;
@@ -68,6 +77,8 @@
   services.udev.extraRules = ''
     # NS PRO Controller USB
     KERNEL=="hidraw*", ATTRS{idVendor}=="20d6", ATTRS{idProduct}=="a711", MODE="0660", TAG+="uaccess", GROUP="input"
+
+    SUBSYSTEM=="usb", ATTR{idVendor}=="091e", ATTR{idProduct}=="4fb8", MODE="0666", ENV{ID_MTP_DEVICE}="1", ENV{ID_MEDIA_PLAYER}="1"
   '';
 
   services.xserver.videoDrivers = ["nvidia"];
