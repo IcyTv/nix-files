@@ -65,6 +65,7 @@
     subniri = {
       url = "github:IcyTv/subniri";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cargo2nix.url = "github:AstroForge-Incorporated/cargo2nix/9ccc2c70a23a0905af3a6e218a83e337f1eaa3dd";
     };
 
     disko = {
