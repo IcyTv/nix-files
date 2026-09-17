@@ -10,6 +10,7 @@
   config = lib.mkIf config.my.nixos.core.enable {
     nix.settings = {
       auto-optimise-store = true;
+      keep-outputs = true;
       max-jobs = 2;
       cores = 8;
       experimental-features = [
