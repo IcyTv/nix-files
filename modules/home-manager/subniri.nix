@@ -18,6 +18,15 @@
             brightness = 0.7;
           };
         };
+
+        systemMenu.widgets = [
+          "Wifi"
+          "Bluetooth"
+          "Speaker"
+          "Microphone"
+          "Vpn"
+          "Nightlight"
+        ];
       };
     };
   };
