@@ -20,12 +20,12 @@
         };
 
         systemMenu.widgets = [
-          "Wifi"
-          "Bluetooth"
-          "Speaker"
-          "Microphone"
-          "Vpn"
-          "Nightlight"
+          "wifi"
+          "bluetooth"
+          "speaker"
+          "microphone"
+          "vpn"
+          "nightlight"
         ];
       };
     };
