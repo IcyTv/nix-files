@@ -14,7 +14,7 @@
       discord = {
         enable = true;
         # autoscroll.enable = true;
-        branch = "stable";
+        branches = ["stable"];
 
         vencord.enable = false;
         equicord.enable = true;
