@@ -33,6 +33,12 @@
           };
         };
       };
+
+      signing = {
+        format = "openpgp";
+        key = "433D8E22007D3A9762D54780ED06A3B7C8B9C6B0!";
+        signByDefault = true;
+      };
     };
 
     programs.gh = {
