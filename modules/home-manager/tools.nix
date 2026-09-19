@@ -15,7 +15,17 @@
 
     programs.gpg.enable = true;
 
-    services.gpg-agent.enable = true;
+    services.gpg-agent = {
+      enable = true;
+
+      pinentry.package = pkgs.pinentry-curses;
+
+      # Pick the one matching your shell:
+      # enableBashIntegration = true;
+      enableZshIntegration = true;
+      # enableFishIntegration = true;
+      enableNushellIntegration = true;
+    };
 
     home.packages = [
       pkgs.openrgb
