@@ -18,10 +18,18 @@
       unar
       piper
       pipewire.jack
+      yubikey-manager
     ];
 
     services.gvfs.enable = true;
     services.logiops.enable = true;
+    services.pcscd.enable = true;
+
+    hardware.gpgSmartcards.enable = true;
+
+    services.udev.packages = [
+      pkgs.yubikey-personalization
+    ];
 
     services.flatpak.enable = true;
     programs.coolercontrol.enable = true;
