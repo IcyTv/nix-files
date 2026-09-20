@@ -19,6 +19,11 @@
           };
         };
 
+        # spotify = {
+        #   enable = true;
+        #   clientId = "a41e9bfa24b649508c8987b0e2ce09d6";
+        # };
+
         systemMenu.widgets = [
           "wifi"
           "bluetooth"
