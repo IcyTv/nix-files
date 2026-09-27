@@ -17,6 +17,7 @@
     ananicy.enable = true;
     bluetooth.enable = true;
     console-font.enable = true;
+    docker.enable = true;
     games.enable = true;
     geoclue.enable = true;
     greetd.enable = true;

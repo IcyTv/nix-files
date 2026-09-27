@@ -16,6 +16,7 @@
     ./niri.nix
     ./openrgb.nix
     ./plymouth.nix
+    ./podman.nix
     ./printing.nix
     ./rebuild.nix
     ./stylix.nix

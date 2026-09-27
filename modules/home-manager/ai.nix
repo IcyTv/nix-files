@@ -186,7 +186,7 @@ in {
         provider = {
           openai.options = {
             websearch_cited = {
-              model = "gpt-5.4-mini-fast";
+              model = "gpt-5.2";
             };
           };
         };
