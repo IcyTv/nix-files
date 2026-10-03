@@ -5,8 +5,8 @@
     inputs.agenix.homeManagerModules.default
     inputs.nixcord.homeModules.nixcord
     inputs.subniri.homeModules.subniri
+    inputs.nixcraft.homeModules.default
 
-    ./waybar.nix
     ./ai.nix
     ./anyrun.nix
     ./audio.nix
@@ -20,22 +20,24 @@
     ./gammastep.nix
     ./ghostty.nix
     ./git.nix
+    ./hyprland.nix
     ./kitty.nix
     ./niri.nix
-    ./hyprland.nix
     ./nix.nix
     ./nushell.nix
     ./obs.nix
+    ./qt6.nix
     ./spotify.nix
     ./ssh.nix
     ./starship.nix
-    ./qt6.nix
     ./stylix.nix
     ./subniri.nix
     ./swww.nix
     ./tools.nix
     ./unifiedremote.nix
+    ./waybar.nix
     ./yazi.nix
     ./zsh.nix
+    ./minecraft.nix
   ];
 }

@@ -12,6 +12,7 @@
   my.hm.core.enable = true;
   my.hm.default.enable = true;
   my.hm.daw.enable = true;
+  my.hm.minecraft.enable = true;
 
   programs.niri = {
     settings.outputs = {
