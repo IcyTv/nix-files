@@ -8,7 +8,7 @@
 
   config = lib.mkIf config.my.hm.minecraft.enable {
     home.packages = [
-      pkgs.modrinth-app
+      pkgs.pakku
     ];
 
     nixcraft = {
