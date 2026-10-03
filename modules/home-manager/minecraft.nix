@@ -41,6 +41,10 @@
               url = "https://cdn.modrinth.com/data/P7dR8mSH/versions/bNnaTiuM/fabric-api-0.161.0%2B26.3.jar";
               hash = "sha256-hvFheKPOzIh6haTP6aedkvpzQdjzm1lRpNatgAq2V6Y=";
             };
+            "mods/mod-menu.jar".source = pkgs.fetchurl {
+              url = "https://cdn.modrinth.com/data/mOgUt4GM/versions/kyy7dbrZ/modmenu-21.0.0.jar";
+              hash = "sha256-g3gSxsmNZhQdt7XcrmaPJ/t41Vfo9MDImRKYX8JqXm8=";
+            };
           };
         };
       };
