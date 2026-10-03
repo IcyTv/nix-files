@@ -8,7 +8,7 @@
 
   config = lib.mkIf config.my.hm.minecraft.enable {
     home.packages = [
-      pkgs.pakku
+      pkgs.packwiz
     ];
 
     nixcraft = {
