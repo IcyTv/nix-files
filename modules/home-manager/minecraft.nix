@@ -30,12 +30,19 @@
         instances.vanilla-plus = {
           desktopEntry = {
             enable = true;
-            name = "Unmodded Minecraft";
+            name = "Vanilla Plus";
           };
 
-          fabricLoader = {
+          mrpack = {
             enable = true;
-            version = "0.19.5";
+            file = pkgs.stdenv.mkDerivation {
+              pname = "Vanilla Plus";
+              version = "0.0.1";
+              src = ./Vanilla-Plus-0.0.1.mrpack;
+              dontUnpack = true;
+              installPhase = "cp $src $out";
+            };
+            fabricLoaderVersion = "0.19.5";
           };
 
           java.maxMemory = 160000;
