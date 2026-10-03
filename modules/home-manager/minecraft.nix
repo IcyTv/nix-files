@@ -7,6 +7,10 @@
   options.my.hm.minecraft.enable = lib.mkEnableOption "Gaming tools (Lutris, Proton)";
 
   config = lib.mkIf config.my.hm.minecraft.enable {
+    home.packages = [
+      pkgs.modrinth-app
+    ];
+
     nixcraft = {
       enable = true;
       client = {
@@ -45,6 +49,10 @@
               url = "https://cdn.modrinth.com/data/mOgUt4GM/versions/kyy7dbrZ/modmenu-21.0.0.jar";
               hash = "sha256-g3gSxsmNZhQdt7XcrmaPJ/t41Vfo9MDImRKYX8JqXm8=";
             };
+            # "mods/sodium.jar".source = pkgs.fetchurl {
+            #   url = "https://cdn.modrinth.com/data/AANobbMI/versions/bAZQdGpg/sodium-fabric-0.9.2%2Bmc26.3.jar";
+            #   hash = lib.fakeHash;
+            # };
           };
         };
       };
