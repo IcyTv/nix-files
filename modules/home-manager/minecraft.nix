@@ -49,12 +49,6 @@
             };
           };
 
-          files = {
-            "resourcepacks/FreshAnimations_v1.10.5.zip".method = lib.mkForce "copy";
-            "resourcepacks/No Pumpkin Blur 1.4.zip".method = lib.mkForce "copy";
-            "resourcepacks/Redstone Tweaks 2.5.6.zip".method = lib.mkForce "copy";
-          };
-
           java.maxMemory = 160000;
         };
       };
