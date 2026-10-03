@@ -33,6 +33,11 @@
             name = "Vanilla Plus";
           };
 
+          binEntry = {
+            enable = true;
+            name = "mc-vanilla-plus";
+          };
+
           mrpack = {
             enable = true;
             file = pkgs.stdenv.mkDerivation {
