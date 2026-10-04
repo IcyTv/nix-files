@@ -42,7 +42,7 @@
             enable = true;
             file = pkgs.stdenv.mkDerivation {
               pname = "Vanilla Plus";
-              version = "0.0.1";
+              version = "1.0.2";
               src = ./Vanilla-Plus-1.0.2.mrpack;
               dontUnpack = true;
               installPhase = "cp $src $out";
