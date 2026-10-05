@@ -27,29 +27,53 @@
           };
         };
 
-        instances.vanilla-plus = {
-          desktopEntry = {
-            enable = true;
-            name = "Vanilla Plus";
-          };
-
-          binEntry = {
-            enable = true;
-            name = "mc-vanilla-plus";
-          };
-
-          mrpack = {
-            enable = true;
-            file = pkgs.stdenv.mkDerivation {
-              pname = "Vanilla Plus";
-              version = "1.0.2";
-              src = ./Vanilla-Plus-1.0.2.mrpack;
-              dontUnpack = true;
-              installPhase = "cp $src $out";
+        instances = {
+          vanilla-plus = {
+            desktopEntry = {
+              enable = true;
+              name = "Vanilla Plus";
             };
-          };
 
-          java.maxMemory = 160000;
+            binEntry = {
+              enable = true;
+              name = "mc-vanilla-plus";
+            };
+
+            mrpack = {
+              enable = true;
+              file = pkgs.stdenv.mkDerivation {
+                pname = "Vanilla Plus";
+                version = "1.0.2";
+                src = ./Vanilla-Plus-1.0.2.mrpack;
+                dontUnpack = true;
+                installPhase = "cp $src $out";
+              };
+            };
+
+            java.maxMemory = 160000;
+            java.extraArguments = ["-XX:+UseZGC"];
+          };
+          slimed = {
+            desktopEntry = {
+              enable = true;
+              name = "Slimed";
+            };
+
+            binEntry = {
+              enable = true;
+              name = "mc-slimed";
+            };
+
+            mrpack = {
+              enable = true;
+              file = pkgs.fetchurl {
+                url = "https://cdn.modrinth.com/data/8yKzGJOG/versions/ylSYr50H/Slimes%20Adventure%20-%201.13.4.mrpack";
+                sha256 = "sha256-tIsqKpXo2xpRSnYjYbWu9ZbHoTLnx23g6Z6hEcafikg=";
+              };
+            };
+
+            java.maxMemory = 160000;
+          };
         };
       };
     };
