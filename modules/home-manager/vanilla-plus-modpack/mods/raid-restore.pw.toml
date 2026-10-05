@@ -1,0 +1,13 @@
+name = "Raid Restorer"
+filename = "raid-restore-1.5.0.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/7YpmyzZr/versions/KDZS6IER/raid-restore-1.5.0.jar"
+hash-format = "sha512"
+hash = "1aef6421ae6d959a10d5b448acf2c2bd35cd3fcf32c53e8e9a073acca5262bd492177c1e1f9cf8302f919ccc804d72f9734fb8a66d5bf092e7e84f3e99b82ed1"
+
+[update]
+[update.modrinth]
+mod-id = "7YpmyzZr"
+version = "KDZS6IER"

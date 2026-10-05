@@ -1,0 +1,13 @@
+name = "InvSearch"
+filename = "invsearch-storage-indexer-1.3.2+26.2-fabric.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/s8jPicuI/versions/7CeCZe45/invsearch-storage-indexer-1.3.2%2B26.2-fabric.jar"
+hash-format = "sha512"
+hash = "64f5ccfb2088e2fe0d74bca61c9d0a2269b9a0f4f10cb8cebe8b592be79f5bc105d7d45eb6b6ae0c9d58fba256fc67d196b50f3da3d20fe7c454f51b60543258"
+
+[update]
+[update.modrinth]
+mod-id = "s8jPicuI"
+version = "7CeCZe45"

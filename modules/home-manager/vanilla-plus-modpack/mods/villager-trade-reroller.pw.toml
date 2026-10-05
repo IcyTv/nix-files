@@ -1,0 +1,13 @@
+name = "Villager Trade Reroller"
+filename = "villager-trade-reroller-1.0.0.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/l9XgsasG/versions/dXsIwmjr/villager-trade-reroller-1.0.0.jar"
+hash-format = "sha512"
+hash = "17b9fe8b4fb72c1db5d287ad327f5ff9cbf1c4b90a331f5c16e2efc1cd38ac8a8d8e7d09e0fdeb6120c75c2be94c3dd82c86ad7d493fae645758ad9e6ff9852d"
+
+[update]
+[update.modrinth]
+mod-id = "l9XgsasG"
+version = "dXsIwmjr"

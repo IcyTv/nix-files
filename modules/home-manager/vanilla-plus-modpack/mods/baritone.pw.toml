@@ -1,0 +1,8 @@
+name = "baritone"
+filename = "baritone-standalone-fabric-1.19.0.jar"
+side = "both"
+
+[download]
+url = "https://github.com/cabaletta/baritone/releases/download/v1.19.0/baritone-standalone-fabric-1.19.0.jar"
+hash-format = "sha256"
+hash = "b0641910b5829a2864c4d3ded38b34ece4e9e7fef0ed8edcc0a44094e45ba883"

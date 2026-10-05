@@ -1,0 +1,13 @@
+name = "Litematica Bobby Fix Fork"
+filename = "litematica_bobby_fix-1.1.2+26.2.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/KG2rXgFv/versions/ohXUklJl/litematica_bobby_fix-1.1.2%2B26.2.jar"
+hash-format = "sha512"
+hash = "8589b31627e8b44894c2952bcdeb3f7122970efdc24e08b754dba99b734590773aeeb53a0228d9ce02a39a15f44a7cc3f10a455053715fc1f54bf9b6461b503e"
+
+[update]
+[update.modrinth]
+mod-id = "KG2rXgFv"
+version = "ohXUklJl"

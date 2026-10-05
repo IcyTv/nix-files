@@ -78,8 +78,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixcraft = {
-      url = "github:loystonpais/nixcraft";
+    nix-minecraft = {
+      url = "github:Infinidoge/nix-minecraft";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
@@ -105,6 +105,7 @@
         {pkgs, ...}: {
           nixpkgs.overlays = [
             inputs.niri.overlays.niri
+            inputs.nix-minecraft.overlay
             inputs.nur.overlays.default
             inputs.subniri.overlays.default
           ];

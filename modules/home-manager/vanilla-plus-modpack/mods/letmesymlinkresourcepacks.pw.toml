@@ -1,0 +1,13 @@
+name = "LetMeSymlink (Resource Packs)"
+filename = "LetMeSymlink-fabric-2.0.0.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/TqW7WY8n/versions/o2aQVnGs/LetMeSymlink-fabric-2.0.0.jar"
+hash-format = "sha512"
+hash = "4c5e44366f756be5f90845de9e81fb22e815810988b78af6255c6bf4a4a2c3e739f7af1d93f45c706b1eff5b1a451379df94559277ed0a3d8316be0b0e85d10c"
+
+[update]
+[update.modrinth]
+mod-id = "TqW7WY8n"
+version = "o2aQVnGs"

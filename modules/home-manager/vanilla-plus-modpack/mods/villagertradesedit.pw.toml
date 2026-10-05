@@ -1,0 +1,13 @@
+name = "VillagerTradesEdit"
+filename = "villagertrades-26.2-1.0.8-fabric.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/rphz5Ci4/versions/UyHWDFJE/villagertrades-26.2-1.0.8-fabric.jar"
+hash-format = "sha512"
+hash = "8d85e6199112b0452c76ccecec8fad6521eea27bbede81fe67ab0926a5451d0ffe493a381d4ed4d62bd1e743452dd21f017f7fc0ad570e2015be651063e6a44f"
+
+[update]
+[update.modrinth]
+mod-id = "rphz5Ci4"
+version = "UyHWDFJE"

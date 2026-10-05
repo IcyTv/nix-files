@@ -5,8 +5,6 @@
     inputs.agenix.homeManagerModules.default
     inputs.nixcord.homeModules.nixcord
     inputs.subniri.homeModules.subniri
-    inputs.nixcraft.homeModules.default
-
     ./ai.nix
     ./anyrun.nix
     ./audio.nix

@@ -1,0 +1,13 @@
+name = "End Portal Calculator"
+filename = "EndPortalCalculator-1.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/Fz992LCe/versions/5D1k9g7f/EndPortalCalculator-1.jar"
+hash-format = "sha512"
+hash = "e985aedbbbd1a6ed00b202a08a05d61bc1b85fd878bf9b2c264482e967067b38d006c7beb8e4fc29fe47aa7530200ef22e09e004de34d536dd4d14ee344eab46"
+
+[update]
+[update.modrinth]
+mod-id = "Fz992LCe"
+version = "5D1k9g7f"

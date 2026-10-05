@@ -1,0 +1,13 @@
+name = "Easy Auto Cycler"
+filename = "easyautocycler-fabric-26.2-3.1.2.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/L1k78Y2G/versions/TNYPPMuh/easyautocycler-fabric-26.2-3.1.2.jar"
+hash-format = "sha512"
+hash = "54b652733e58b20375401fa34f924e0e1104cf1f794e4b0f4778abdeb9f9cf16824832f67f5d882070867ccbdf9bdb3e329a221877579b3e394f94276b3fb64a"
+
+[update]
+[update.modrinth]
+mod-id = "L1k78Y2G"
+version = "TNYPPMuh"

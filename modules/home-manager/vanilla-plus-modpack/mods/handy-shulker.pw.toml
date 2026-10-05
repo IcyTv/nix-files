@@ -1,0 +1,13 @@
+name = "Handy Shulker"
+filename = "handyshulker-2.2.0.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/hEULt5Y8/versions/zJcuTQrT/handyshulker-2.2.0.jar"
+hash-format = "sha512"
+hash = "cabb5e874aab55cffe7016a6eb04f8421a1150534694ee69f3f3795c2206acaee5ac95a711263ed42db3c16276df63e5342935b8e14718858acf0c68b3f91c24"
+
+[update]
+[update.modrinth]
+mod-id = "hEULt5Y8"
+version = "zJcuTQrT"

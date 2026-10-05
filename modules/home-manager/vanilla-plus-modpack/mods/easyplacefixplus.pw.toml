@@ -1,0 +1,13 @@
+name = "Litematica EasyPlaceFixPlus"
+filename = "litematica-easy-place-fix-plus-1.0.6+26.2.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/8yXLuMTt/versions/gW2Hmsjm/litematica-easy-place-fix-plus-1.0.6%2B26.2.jar"
+hash-format = "sha512"
+hash = "a00f0f42faae9060f8dab95b2fcec98b196b13b66297c50770f924d9febf610f3f2106f2dacde18b2d066c8eaf17cbb6d783ceb5fa5fecc1d8ecbccc337d3e9d"
+
+[update]
+[update.modrinth]
+mod-id = "8yXLuMTt"
+version = "gW2Hmsjm"

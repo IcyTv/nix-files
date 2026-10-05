@@ -1,0 +1,13 @@
+name = "Better Update Suppression"
+filename = "better_update_suppression-2.0+26.2.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/AjNvLZDh/versions/HlxSQk4E/better_update_suppression-2.0%2B26.2.jar"
+hash-format = "sha512"
+hash = "17fb23d848711e1b21c471223b792ca5a3056b238cb0ccfbf1b9e5355c67b04d01bbde1c5147aed1f2ca61d2171d9cd290500c8f95a4d34928e605aa45b13f27"
+
+[update]
+[update.modrinth]
+mod-id = "AjNvLZDh"
+version = "HlxSQk4E"

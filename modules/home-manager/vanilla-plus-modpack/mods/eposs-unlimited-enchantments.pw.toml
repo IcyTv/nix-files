@@ -1,0 +1,13 @@
+name = "Unlimited Enchantments"
+filename = "unlimited-enchantments-1.3.0+26.X.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/6YplFU9p/versions/dIg3Pu1U/unlimited-enchantments-1.3.0%2B26.X.jar"
+hash-format = "sha512"
+hash = "ee693651eb9bdd4bb804b6c18df36a2695973339b9d54a913b757444d049e511d80e512f65068bb22faf2f43413c0debf11ad66c532bc29a68887363bc0ad3d1"
+
+[update]
+[update.modrinth]
+mod-id = "6YplFU9p"
+version = "dIg3Pu1U"

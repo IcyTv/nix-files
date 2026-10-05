@@ -1,0 +1,13 @@
+name = "Gravity Duplication Return"
+filename = "gravity-duplication-return-1.0.0.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/FDnrQb8d/versions/sBTV8LHh/gravity-duplication-return-1.0.0.jar"
+hash-format = "sha512"
+hash = "c25d5b33bbb0f3ee6bb6ee8e0f844ea21ab51ff94ee9e911339382dfb1b533ddb9fa9098ad2c123ecc7ef4bdf60e81c91c537ec7819527cb38c84a96f6121cc2"
+
+[update]
+[update.modrinth]
+mod-id = "FDnrQb8d"
+version = "sBTV8LHh"

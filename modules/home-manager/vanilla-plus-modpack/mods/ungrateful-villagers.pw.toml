@@ -1,0 +1,13 @@
+name = "Ungrateful Villagers"
+filename = "ungrateful-villagers-1.0.1-26.2.jar"
+side = "server"
+
+[download]
+url = "https://cdn.modrinth.com/data/xX8jSfUy/versions/bGoZfEKJ/ungrateful-villagers-1.0.1-26.2.jar"
+hash-format = "sha512"
+hash = "724108d68c7cd4335d188c26ae8f11a926129a90dd54a26313858f6586bd04c1a5bc7f983625cb7cbc2a741d64020ff1700820752b6065e844e7c85d69b92ffc"
+
+[update]
+[update.modrinth]
+mod-id = "xX8jSfUy"
+version = "bGoZfEKJ"

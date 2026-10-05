@@ -1,0 +1,13 @@
+name = "Litematica Material HUD & Chest Finder"
+filename = "litematica-material-hud-0.0.22+26.2.jar"
+side = "client"
+
+[download]
+url = "https://cdn.modrinth.com/data/JmqA4Alf/versions/VunIhzsU/litematica-material-hud-0.0.22%2B26.2.jar"
+hash-format = "sha512"
+hash = "c37680a3e3a9ea2745d2e57b53ba1a245bcddee1639f242c3853b5620d5459a54b59765ac049eafcac9b002cbc016dda2733dde4095db8ed69321364e6ddb824"
+
+[update]
+[update.modrinth]
+mod-id = "JmqA4Alf"
+version = "VunIhzsU"

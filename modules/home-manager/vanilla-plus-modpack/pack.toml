@@ -1,0 +1,13 @@
+name = "Vanilla Plus"
+author = "IcyTv"
+version = "1.0.2"
+pack-format = "packwiz:1.1.0"
+
+[index]
+file = "index.toml"
+hash-format = "sha256"
+hash = "7f4d2652ac161f7d16785a2cc82b024074ba4f1294f564072bd468d0dbcadf2b"
+
+[versions]
+fabric = "0.19.5"
+minecraft = "26.2"

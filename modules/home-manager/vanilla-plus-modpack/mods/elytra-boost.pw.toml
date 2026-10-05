@@ -1,0 +1,13 @@
+name = "Elytra Boost"
+filename = "elytra_boost-beta1.0.1.jar"
+side = "both"
+
+[download]
+url = "https://cdn.modrinth.com/data/GoqQ4SII/versions/fdYVz8DT/elytra_boost-beta1.0.1.jar"
+hash-format = "sha512"
+hash = "cd405e4d23e4642eefde787681c0fdd65883ba13d1ca651b74324c70ee9441164f167cc071cdf45f3445348e30c0116f29fa3d059741695be8745d4fca21b277"
+
+[update]
+[update.modrinth]
+mod-id = "GoqQ4SII"
+version = "fdYVz8DT"
