@@ -54,6 +54,24 @@
 
     networking.networkmanager.enable = true;
 
+    networking.networkmanager.insertNameservers = [
+      "1.1.1.1"
+      "2606:4700:4700::1111"
+    ];
+
+    services.resolved = {
+      enable = true;
+
+      settings.Resolve = {
+        DNS = [
+          "1.1.1.1"
+          "2606:4700:4700::1111"
+        ];
+
+        Cache = "yes";
+      };
+    };
+
     time.timeZone = "Europe/Berlin";
     i18n.defaultLocale = "en_US.UTF-8";
 
