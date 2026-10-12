@@ -41,6 +41,86 @@
 
     doCheck = false;
   };
+  tracy-mcp = let
+    capstoneSrc = pkgs.fetchFromGitHub {
+      owner = "capstone-engine";
+      repo = "capstone";
+      rev = "6.0.0-Alpha1";
+      hash = "sha256-oKRu3P1inWueEMIpL0uI2ayCMHZ9FIVotil4sqwLqH4=";
+    };
+    zstdSrc = pkgs.fetchFromGitHub {
+      owner = "facebook";
+      repo = "zstd";
+      rev = "v1.5.7";
+      hash = "sha256-tNFWIT9ydfozB8dWcmTMuZLCQmQudTFJIkSr0aG7S44=";
+    };
+    ppqsortSource = pkgs.fetchFromGitHub {
+      owner = "GabTux";
+      repo = "PPQSort";
+      rev = "v1.0.5";
+      hash = "sha256-EMZVI/uyzwX5637/rdZuMZoql5FTrsx0ESJMdLVDmfk=";
+    };
+    cpmSrc = pkgs.fetchurl {
+      url = "https://github.com/cpm-cmake/CPM.cmake/releases/download/v0.38.7/CPM.cmake";
+      hash = "sha256-g+XrcbK7uLHyrTjxlQKHoFdiTjhcI49gh/lM38RK+cU=";
+    };
+    ppqsortSrc = pkgs.runCommand "ppqsort-1.0.5-source" {} ''
+      cp -r ${ppqsortSource} $out
+      chmod -R u+w $out
+      cp ${cpmSrc} $out/cmake/CPM.cmake
+    '';
+    packageProjectSrc = pkgs.fetchFromGitHub {
+      owner = "TheLartians";
+      repo = "PackageProject.cmake";
+      rev = "v1.11.1";
+      hash = "sha256-E7WZSYDlss5bidbiWL1uX41Oh6JxBRtfhYsFU19kzIw=";
+    };
+    jsonSrc = pkgs.fetchFromGitHub {
+      owner = "nlohmann";
+      repo = "json";
+      rev = "v3.12.0";
+      hash = "sha256-cECvDOLxgX7Q9R3IE86Hj9JJUxraDQvhoyPDF03B2CY=";
+    };
+    tracySrc = pkgs.fetchFromGitHub {
+      owner = "wolfpld";
+      repo = "tracy";
+      rev = "05cceee0df3b8d7c6fa87e9638af311dbabc63cb";
+      hash = "sha256-D4aQ5kSfWH9qEUaithR0W/E5pN5on0n9YoBHeMggMSE=";
+    };
+  in
+    pkgs.stdenv.mkDerivation {
+      name = "tracy-mcp";
+      version = "0.1.0";
+
+      src = pkgs.fetchFromGitHub {
+        owner = "HTRMC";
+        repo = "tracy-mcp";
+        rev = "v0.1.0";
+        sha256 = "sha256-hQZZ4ntUMMqe0BAtTUV14zszlWh4oY/5IFFKT1m7+pI=";
+      };
+
+      postPatch = ''
+        substituteInPlace CMakeLists.txt \
+          --replace-fail 'set(TRACY_DIR ''${CMAKE_CURRENT_LIST_DIR}/third_party/tracy)' 'set(TRACY_DIR ${tracySrc})'
+        substituteInPlace cmake/deps.cmake \
+          --replace-fail 'set(TRACY_DIR ''${CMAKE_CURRENT_LIST_DIR}/../third_party/tracy)' 'set(TRACY_DIR ${tracySrc})'
+      '';
+
+      nativeBuildInputs = with pkgs; [cmake ninja pkg-config];
+      buildInputs = with pkgs; [openssl];
+
+      cmakeFlags = [
+        "-DCPM_capstone_SOURCE=${capstoneSrc}"
+        "-DCPM_zstd_SOURCE=${zstdSrc}"
+        "-DCPM_PPQSort_SOURCE=${ppqsortSrc}"
+        "-DCPM_PackageProject.cmake_SOURCE=${packageProjectSrc}"
+        "-DCPM_json_SOURCE=${jsonSrc}"
+      ];
+
+      installPhase = ''
+        cmake --install .
+      '';
+    };
 in {
   options.my.hm.ai.enable = lib.mkEnableOption "AI tools (opencode, mcp)";
 
@@ -214,6 +294,9 @@ in {
         };
         rust-docs = {
           command = "${docsrs-mcp}/bin/docsrs-mcp";
+        };
+        tracy-mcp = {
+          command = "${tracy-mcp}/bin/tracy-mcp";
         };
       };
     };
