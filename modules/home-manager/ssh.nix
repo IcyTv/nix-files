@@ -29,6 +29,13 @@
           Port = 3232;
           User = "icytv";
         };
+
+        "box" = {
+          HostName = "91.98.39.22";
+          Port = 22;
+          User = "michael";
+          ForwardAgent = true;
+        };
       };
     };
   };
