@@ -54,20 +54,17 @@
 
     networking.networkmanager.enable = true;
 
-    networking.networkmanager.insertNameservers = [
-      "1.1.1.1"
-      "2606:4700:4700::1111"
-    ];
-
     services.resolved = {
       enable = true;
 
       settings.Resolve = {
         DNS = [
-          "1.1.1.1"
-          "2606:4700:4700::1111"
+          "1.1.1.1#cloudflare-dns.com"
+          "2606:4700:4700::1111#cloudflare-dns.com"
         ];
 
+        DNSOverTLS = "yes";
+        DNSSEC = "yes";
         Cache = "yes";
       };
     };
