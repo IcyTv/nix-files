@@ -260,7 +260,7 @@ in {
         plugin = [
           "@anthonyhaussman/opencode-agy-auth"
           "opencode-dynamic-context-pruning@latest"
-          "@slkiser/opencode-quota@latest"
+          "@slkiser/opencode-quota@4"
           "opencode-websearch-cited@latest"
         ];
 
@@ -269,6 +269,9 @@ in {
             websearch_cited = {
               model = "gpt-5.5";
             };
+          };
+          google.options = {
+            projectId = "gen-lang-client-0198199812";
           };
         };
       };
