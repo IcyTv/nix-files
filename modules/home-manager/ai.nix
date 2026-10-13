@@ -222,7 +222,7 @@ in {
 
         ## Commands
 
-        You will generally be acting on NixOS, inside an isolated environment, generally defined at @flake.nix.
+        You will be acting on NixOS, inside an isolated environment, generally defined at @flake.nix.
         If any tools you expect to see, based on the flake, are missing either:
         - Prompt the user to restart your shell (preferred)
         - Run commands using `nix develop`.
@@ -258,15 +258,16 @@ in {
       settings = {
         autoshare = false;
         plugin = [
-          "opencode-gemini-auth@latest"
-          "opencode-websearch-cited@1.2.0"
+          "@anthonyhaussman/opencode-agy-auth"
           "opencode-dynamic-context-pruning@latest"
+          "@slkiser/opencode-quota@latest"
+          "opencode-websearch-cited@latest"
         ];
 
         provider = {
           openai.options = {
             websearch_cited = {
-              model = "gpt-5.2";
+              model = "gpt-5.5";
             };
           };
         };
