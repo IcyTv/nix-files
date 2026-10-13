@@ -275,6 +275,12 @@ in {
           };
         };
       };
+
+      tui = {
+        plugin = [
+          "@slkiser/opencode-quota@4"
+        ];
+      };
     };
 
     programs.antigravity-cli = {
