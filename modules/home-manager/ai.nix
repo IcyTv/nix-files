@@ -269,8 +269,9 @@ in {
         plugin = [
           "@anthonyhaussman/opencode-agy-auth"
           "opencode-dynamic-context-pruning@latest"
-          "@slkiser/opencode-quota@4"
+          "@slkiser/opencode-quota@5"
           "opencode-websearch-cited@latest"
+          "opencode-latex"
         ];
 
         provider = {
