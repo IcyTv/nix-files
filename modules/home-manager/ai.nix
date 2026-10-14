@@ -18,6 +18,7 @@
       makeWrapper ${lib.getExe opencode2} $out/bin/opencode
     '';
   };
+  opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -271,7 +272,7 @@ in {
           "opencode-dynamic-context-pruning@latest"
           "@slkiser/opencode-quota@5"
           "opencode-websearch-cited@latest"
-          "opencode-latex"
+          "${opencode-latex}"
         ];
 
         provider = {
