@@ -288,7 +288,7 @@ in {
 
       tui = {
         plugin = [
-          "@slkiser/opencode-quota@4"
+          "@slkiser/opencode-quota@5"
         ];
       };
     };
