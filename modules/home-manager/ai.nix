@@ -9,6 +9,15 @@
     system = "x86_64-linux";
     config.allowUnfree = true;
   };
+  opencode2 = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.opencode2;
+  opencode = pkgs.symlinkJoin {
+    name = "opencode-${opencode2.version}";
+    paths = [opencode2];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      makeWrapper ${lib.getExe opencode2} $out/bin/opencode
+    '';
+  };
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -128,7 +137,7 @@ in {
     programs.opencode = {
       enable = true;
       enableMcpIntegration = true;
-      package = pkgs-unstable.opencode;
+      package = opencode;
 
       context = ''
         # General Development Rules
