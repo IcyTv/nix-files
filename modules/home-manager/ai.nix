@@ -355,6 +355,10 @@ in {
       source = pkgs.agent-skills.github.mattpocock.skills.handoff;
       recursive = true;
     };
+    home.file.".agents/skills/diagnosing-bugs" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.diagnosing-bugs;
+      recursive = true;
+    };
     home.file.".agents/skills/codebase-design" = {
       source = pkgs.agent-skills.github.mattpocock.skills.codebase-design;
       recursive = true;
