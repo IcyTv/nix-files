@@ -62,6 +62,8 @@ in
       mkdir -p $out
       cp package.json server.js tui.js $out/
       cp -r node_modules $out/
+      install -Dm644 plugin/LICENSE $out/share/licenses/opencode-latex/LICENSE
+      install -Dm644 vendor/opentui-math/LICENSE $out/share/licenses/opentui-math/LICENSE
       runHook postInstall
     '';
 

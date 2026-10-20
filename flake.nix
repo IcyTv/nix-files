@@ -60,6 +60,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    agents-nix = {
+      url = "github:sudosubin/agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nix-filter.url = "github:numtide/nix-filter";
 
     nixcord.url = "github:FlameFlag/nixcord";
@@ -92,6 +97,7 @@
     nur,
     nix-filter,
     subniri,
+    agents-nix,
     ...
   } @ inputs: let
     systems = nixpkgs.lib.systems.flakeExposed;
@@ -110,6 +116,7 @@
             inputs.nix-minecraft.overlay
             inputs.nur.overlays.default
             inputs.subniri.overlays.default
+            agents-nix.overlays.default
           ];
         }
       )

@@ -321,5 +321,19 @@ in {
         };
       };
     };
+
+    # Skills
+    home.file.".agents/skills/find-skill" = {
+      source = pkgs.agent-skills.github.vercel-labs.skills.find-skills;
+      recursive = true;
+    };
+    home.file.".agents/skills/systematic-debugging" = {
+      source = pkgs.agent-skills.github.obra.superpowers.systematic-debugging;
+      recursive = true;
+    };
+    home.file.".agents/skills/improve-codebase-architecture" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.improve-codebase-architecture;
+      recursive = true;
+    };
   };
 }

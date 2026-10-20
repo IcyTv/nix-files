@@ -20,6 +20,26 @@
         "type": "github"
       }
     },
+    "agents-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1792459318,
+        "narHash": "sha256-Q8um1YMqjftkQRnsrtFbPVDOQpjmr0B+UrJnv8EiF78=",
+        "owner": "sudosubin",
+        "repo": "agents.nix",
+        "rev": "6feeaa472b53a325ca75863f0e73b6a7f51a9261",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sudosubin",
+        "repo": "agents.nix",
+        "type": "github"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -1017,6 +1037,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "agents-nix": "agents-nix",
         "disko": "disko",
         "hardware": "hardware",
         "home-manager": "home-manager",
