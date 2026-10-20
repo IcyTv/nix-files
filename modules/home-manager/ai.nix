@@ -18,6 +18,9 @@
       makeWrapper ${lib.getExe opencode2} $out/bin/opencode
     '';
   };
+
+  antigravity-cli = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli;
+
   opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
@@ -296,7 +299,7 @@ in {
 
     programs.antigravity-cli = {
       enable = true;
-      package = pkgs-unstable.antigravity-cli;
+      package = antigravity-cli;
     };
 
     programs.mcp = {
