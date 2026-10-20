@@ -335,5 +335,29 @@ in {
       source = pkgs.agent-skills.github.mattpocock.skills.improve-codebase-architecture;
       recursive = true;
     };
+    home.file.".agents/skills/research" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.research;
+      recursive = true;
+    };
+    home.file.".agents/skills/wayfinder" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.wayfinder;
+      recursive = true;
+    };
+    home.file.".agents/skills/grilling" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.grilling;
+      recursive = true;
+    };
+    home.file.".agents/skills/teach" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.teach;
+      recursive = true;
+    };
+    home.file.".agents/skills/handoff" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.handoff;
+      recursive = true;
+    };
+    home.file.".agents/skills/codebase-design" = {
+      source = pkgs.agent-skills.github.mattpocock.skills.codebase-design;
+      recursive = true;
+    };
   };
 }
