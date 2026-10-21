@@ -294,6 +294,7 @@ in {
         plugin = [
           "@slkiser/opencode-quota@5"
         ];
+        experimental.todo = true;
       };
     };
 
