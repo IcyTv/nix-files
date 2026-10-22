@@ -1,5 +1,4 @@
 {
-  pkgs,
   config,
   lib,
   ...
@@ -20,9 +19,10 @@
           };
           "wm:M" = {
             d = "layer(wmshift)";
+            f = "overload(wmctrlshift, M-f)";
           };
-          "wmshift:M-S" = {
-          };
+          "wmshift:M-S" = {};
+          "wmctrlshift:M-C-S" = {};
         };
       };
     };
