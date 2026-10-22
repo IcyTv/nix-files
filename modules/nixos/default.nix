@@ -11,6 +11,7 @@
     ./greetd.nix
     ./hyprland.nix
     ./installer.nix
+    ./keyd.nix
     ./keymap.nix
     ./limine.nix
     ./niri.nix

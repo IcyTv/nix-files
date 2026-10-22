@@ -21,6 +21,7 @@
     games.enable = true;
     geoclue.enable = true;
     greetd.enable = true;
+    keyd.enable = true;
     keymap.enable = true;
     limine.enable = true;
     niri.enable = true;
