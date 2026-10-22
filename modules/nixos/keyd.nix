@@ -22,7 +22,7 @@
             f = "overload(wmctrlshift, M-f)";
           };
           "wmshift:M-S" = {};
-          "wmctrlshift:M-C-S" = {};
+          "wmctrlshift:M-C" = {};
         };
       };
     };
