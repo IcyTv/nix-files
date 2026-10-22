@@ -222,6 +222,8 @@ in {
 
           settings = {
             "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+            "extensions.webextensions.restictedDomains" = "";
+            "privacy.resistFingerprinting.block_mozAddonManager" = true;
           };
           userChrome = ''
             #import-button {

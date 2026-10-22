@@ -235,37 +235,23 @@
             repeat = false;
           };
 
-          "Mod+Left".action.focus-column-left = {};
-          "Mod+Right".action.focus-column-right = {};
           "Mod+H".action.focus-column-left = {};
           "Mod+L".action.focus-column-right = {};
 
-          "Mod+Ctrl+Left".action.move-column-left-or-to-monitor-left = {};
-          "Mod+Ctrl+Right".action.move-column-right-or-to-monitor-right = {};
           "Mod+Ctrl+H".action.move-column-left-or-to-monitor-left = {};
           "Mod+Ctrl+L".action.move-column-right-or-to-monitor-right = {};
 
-          "Mod+Down".action.focus-window-or-workspace-down = {};
-          "Mod+Up".action.focus-window-or-workspace-up = {};
           "Mod+J".action.focus-window-or-workspace-down = {};
           "Mod+K".action.focus-window-or-workspace-up = {};
 
-          "Mod+Ctrl+Down".action.move-window-down-or-to-workspace-down = {};
-          "Mod+Ctrl+Up".action.move-window-up-or-to-workspace-up = {};
-          "Mod+Ctrl+J".action.move-window-up-or-to-workspace-up = {};
+          "Mod+Ctrl+J".action.move-window-down-or-to-workspace-down = {};
           "Mod+Ctrl+K".action.move-window-up-or-to-workspace-up = {};
 
-          "Mod+Shift+Left".action.focus-monitor-left = {};
-          "Mod+Shift+Down".action.focus-workspace-down = {};
-          "Mod+Shift+Up".action.focus-workspace-up = {};
-          "Mod+Shift+Right".action.focus-monitor-right = {};
           "Mod+Shift+H".action.focus-monitor-left = {};
           "Mod+Shift+J".action.focus-workspace-down = {};
           "Mod+Shift+K".action.focus-workspace-up = {};
           "Mod+Shift+L".action.focus-monitor-right = {};
 
-          "Mod+Alt+Up".action.move-workspace-up = {};
-          "Mod+Alt+Down".action.move-workspace-down = {};
           "Mod+Alt+K".action.move-workspace-up = {};
           "Mod+Alt+J".action.move-workspace-down = {};
 
