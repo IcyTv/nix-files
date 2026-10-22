@@ -271,7 +271,7 @@ in {
       settings = {
         autoshare = false;
         plugins = [
-          "opencode-vin@latest"
+          "opencode-vim@latest"
           "@anthonyhaussman/opencode-agy-auth"
           "opencode-dynamic-context-pruning@latest"
           "@slkiser/opencode-quota@5"
