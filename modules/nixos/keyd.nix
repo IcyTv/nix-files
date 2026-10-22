@@ -21,7 +21,7 @@
           "wm:M" = {
             d = "layer(wmshift)";
           };
-          "wmshift:M=S" = {
+          "wmshift:M-S" = {
           };
         };
       };
