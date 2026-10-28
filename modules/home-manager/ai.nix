@@ -276,6 +276,8 @@ in {
           "opencode-dynamic-context-pruning@latest"
           "@slkiser/opencode-quota@5"
           "opencode-websearch-cited@latest"
+          "@bybrawe/opencode-loop@latest"
+          "@bybrawe/opencode-goal@latest"
           "${opencode-latex}"
         ];
 
