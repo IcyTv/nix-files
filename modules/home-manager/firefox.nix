@@ -60,6 +60,33 @@
     };
   };
 
+  tab-to-list = buildFirefoxXpiAddon {
+    pname = "tab-to-list";
+    version = "2.5";
+    addonId = "{948c55c8-acf3-4adc-ac2f-1beaf6a12b4a}";
+    sha256 = "72be9941db16eb08a5d8b64f88f6a1be2270d9ab79f1fa31408011485cd31447";
+    url = "https://addons.mozilla.org/firefox/downloads/file/4893303/tab_to_list-2.5.xpi";
+    meta = with pkgs.lib; {
+      description = "Convert tabs into a list";
+      homepage = "https://addons.mozilla.org/en-US/firefox/addon/tab-to-list/";
+      license = licenses.mpl20;
+      platforms = platforms.all;
+    };
+  };
+  block-yt-shortvideo = buildFirefoxXpiAddon {
+    pname = "block-yt-shortvideo";
+    version = "1.1.0";
+    addonId = "{014d0bac-dd06-4e96-b7c1-41ad0d208c07}";
+    sha256 = "fdd294edf9d3e5de6b5e2fdc81ab2abd449e1146efd54ba47dd0b7d26d5d185a";
+    url = "https://addons.mozilla.org/firefox/downloads/file/4896358/block_yt_shortvideo-1.1.0.xpi";
+    meta = with pkgs.lib; {
+      description = "Hide YouTube Shorts and Playables";
+      homepage = "https://addons.mozilla.org/en-US/firefox/addon/block-yt-shortvideo/";
+      license = licenses.mpl20;
+      platforms = platforms.all;
+    };
+  };
+
   defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
   yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
 in {
@@ -210,6 +237,7 @@ in {
               sponsorblock
               pkgs.nur.repos.crazazy.firefox-addons.tabliss
               tab-stash
+              tab-to-list
               auto-tab-discard
               istilldontcareaboutcookies
               behind-the-overlay-revival
@@ -217,6 +245,7 @@ in {
               catppuccin-web-file-icons
               image-zoom
               yt-player-fix
+              block-yt-shortvideo
             ];
           };
 
