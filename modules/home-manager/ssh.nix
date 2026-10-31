@@ -36,6 +36,18 @@
           User = "michael";
           ForwardAgent = true;
         };
+
+        "storagebox" = {
+          HostName = "u689340.your-storagebox.de";
+          User = "u689340";
+          Port = 23;
+        };
+
+        "storagebox-server-backups" = {
+          HostName = "u689340-sub1.your-storagebox.de";
+          User = "u689340-sub1";
+          Port = 23;
+        };
       };
     };
   };

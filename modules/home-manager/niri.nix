@@ -112,6 +112,7 @@
             {app-id = "^com.mitchellh.ghostty$";}
           ];
           open-maximized = true;
+          opacity = 0.99;
         }
         {
           matches = [
