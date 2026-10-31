@@ -39,6 +39,11 @@
     nix.daemonCPUSchedPolicy = "idle";
     nix.daemonIOSchedClass = "idle";
 
+    # Disable nano entirely
+    programs.nano.enable = false;
+    environment.variables.EDITOR = "nvim";
+    environment.variables.VISUAL = "nvim";
+
     systemd.services.nix-daemon.serviceConfig = {
       CPUWeight = 20;
       IOWeight = 20;
