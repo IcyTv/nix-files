@@ -24,6 +24,12 @@
           clientId = "a41e9bfa24b649508c8987b0e2ce09d6";
         };
 
+        homeassistant = {
+          enable = true;
+          url = "https://assistant.icytv.de";
+          trackedDevices = ["scene.livingroom_bright" "scene.livingrom_evening" "input_boolean.nighlights_active" "script.1714814456677" "light.bedroom_lamp" "light.living_room_lamp" "scene.livingrom_middle" "scene.livingroom_off"];
+        };
+
         systemMenu.widgets = [
           "wifi"
           "bluetooth"
