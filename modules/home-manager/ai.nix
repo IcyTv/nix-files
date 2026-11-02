@@ -190,8 +190,8 @@ in {
         - Checking the target thoroughly before running `rm` (no `-f` and no `-r`), deleting files individually.
         - Using `rmdir` to delete empty directories.
 
-        It is only ever acceptible to delete files or directories, if *you* created them in this session.
-        It is generally unacceptible to delete any non-generated code files.
+        It is only ever acceptible to delete files or directories using `rm`, if *you* created them in this session.
+        It is generally unacceptible to delete any non-generated code files. Trash them instead and only if needed.
 
         If you're unsure about whether a file or directory can be deleted, ask for clarification before proceeding. It's better to be safe than sorry.
         If the `trash` cli fails to execute, ask for clarification before proceeding.
@@ -280,6 +280,10 @@ in {
           "${opencode-latex}"
         ];
 
+        experimental = {
+          todo = true;
+        };
+
         provider = {
           openai.options = {
             websearch_cited = {
@@ -296,7 +300,6 @@ in {
         plugin = [
           "@slkiser/opencode-quota@5"
         ];
-        experimental.todo = true;
       };
     };
 
