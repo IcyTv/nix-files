@@ -3,7 +3,12 @@
   config,
   lib,
   ...
-}: {
+}: let
+  excludesfile = pkgs.writeText "gitignore" ''
+    .vscode
+    .opencode
+  '';
+in {
   options.my.hm.git.enable = lib.mkEnableOption "Git and GitHub CLI configuration";
 
   config = lib.mkIf config.my.hm.git.enable {
@@ -11,6 +16,10 @@
       enable = true;
       lfs.enable = true;
       settings = {
+        core = {
+          excludesfile = "${excludesfile}";
+        };
+
         init = {
           defaultBranch = "main";
         };
