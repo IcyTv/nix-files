@@ -4,19 +4,23 @@
   lib,
   ...
 }: let
-  excludesfile = pkgs.writeText "gitignore" ''
-    .vscode
-    .opencode
-  '';
 in {
   options.my.hm.git.enable = lib.mkEnableOption "Git and GitHub CLI configuration";
+
+  options.my.hm.git.excludes = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [];
+    description = "Paths to globally exclude from git";
+  };
 
   config = lib.mkIf config.my.hm.git.enable {
     programs.git = {
       enable = true;
       lfs.enable = true;
       settings = {
-        core = {
+        core = let
+          excludesfile = pkgs.writeText "gitignore" (lib.concatStringsSep "\n" config.my.hm.git.excludes);
+        in {
           excludesfile = "${excludesfile}";
         };
 

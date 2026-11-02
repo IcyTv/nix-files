@@ -138,6 +138,8 @@ in {
   options.my.hm.ai.enable = lib.mkEnableOption "AI tools (opencode, mcp)";
 
   config = lib.mkIf config.my.hm.ai.enable {
+    my.hm.git.excludes = [".opencode"];
+
     programs.opencode = {
       enable = true;
       enableMcpIntegration = true;
