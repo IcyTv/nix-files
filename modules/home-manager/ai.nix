@@ -275,8 +275,6 @@ in {
         plugins = [
           "@anthonyhaussman/opencode-agy-auth"
           "@slkiser/opencode-quota@5"
-          "@bybrawe/opencode-loop@latest"
-          "@bybrawe/opencode-goal@latest"
           "${opencode-latex}"
         ];
 
