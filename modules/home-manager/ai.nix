@@ -332,7 +332,7 @@ in {
     home.file =
       lib.mapAttrs' (
         name: source:
-          lib.nameValuePair "./agents/skills/${name}" {
+          lib.nameValuePair ".agents/skills/${name}" {
             inherit source;
             recursive = true;
           }
