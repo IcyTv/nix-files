@@ -329,46 +329,48 @@ in {
       };
     };
 
-    # Skills
-    home.file.".agents/skills/find-skill" = {
-      source = pkgs.agent-skills.github.vercel-labs.skills.find-skills;
-      recursive = true;
-    };
-    home.file.".agents/skills/systematic-debugging" = {
-      source = pkgs.agent-skills.github.obra.superpowers.systematic-debugging;
-      recursive = true;
-    };
-    home.file.".agents/skills/improve-codebase-architecture" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.improve-codebase-architecture;
-      recursive = true;
-    };
-    home.file.".agents/skills/research" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.research;
-      recursive = true;
-    };
-    home.file.".agents/skills/wayfinder" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.wayfinder;
-      recursive = true;
-    };
-    home.file.".agents/skills/grilling" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.grilling;
-      recursive = true;
-    };
-    home.file.".agents/skills/teach" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.teach;
-      recursive = true;
-    };
-    home.file.".agents/skills/handoff" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.handoff;
-      recursive = true;
-    };
-    home.file.".agents/skills/diagnosing-bugs" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.diagnosing-bugs;
-      recursive = true;
-    };
-    home.file.".agents/skills/codebase-design" = {
-      source = pkgs.agent-skills.github.mattpocock.skills.codebase-design;
-      recursive = true;
-    };
+    home.file =
+      lib.mapAttrs' (
+        name: source:
+          lib.nameValuePair "./agents/skills/${name}" {
+            inherit source;
+            recursive = true;
+          }
+      ) {
+        find-skill = pkgs.agent-skills.github.vercel-labs.skills.find-skills;
+        systematic-debugging = pkgs.agent-skills.github.obra.superpowers.systematic-debugging;
+
+        inherit
+          (pkgs.agent-skills.github.mattpocock.skills)
+          improve-codebase-architecture
+          research
+          wayfinder
+          grilling
+          grill-me
+          teach
+          handoff
+          diagnosing-bugs
+          codebase-design
+          ;
+
+        inherit
+          (pkgs.agent-skills.github.juliusbrussee.caveman)
+          caveman
+          caveman-commit
+          caveman-compress
+          caveman-review
+          caveman-help
+          cavecrew
+          caveman-stats
+          caveman-explore
+          caveman-learn
+          safe-refactor
+          investigate-first
+          verify-and-stop
+          surgical-patch
+          lean-build
+          caveman-optimize
+          ;
+      };
   };
 }
