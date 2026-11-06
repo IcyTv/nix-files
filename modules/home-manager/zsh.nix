@@ -102,8 +102,17 @@
 
     programs.pay-respects = {
       enable = true;
-      enableNushellIntegration = true;
+      # Home Manager generates `_PR_SHELL: nushell`, but the executable is `nu`.
+      enableNushellIntegration = false;
     };
+
+    programs.nushell.extraConfig = lib.mkIf config.programs.nushell.enable ''
+      source ${
+        pkgs.runCommand "pay-respects-nushell-config.nu" {} ''
+          ${lib.getExe config.programs.pay-respects.package} nu ${lib.escapeShellArgs config.programs.pay-respects.options} > "$out"
+        ''
+      }
+    '';
 
     programs.fastfetch = {
       enable = true;
