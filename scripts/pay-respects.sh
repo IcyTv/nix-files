@@ -13,4 +13,5 @@ else
   export _PR_AI_DISABLE=1
 fi
 
-exec "$PAY_RESPECTS_BIN" "$@"
+# Generated shell integrations must call this wrapper, not the bare binary.
+exec -a "$0" "$PAY_RESPECTS_BIN" "$@"
