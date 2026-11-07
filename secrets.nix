@@ -3,4 +3,5 @@ let
 in {
   "secrets/id_ed25519.age".publicKeys = [masterKey];
   "secrets/github-token.age".publicKeys = [masterKey];
+  "secrets/pay-respects-api-key.age".publicKeys = [masterKey];
 }

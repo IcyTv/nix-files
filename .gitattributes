@@ -1,5 +1,5 @@
 *.png filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
-secrets/*.json filter=git-crypt diff=git-crypt
-secrets/*.key filter=git-crypt diff=git-crypt
+secrets/bookmarks-default.json filter=git-crypt diff=git-crypt
+secrets/bookmarks-yes.json filter=git-crypt diff=git-crypt

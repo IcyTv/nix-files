@@ -84,7 +84,7 @@
         gtk.gtk4.theme = lib.mkForce null;
 
         age = {
-          identityPaths = ["/home/michael/.dotfiles/nix/secrets/master.key"];
+          identityPaths = ["${config.home.homeDirectory}/.keys/age-master.key"];
 
           secrets.mainKey = {
             file = ../../secrets/id_ed25519.age;

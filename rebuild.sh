@@ -13,6 +13,9 @@ HOST="${HOSTNAME:-$(hostname)}"
 
 pushd "$TARGET_DIR" >/dev/null
 
+# Check before formatting, staging, committing, or importing the flake into Nix.
+bash ./scripts/check-secrets.sh
+
 TEMP_COMMIT_CREATED=0
 
 cleanup() {

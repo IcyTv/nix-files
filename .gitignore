@@ -1,1 +1,8 @@
 result
+
+# Only encrypted credentials and the existing git-crypt bookmarks belong here.
+secrets/*
+!secrets/*.age
+!secrets/bookmarks-default.json
+!secrets/bookmarks-yes.json
+!secrets/README.md

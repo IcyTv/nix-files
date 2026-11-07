@@ -24,6 +24,7 @@
     ./nix.nix
     ./nushell.nix
     ./obs.nix
+    ./pay-respects.nix
     ./qt6.nix
     ./spotify.nix
     ./ssh.nix
