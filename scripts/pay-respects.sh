@@ -1,3 +1,10 @@
+# Disable aggressive guesses by default; opt back in with _PR_NO_DESPERATE=0.
+if [[ "${_PR_NO_DESPERATE:-1}" == 0 ]]; then
+  unset _PR_NO_DESPERATE
+else
+  export _PR_NO_DESPERATE=1
+fi
+
 # Read credentials at runtime, never during Nix evaluation or shell startup.
 if [[ -r "$PAY_RESPECTS_KEY_FILE" ]]; then
   _PR_AI_API_KEY=$(<"$PAY_RESPECTS_KEY_FILE")
