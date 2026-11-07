@@ -12,6 +12,7 @@
 
     programs.pay-respects.package = pkgs.writeShellApplication {
       name = "pay-respects";
+      runtimeInputs = [pkgs.pay-respects];
       runtimeEnv = {
         PAY_RESPECTS_BIN = lib.getExe pkgs.pay-respects;
       };
