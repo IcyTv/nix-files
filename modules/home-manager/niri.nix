@@ -31,7 +31,7 @@
       };
 
       layout = {
-        gaps = 4;
+        gaps = 12;
         center-focused-column = "never";
         background-color = "transparent";
         always-center-single-column = true;
@@ -45,15 +45,38 @@
         ];
         default-column-width.proportion = 2.0 / 3.0;
 
-        focus-ring = {
+        focus-ring.enable = false;
+
+        # Match Subniri's neo-widgets palette and surface geometry.
+        border = {
           enable = true;
           width = 2;
-          active.color = "#b4befe";
-          inactive.color = "#585b70";
+          active.color = "#FF8ACD";
+          inactive.color = "#000000";
+          urgent.color = "#FF5454";
         };
 
-        border.enable = false;
-        shadow.enable = false;
+        shadow = {
+          enable = true;
+          softness = 0;
+          spread = 0;
+          offset = {
+            x = 4;
+            y = 4;
+          };
+          draw-behind-window = false;
+          color = "#000000";
+          inactive-color = "#000000";
+        };
+
+        tab-indicator = {
+          corner-radius = 3;
+          active.color = "#FF8ACD";
+          inactive.color = "#000000";
+          urgent.color = "#FF5454";
+        };
+
+        insert-hint.display.color = "#8AF1FF80";
       };
 
       hotkey-overlay.skip-at-startup = true;
@@ -76,10 +99,10 @@
         }
         {
           geometry-corner-radius = {
-            bottom-left = 12.0;
-            bottom-right = 12.0;
-            top-left = 12.0;
-            top-right = 12.0;
+            bottom-left = 3.0;
+            bottom-right = 3.0;
+            top-left = 3.0;
+            top-right = 3.0;
           };
           clip-to-geometry = true;
         }
@@ -112,7 +135,7 @@
             {app-id = "^com.mitchellh.ghostty$";}
           ];
           open-maximized = true;
-          opacity = 0.99;
+          opacity = 1.0;
         }
         {
           matches = [
