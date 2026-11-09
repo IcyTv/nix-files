@@ -3,10 +3,7 @@
   lib,
   pkgs,
   ...
-}: let
-  user = "michael";
-  flakeDir = ".dotfiles/nix";
-in {
+}: {
   options.my.nixos.rebuild.enable = lib.mkEnableOption "Custom rebuild script";
 
   config = lib.mkIf config.my.nixos.rebuild.enable {
@@ -15,7 +12,7 @@ in {
         name = "rebuild";
         runtimeInputs = [pkgs.git pkgs.nvd pkgs.alejandra];
         runtimeEnv = {
-          FLAKE_PATH = "/home/${user}/${flakeDir}";
+          FLAKE_PATH = config.icy.repository;
         };
         text = builtins.readFile ../../rebuild.sh;
       })

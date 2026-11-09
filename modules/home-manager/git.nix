@@ -33,8 +33,8 @@ in {
         };
 
         user = {
-          name = "Michael Finger";
-          email = "michael.finger@icytv.de";
+          name = config.icy.git.name;
+          email = config.icy.git.email;
         };
 
         url = {
@@ -50,7 +50,7 @@ in {
       signing = {
         format = "openpgp";
         key = "433D8E22007D3A9762D54780ED06A3B7C8B9C6B0!";
-        signByDefault = true;
+        signByDefault = config.icy.git.signing;
       };
     };
 

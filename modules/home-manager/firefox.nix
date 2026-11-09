@@ -87,8 +87,14 @@
     };
   };
 
-  defaultBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json);
-  yesBookmarks = builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json);
+  defaultBookmarks =
+    if config.icy.personalSecrets
+    then builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json)
+    else [];
+  yesBookmarks =
+    if config.icy.personalSecrets
+    then builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json)
+    else [];
 in {
   options.my.hm.firefox.enable = lib.mkEnableOption "Firefox configuration";
 

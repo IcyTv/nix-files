@@ -5,15 +5,15 @@
   inputs,
   ...
 }: {
-  options.my.hm.core.enable = lib.mkEnableOption "Core Home Manager configuration";
+  options.icy.internal.core.enable = lib.mkEnableOption "Core Home Manager configuration";
   options.my.hm.default.enable = lib.mkEnableOption "Enable all default Home Manager modules";
 
   config = lib.mkMerge [
     (
-      lib.mkIf config.my.hm.core.enable {
+      lib.mkIf config.icy.internal.core.enable {
         home = {
-          username = "michael";
-          homeDirectory = "/home/michael";
+          username = config.icy.user.name;
+          homeDirectory = "/home/${config.icy.user.name}";
           stateVersion = "25.11";
         };
 
@@ -83,12 +83,12 @@
 
         gtk.gtk4.theme = lib.mkForce null;
 
-        age = {
+        age = lib.mkIf config.icy.personalSecrets {
           identityPaths = ["${config.home.homeDirectory}/.keys/age-master.key"];
 
           secrets.mainKey = {
             file = ../../secrets/id_ed25519.age;
-            path = "/home/michael/.ssh/id_ed25519";
+            path = "${config.home.homeDirectory}/.ssh/id_ed25519";
             mode = "600";
           };
 
@@ -97,13 +97,15 @@
           };
         };
 
-        nix.extraOptions = ''
+        nix.extraOptions = lib.mkIf config.icy.personalSecrets ''
           !include /run/user/1000/agenix/github-token
         '';
 
-        home.file.".ssh/id_ed25519.pub".text = ''
-          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE7ZqNhzqRIfH0C9OOuGvJRxQSG1y5HX8RAH6FsF/V3R
-        '';
+        home.file = lib.mkIf config.icy.personalSecrets {
+          ".ssh/id_ed25519.pub".text = ''
+            ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE7ZqNhzqRIfH0C9OOuGvJRxQSG1y5HX8RAH6FsF/V3R
+          '';
+        };
 
         xdg.configFile."nixpkgs/config.nix".text = ''
           {allowUnfree = true;}
@@ -120,30 +122,32 @@
       }
     )
     (lib.mkIf config.my.hm.default.enable {
-      my.hm.ai.enable = true;
-      my.hm.anyrun.enable = true;
-      my.hm.audio.enable = true;
-      my.hm.bluetooth.enable = true;
-      my.hm.discord.enable = true;
-      my.hm.firefox.enable = true;
-      my.hm.games.enable = true;
-      my.hm.git.enable = true;
-      my.hm.kitty.enable = true;
-      my.hm.ghostty.enable = true;
-      my.hm.niri.enable = true;
-      my.hm.nix.enable = true;
-      my.hm.nushell.enable = true;
-      my.hm.obs.enable = true;
-      my.hm.spotify.enable = true;
-      my.hm.ssh.enable = true;
-      my.hm.starship.enable = true;
-      my.hm.stylix.enable = true;
-      my.hm.subniri.enable = true;
-      my.hm.swww.enable = true;
-      my.hm.tools.enable = true;
-      my.hm.unifiedremote.enable = true;
-      my.hm.yazi.enable = true;
-      my.hm.zsh.enable = true;
+      my.hm = lib.genAttrs [
+        "ai"
+        "anyrun"
+        "audio"
+        "bluetooth"
+        "discord"
+        "firefox"
+        "games"
+        "git"
+        "kitty"
+        "ghostty"
+        "niri"
+        "nix"
+        "nushell"
+        "obs"
+        "spotify"
+        "ssh"
+        "starship"
+        "stylix"
+        "subniri"
+        "swww"
+        "tools"
+        "unifiedremote"
+        "yazi"
+        "zsh"
+      ] (_: {enable = lib.mkDefault true;});
     })
   ];
 }

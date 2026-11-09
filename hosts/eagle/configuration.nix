@@ -11,9 +11,9 @@
   ];
 
   networking.hostName = "eagle";
+  icy.internal.core.enable = true;
 
   my.nixos = {
-    core.enable = true;
     ananicy.enable = true;
     bluetooth.enable = true;
     console-font.enable = true;

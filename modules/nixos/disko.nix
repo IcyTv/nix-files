@@ -3,7 +3,7 @@
   lib,
   ...
 }: {
-  options.my.nixos.disko = {
+  options.icy.internal.disko = {
     enable = lib.mkEnableOption "Disko declarative partitioning (Btrfs)";
 
     device = lib.mkOption {
@@ -13,12 +13,12 @@
     };
   };
 
-  config = lib.mkIf config.my.nixos.disko.enable {
+  config = lib.mkIf config.icy.internal.disko.enable {
     disko.devices = {
       disk = {
         main = {
           type = "disk";
-          device = config.my.nixos.disko.device;
+          device = config.icy.internal.disko.device;
           content = {
             type = "gpt";
             partitions = {

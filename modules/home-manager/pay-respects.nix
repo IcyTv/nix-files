@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: {
-  config = lib.mkIf (config.my.hm.core.enable && config.programs.pay-respects.enable) {
+  config = lib.mkIf (config.icy.internal.core.enable && config.icy.personalSecrets && config.programs.pay-respects.enable) {
     age.secrets.pay-respects-api-key = {
       file = ../../secrets/pay-respects-api-key.age;
       mode = "600";

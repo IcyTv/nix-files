@@ -1,0 +1,21 @@
+{
+  "api": 1,
+  "revision": "0000000000000000000000000000000000000000",
+  "hostname": "installer-demo",
+  "username": "michael",
+  "disk": "/dev/disk/by-id/REPLACE-ME",
+  "encrypted": false,
+  "fido2": false,
+  "personalSecrets": false,
+  "signing": false,
+  "swapGiB": 4,
+  "hibernate": false,
+  "timezone": "Europe/Berlin",
+  "locale": "en_US.UTF-8",
+  "gitName": "Michael Finger",
+  "gitEmail": "michael.finger@icytv.de",
+  "stateVersion": "26.05",
+  "system": {},
+  "home": {},
+  "hardware": {"cpu": "other", "gpu": "other", "vm": "none", "laptop": false}
+}

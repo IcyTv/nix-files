@@ -5,7 +5,7 @@
 }: {
   options.my.nixos.virtualbox.enable = lib.mkEnableOption "Enable VirtualBox support";
 
-  config = lib.mkIf config.my.nixos.tools.enable {
+  config = lib.mkIf config.my.nixos.virtualbox.enable {
     virtualisation.virtualbox.host = {
       enable = true;
       # enableExtensionPack = true;
@@ -15,6 +15,6 @@
       requires = ["vboxnet0.service"];
       after = ["vboxnet0.service"];
     };
-    users.extraGroups.vboxusers.members = ["michael"];
+    users.extraGroups.vboxusers.members = [config.icy.user.name];
   };
 }

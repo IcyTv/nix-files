@@ -1,5 +1,6 @@
 {inputs, ...}: {
   imports = [
+    ./identity.nix
     ./ananicy.nix
     ./bluetooth.nix
     ./console-font.nix

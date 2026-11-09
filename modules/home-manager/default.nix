@@ -1,5 +1,6 @@
 {inputs, ...}: {
   imports = [
+    ./identity.nix
     inputs.nix-index-database.homeModules.nix-index
     inputs.spicetify-nix.homeManagerModules.default
     inputs.agenix.homeManagerModules.default

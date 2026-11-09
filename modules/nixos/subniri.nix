@@ -8,7 +8,7 @@
   config = lib.mkIf config.my.nixos.subniri.enable {
     services.subniri.resumeRestart = {
       enable = true;
-      users = ["michael"];
+      users = [config.icy.user.name];
     };
   };
 }

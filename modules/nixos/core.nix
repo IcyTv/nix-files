@@ -5,9 +5,9 @@
   inputs,
   ...
 }: {
-  options.my.nixos.core.enable = lib.mkEnableOption "Core NixOS configuration";
+  options.icy.internal.core.enable = lib.mkEnableOption "Core NixOS configuration";
 
-  config = lib.mkIf config.my.nixos.core.enable {
+  config = lib.mkIf config.icy.internal.core.enable {
     nix.settings = {
       auto-optimise-store = true;
       keep-outputs = true;
@@ -34,7 +34,7 @@
         "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
       ];
 
-      trusted-users = ["root" "michael"];
+      trusted-users = ["root" config.icy.user.name];
     };
     nix.daemonCPUSchedPolicy = "idle";
     nix.daemonIOSchedClass = "idle";
@@ -81,7 +81,7 @@
     security.rtkit.enable = true;
     services.openssh.enable = true;
 
-    users.users.michael = {
+    users.users.${config.icy.user.name} = {
       isNormalUser = true;
       extraGroups = ["wheel"];
       shell = pkgs.nushell;

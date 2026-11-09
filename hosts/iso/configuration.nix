@@ -11,17 +11,18 @@
   ];
 
   networking.hostName = "mayfly";
-  security.sudo.enable = false;
+  security.sudo.enable = true;
 
   users.motd = ''
     ========================================================================
      Welcome to the Custom NixOS Installer!
-     Type `run-installer` and press Enter to start the interactive setup.
+     Connect networking with `nmtui`, then run `sudo run-installer`.
+     Online installation; review and exact-disk confirmation before erasure.
     ========================================================================
   '';
 
-  my.nixos.core.enable = true;
-  my.nixos.installer.enable = true;
+  icy.internal.core.enable = true;
+  icy.internal.installer.enable = true;
 
   networking.networkmanager.enable = true;
 

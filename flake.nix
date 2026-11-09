@@ -139,16 +139,70 @@
         ./rebuild.sh
         ./modules
         ./scripts
+        ./installer
+        ./.gitattributes
+        ./.gitignore
         ./secrets
         ./hosts
       ];
-      exclude = [./wallpapers];
+      exclude = ["wallpapers"];
     };
     hosts = builtins.attrNames (nixpkgs.lib.filterAttrs (name: type: type == "directory" && name != "iso") (builtins.readDir ./hosts));
   in {
     legacyPackages = forAllSystems (pkgs: pkgs);
 
     packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
+    packages.x86_64-linux.installer = nixpkgs.legacyPackages.x86_64-linux.callPackage ./installer {
+      source = nixpkgs.lib.cleanSourceWith {
+        src = filtered-src;
+        # Never bake unlocked git-crypt bookmark plaintext into the ISO snapshot.
+        filter = path: _: !(builtins.elem (baseNameOf path) ["bookmarks-default.json" "bookmarks-yes.json"]);
+      };
+    };
+
+    installerApi = 1;
+    checks.x86_64-linux.installer = let
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+    in
+        pkgs.runCommand "installer-safety-tests" {nativeBuildInputs = [pkgs.python3 pkgs.psmisc];} ''
+        export PYTHONDONTWRITEBYTECODE=1
+        python3 -m unittest discover -s ${./installer}/tests -p 'test_*.py' -v
+        touch "$out"
+      '';
+    installerStateVersion = nixpkgs.lib.versions.majorMinor nixpkgs.lib.version;
+    installerSchema.x86_64-linux = let
+      schemaSystem = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs;
+          self = filtered-src;
+        };
+        modules = sharedModules ++ [./modules/nixos/default.nix];
+      };
+      schemaHome = inputs.home-manager.lib.homeManagerConfiguration {
+        pkgs = schemaSystem.pkgs;
+        extraSpecialArgs = {inherit inputs;};
+        modules =
+          schemaSystem.config.home-manager.sharedModules
+          ++ [
+            inputs.stylix.homeModules.stylix
+            ./modules/home-manager/default.nix
+            {
+              home.username = "schema";
+              home.homeDirectory = "/home/schema";
+              home.stateVersion = "25.11";
+              my.hm.default.enable = true;
+              icy.personalSecrets = false;
+            }
+          ];
+      };
+    in
+      import ./installer/schema.nix {
+        lib = nixpkgs.lib;
+        systemOptions = schemaSystem.options.my;
+        homeOptions = schemaHome.options.my;
+        homeDefaults = schemaHome.config;
+      };
 
     nixosConfigurations =
       (nixpkgs.lib.genAttrs hosts (host:
