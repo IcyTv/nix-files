@@ -51,7 +51,7 @@
         border = {
           enable = true;
           width = 2;
-          active.color = "#FF8ACD";
+          active.color = "#000000";
           inactive.color = "#000000";
           urgent.color = "#FF5454";
         };
@@ -105,6 +105,11 @@
             top-right = 3.0;
           };
           clip-to-geometry = true;
+        }
+        {
+          # Focused windows look pressed down, like Subniri's neo buttons.
+          matches = [{is-focused = true;}];
+          shadow.enable = false;
         }
         {
           matches = [
