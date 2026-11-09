@@ -9,7 +9,7 @@
   config = lib.mkIf config.my.hm.stylix.enable {
     stylix = {
       enable = true;
-      base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-mocha.yaml";
+      base16Scheme = import ../palettes/neo-dark.nix;
       polarity = "dark";
 
       cursor.package = pkgs.whitesur-cursors;
