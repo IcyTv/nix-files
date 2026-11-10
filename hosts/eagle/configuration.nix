@@ -76,6 +76,9 @@
     nvidiaSettings = true;
   };
 
+  # Expose the NVIDIA Vulkan manifest at a path allowed by Chromium's GPU sandbox.
+  environment.etc."vulkan/icd.d/nvidia_icd.json".source = "${config.hardware.nvidia.package}/share/vulkan/icd.d/nvidia_icd.json";
+
   services.udev.extraRules = ''
     # NS PRO Controller USB
     KERNEL=="hidraw*", ATTRS{idVendor}=="20d6", ATTRS{idProduct}=="a711", MODE="0660", TAG+="uaccess", GROUP="input"
