@@ -36,6 +36,26 @@
     });
   };
 
+  programs.firefox = {
+    package = pkgs.firefox.overrideAttrs (old: {
+      # NVIDIA VA-API requires disabling the media-decoder sandbox on this host.
+      makeWrapperArgs =
+        (old.makeWrapperArgs or [])
+        ++ [
+          "--set"
+          "LIBVA_DRIVER_NAME"
+          "nvidia"
+          "--set"
+          "MOZ_DISABLE_RDD_SANDBOX"
+          "1"
+        ];
+    });
+
+    profiles = lib.genAttrs ["default" "yes"] (_: {
+      settings."media.hardware-video-decoding.force-enabled" = true;
+    });
+  };
+
   programs.niri = {
     settings.outputs = {
       "DP-3" = {
