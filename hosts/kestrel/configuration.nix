@@ -84,34 +84,41 @@
 
   networking.wireless.userControlled = true;
 
-  networking.networkmanager.ensureProfiles.profiles.eduroam = {
-    connection = {
-      id = "eduroam";
-      type = "wifi";
-      autoconnect = false;
+  systemd.tmpfiles.rules = let
+    eduroamProfile = (pkgs.formats.ini {}).generate "eduroam.nmconnection" {
+      connection = {
+        id = "eduroam";
+        uuid = "e0ca8591-5948-3c69-8474-f35bc56aff0d";
+        type = "wifi";
+        autoconnect = true;
+      };
+
+      wifi = {
+        mode = "infrastructure";
+        ssid = "eduroam";
+      };
+
+      wifi-security.key-mgmt = "wpa-eap";
+
+      "802-1x" = {
+        eap = "ttls;";
+        anonymous-identity = "anonymous@kit.edu";
+        identity = "uyhum@kit.edu";
+        domain-match = "radius-wlan.scc.kit.edu";
+        ca-cert = "/etc/ssl/certs/ca-certificates.crt";
+        phase2-auth = "pap";
+        # NetworkManager stores the password in its root-only system profile.
+        password-flags = 0;
+      };
+
+      ipv4.method = "auto";
+      ipv6.method = "auto";
     };
-
-    wifi = {
-      mode = "infrastructure";
-      ssid = "eduroam";
-    };
-
-    wifi-security.key-mgmt = "wpa-eap";
-
-    "802-1x" = {
-      eap = "ttls;";
-      anonymous-identity = "anonymous@kit.edu";
-      identity = "uyhum@kit.edu";
-      domain-match = "radius-wlan.scc.kit.edu";
-      ca-cert = "/etc/ssl/certs/ca-certificates.crt";
-      phase2-auth = "pap";
-      # Ask on each connection; never persist the password.
-      password-flags = 2;
-    };
-
-    ipv4.method = "auto";
-    ipv6.method = "auto";
-  };
+  in [
+    "d /etc/NetworkManager/system-connections 0700 root root -"
+    # Seed only once: rebuilds must not overwrite NetworkManager's saved password.
+    "C /etc/NetworkManager/system-connections/eduroam.nmconnection 0600 root root - ${eduroamProfile}"
+  ];
 
   system.stateVersion = "26.05";
 }
