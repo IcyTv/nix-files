@@ -1,0 +1,105 @@
+diff --git a/src/crypto.c b/src/crypto.c
+index 2acab57..a27b0e6 100644
+--- a/src/crypto.c
++++ b/src/crypto.c
+@@ -747,12 +747,13 @@ int fp_crypto_selftest(void)
+ 	printf("  tls enc/dec rt  OK (AES-256-GCM, %d B round-tripped)\n",
+ 		(int)sizeof(cleartext) - 1);
+ 
+-	/* Finished round-trip. The server-finished computation must match
+-	 * what the client built, given the same transcript state. We can't
+-	 * verify a CLIENT-finished against itself (the labels differ), so
+-	 * instead we build a client-finished, then craft a synthetic
+-	 * server-finished using the same PRF with the "server finished"
+-	 * label, and verify it. This exercises both make and verify. */
++	/* Finished KATs for the sensor's saved pre-client-Finished SHA-256
++	 * transcript (the PRF itself uses SHA-384). These independent vectors
++	 * were calculated with Python hashlib/hmac, not the driver's PRF:
++	 * secret = bytes(range(48)); transcript = the 36 bytes below;
++	 * seed = label + sha256(transcript);
++	 * A1 = HMAC-SHA384(secret, seed);
++	 * verify_data = HMAC-SHA384(secret, A1 + seed)[:12]. */
+ 	struct fp_tls_state ft_st;
+ 	if (fp_tls_state_init(&ft_st) != 0) return -1;
+ 	memcpy(ft_st.master_secret, "\x00\x01\x02\x03\x04\x05\x06\x07"
+@@ -765,26 +766,34 @@ int fp_crypto_selftest(void)
+ 	fp_tls_handshake_hash_update(&ft_st, "ClientHello + ServerHello transcript", 36);
+ 
+ 	/* Build client-finished — also adds its body to the transcript. */
++	static const uint8_t expected_client_finished[] = {
++		0x14, 0x00, 0x00, 0x0c,
++		0x32, 0x6e, 0x8e, 0x1d, 0x54, 0xd8,
++		0x26, 0xdf, 0x8f, 0x5b, 0xdb, 0xd2,
++	};
+ 	uint8_t cf_buf[64];
+ 	int cf_len = fp_tls_make_finished(&ft_st, cf_buf, sizeof(cf_buf));
+-	if (cf_len != 16 || cf_buf[0] != 0x14) {
++	if (cf_len != (int)sizeof(expected_client_finished)
++	 || memcmp(cf_buf, expected_client_finished, sizeof(expected_client_finished)) != 0) {
+ 		fprintf(stderr, "make_finished build error (len=%d hdr=0x%02x)\n",
+ 			cf_len, cf_buf[0]);
+ 		fp_tls_state_destroy(&ft_st);
+ 		return -1;
+ 	}
+ 
+-	/* For verify-server-finished: do PRF over CURRENT transcript (which
+-	 * already includes client's Finished) with "server finished" label,
+-	 * then feed those bytes into our verify function. Should accept. */
+-	uint8_t hs_hash[48], sf_seed[15 + 48], sf_verify_data[12];
+-	if (fp_tls_handshake_hash_snapshot(&ft_st, hs_hash) != 0) return -1;
+-	memcpy(sf_seed, "server finished", 15);
+-	memcpy(sf_seed + 15, hs_hash, 48);
+-	if (fp_tls_prf_sha384(ft_st.master_secret, 48, sf_seed, sizeof(sf_seed),
+-	                      sf_verify_data, 12) != 0) return -1;
+-	if (fp_tls_verify_server_finished(&ft_st, sf_verify_data, 12) != 0) {
+-		fprintf(stderr, "verify_server_finished rejected its own PRF output\n");
++	/* Server Finished uses the SAME pre-client-Finished transcript,
++	 * despite the running transcript now including client Finished. */
++	uint8_t sf_verify_data[] = {
++		0x99, 0x52, 0xa9, 0x0d, 0xdc, 0x14,
++		0x14, 0x04, 0x62, 0x68, 0xb7, 0x2d,
++	};
++	if (fp_tls_verify_server_finished(&ft_st, sf_verify_data, sizeof(sf_verify_data)) != 0) {
++		fprintf(stderr, "verify_server_finished rejected independent KAT\n");
++		fp_tls_state_destroy(&ft_st);
++		return -1;
++	}
++	if (fp_tls_verify_server_finished(&ft_st, sf_verify_data, sizeof(sf_verify_data) - 1) == 0) {
++		fprintf(stderr, "verify_server_finished accepted truncated MAC\n");
+ 		fp_tls_state_destroy(&ft_st);
+ 		return -1;
+ 	}
+@@ -795,19 +804,29 @@ int fp_crypto_selftest(void)
+ 		fp_tls_state_destroy(&ft_st);
+ 		return -1;
+ 	}
+-	printf("  tls Finished    OK (make+verify; rejects tampered)\n");
++	printf("  tls Finished    OK (independent KATs; rejects truncated/tampered)\n");
+ 
+ 	/* Certificate + ClientKeyExchange + CertificateVerify build KAT. */
+ 	uint8_t cert_blob[100];
+ 	memset(cert_blob, 0xab, sizeof(cert_blob));
+ 	uint8_t out[1024];
+ 	int total = 0;
++	ft_st.client_random[4] = 0x12;
++	ft_st.client_random[5] = 0x34;
++	/* Four-byte handshake header, two three-byte lengths, and two
++	 * bytes copied from ClientHello.random precede the certificate. */
++	static const uint8_t expected_cert_header[] = {
++		0x0b, 0x00, 0x00, 0x6c,
++		0x00, 0x00, 0x64, 0x00, 0x00, 0x64, 0x12, 0x34,
++	};
+ 
+ 	int n_cert = fp_tls_make_certificate(&ft_st, cert_blob, sizeof(cert_blob),
+ 	                                     out + total, sizeof(out) - total);
+-	if (n_cert != 4 + 6 + 100) {
+-		fprintf(stderr, "Certificate build wrong size %d (expected %d)\n",
+-			n_cert, 4 + 6 + 100);
++	if (n_cert != (int)(sizeof(expected_cert_header) + sizeof(cert_blob))
++	 || memcmp(out, expected_cert_header, sizeof(expected_cert_header)) != 0
++	 || memcmp(out + sizeof(expected_cert_header), cert_blob, sizeof(cert_blob)) != 0) {
++		fprintf(stderr, "Certificate wrapper KAT mismatch (size %d, expected 112)\n",
++			n_cert);
+ 		fp_tls_state_destroy(&ft_st); return -1;
+ 	}
+ 	total += n_cert;
