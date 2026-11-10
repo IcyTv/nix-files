@@ -11,10 +11,28 @@
 
   icy.internal.core.enable = true;
   my.hm.default.enable = true;
+  my.hm.chromium.enable = true;
   my.hm.daw.enable = true;
   my.hm.minecraft.enable = true;
 
   programs.git.signing.key = "433D8E22007D3A9762D54780ED06A3B7C8B9C6B0!";
+
+  programs.chromium = {
+    commandLineArgs = [
+      "--ozone-platform=wayland"
+      "--disable-features=Vulkan"
+    ];
+
+    package = pkgs.chromium.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [pkgs.makeWrapper];
+      buildCommand =
+        old.buildCommand
+        + ''
+          wrapProgram "$out/bin/chromium" \
+            --set VK_DRIVER_FILES /etc/vulkan/icd.d/nvidia_icd.json
+        '';
+    });
+  };
 
   programs.niri = {
     settings.outputs = {

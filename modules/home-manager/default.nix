@@ -10,6 +10,7 @@
     ./anyrun.nix
     ./audio.nix
     ./bluetooth.nix
+    ./chromium.nix
     ./core.nix
     ./daw.nix
     ./discord.nix
