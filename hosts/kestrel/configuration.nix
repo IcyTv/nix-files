@@ -68,5 +68,7 @@
 
   hardware.graphics.enable = true;
 
+  networking.wireless.userControlled = true;
+
   system.stateVersion = "26.05";
 }
