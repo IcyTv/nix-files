@@ -11,8 +11,11 @@
 
   networking.hostName = "kestrel";
 
+  icy.repository = "/etc/nixos/nix-files";
+  icy.sharedRepository = true;
+  icy.internal.core.enable = true;
+
   my.nixos = {
-    core.enable = true;
     ananicy.enable = true;
     bluetooth.enable = true;
     console-font.enable = true;
@@ -55,7 +58,7 @@
   boot.supportedFilesystems = ["btrfs"];
 
   swapDevices = [
-    { device = "/swap/swapfile"; }
+    {device = "/swap/swapfile";}
   ];
 
   boot.kernelPackages = pkgs.linuxPackages;

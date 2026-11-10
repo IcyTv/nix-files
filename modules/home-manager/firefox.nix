@@ -35,10 +35,10 @@
     else throw "buildFirefoxXpiAddon not found; check NUR import/overlay";
   image-zoom = buildFirefoxXpiAddon {
     pname = "image-zoom";
-    version = "0.2.0";
-    addonId = "image-zoom@basiphobe";
-    sha256 = "sha256-xKqmpGYitePyjOR4jVk600Slk0f3x8l2vAeqQHSQ7Yk=";
-    url = "https://addons.mozilla.org/firefox/downloads/latest/image-zoom/latest.xpi";
+    version = "1.2.1";
+    addonId = "image-zoom@basiphobe.github.io";
+    sha256 = "sha256-IbkALuPoSiR8EUtjnYAVg4dqciV0rryaoQZmjXrmBYc=";
+    url = "https://addons.mozilla.org/firefox/downloads/file/5190368/image_zoom-1.2.1.xpi";
     meta = with pkgs.lib; {
       description = "Zoom images with the mouse wheel";
       homepage = "https://github.com/basiphobe/image-zoom-extension";
@@ -49,9 +49,9 @@
   yt-player-fix = buildFirefoxXpiAddon {
     pname = "youtube-mpris-fix";
     version = "1.2";
-    addonId = "youtube-mpris-fix@deni111bg";
+    addonId = "youtube-mpris-fix@d1bg";
     sha256 = "sha256-CkvGMV0uTqJtPDKDcmFhl2lONBkmVuLz86V8UtXjoN8=";
-    url = "https://addons.mozilla.org/firefox/downloads/latest/youtube-mpris-fix/latest.xpi";
+    url = "https://addons.mozilla.org/firefox/downloads/file/4601432/youtube_mpris_fix-1.2.xpi";
     meta = with pkgs.lib; {
       description = "Zoom images with the mouse wheel";
       homepage = "https://addons.mozilla.org/en-US/firefox/addon/youtube-mpris-fix/";
