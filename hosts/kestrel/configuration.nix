@@ -70,5 +70,34 @@
 
   networking.wireless.userControlled = true;
 
+  networking.networkmanager.ensureProfiles.profiles.eduroam = {
+    connection = {
+      id = "eduroam";
+      type = "wifi";
+      autoconnect = false;
+    };
+
+    wifi = {
+      mode = "infrastructure";
+      ssid = "eduroam";
+    };
+
+    wifi-security.key-mgmt = "wpa-eap";
+
+    "802-1x" = {
+      eap = "ttls;";
+      anonymous-identity = "anonymous@kit.edu";
+      identity = "uyhum@kit.edu";
+      domain-match = "radius-wlan.scc.kit.edu";
+      ca-cert = "/etc/ssl/certs/ca-certificates.crt";
+      phase2-auth = "pap";
+      # Ask on each connection; never persist the password.
+      password-flags = 2;
+    };
+
+    ipv4.method = "auto";
+    ipv6.method = "auto";
+  };
+
   system.stateVersion = "26.05";
 }
