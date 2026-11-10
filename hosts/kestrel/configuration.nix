@@ -7,6 +7,7 @@
   imports = [
     ./hardware-configuration.nix
     ./fingerprint
+    ../../installer/hibernation.nix
     ../../modules/nixos/default.nix
   ];
 
@@ -61,6 +62,19 @@
   swapDevices = [
     {device = "/swap/swapfile";}
   ];
+
+  boot.resumeDevice = "/dev/mapper/cryptroot";
+  boot.kernelParams = ["resume_offset=3248182"];
+
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend-then-hibernate";
+    HandleLidSwitchExternalPower = "suspend-then-hibernate";
+    HandleLidSwitchDocked = "suspend-then-hibernate";
+  };
+
+  systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
+
+  security.pam.services.swaylock = {};
 
   boot.kernelPackages = pkgs.linuxPackages;
 

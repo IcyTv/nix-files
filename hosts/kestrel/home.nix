@@ -14,6 +14,14 @@
 
   programs.git.signing.key = "0542E68C4DB7F8FBCA58B89E80C0D762AAB2A00F!";
 
+  services.swayidle = {
+    enable = true;
+    events = {
+      before-sleep = "${pkgs.swaylock}/bin/swaylock --daemonize";
+      lock = "${pkgs.swaylock}/bin/swaylock --daemonize";
+    };
+  };
+
   programs.niri = {
     settings.outputs = {
     };
