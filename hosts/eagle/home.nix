@@ -21,6 +21,7 @@
     commandLineArgs = [
       "--ozone-platform=wayland"
       "--disable-features=Vulkan"
+      "--enable-features=VaapiOnNvidiaGPUs,AcceleratedVideoDecodeLinuxGL"
     ];
 
     package = pkgs.chromium.overrideAttrs (old: {
@@ -29,7 +30,8 @@
         old.buildCommand
         + ''
           wrapProgram "$out/bin/chromium" \
-            --set VK_DRIVER_FILES /etc/vulkan/icd.d/nvidia_icd.json
+            --set VK_DRIVER_FILES /etc/vulkan/icd.d/nvidia_icd.json \
+            --set LIBVA_DRIVER_NAME nvidia
         '';
     });
   };

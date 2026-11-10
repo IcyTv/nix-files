@@ -67,6 +67,10 @@
   hardware.bluetooth.powerOnBoot = true;
 
   hardware.graphics.enable = true;
+  # Chromium requires the single-buffer export support added in 0.0.18.
+  hardware.graphics.extraPackages = [
+    inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.nvidia-vaapi-driver
+  ];
 
   hardware.nvidia = {
     modesetting.enable = true;
@@ -74,6 +78,8 @@
     open = false;
     package = config.boot.kernelPackages.nvidiaPackages.legacy_580;
     nvidiaSettings = true;
+    # Install the newer VA-API driver above instead of the default version.
+    videoAcceleration = false;
   };
 
   # Expose the NVIDIA Vulkan manifest at a path allowed by Chromium's GPU sandbox.
