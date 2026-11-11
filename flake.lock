@@ -27,11 +27,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1793967790,
-        "narHash": "sha256-AGY1qMPGLn+VM9q+CipaMetArmOat/Abf8TNN7htFtk=",
+        "lastModified": 1794392399,
+        "narHash": "sha256-EXNifxIqWCjcBYx5W1oYqZp24IZcsnRsCK/Nis/GazM=",
         "owner": "sudosubin",
         "repo": "agents.nix",
-        "rev": "4491f13e8f538fad47b74d6e69faad8ae36b233e",
+        "rev": "74c301f636e025d6f896a34de26e748aa61eac18",
         "type": "github"
       },
       "original": {
