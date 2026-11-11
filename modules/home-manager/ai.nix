@@ -150,6 +150,14 @@ in {
 
         Use the @caveman skill.
 
+        ## Persistent memory
+
+        Automatic memory recall is selective, not exhaustive. Missing injected context does not mean no relevant memory exists.
+        Before relying on past project decisions, constraints, or failed approaches, explicitly search the memory tool using specific technical keywords.
+        If a search returns no matches, try alternative terms or inspect recent project memories before concluding nothing was recorded.
+        Treat retrieved memories as historical context, not verified current facts; check relevant code and evidence before acting.
+        Keep mandatory rules and stable instructions in AGENTS.md, not only in memory.
+
         ## Removal of files and directories
 
         CRITICAL: Never, ever run `rm -rf` to delete files or directories. This command is extremely dangerous and can lead to irreversible data loss. Instead, use safer alternatives like `${pkgs.trash-cli}/bin/trash` to move files to the trash.
