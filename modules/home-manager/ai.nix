@@ -148,6 +148,8 @@ in {
       context = ''
         # General Development Rules
 
+        Use the @caveman skill.
+
         ## Removal of files and directories
 
         CRITICAL: Never, ever run `rm -rf` to delete files or directories. This command is extremely dangerous and can lead to irreversible data loss. Instead, use safer alternatives like `${pkgs.trash-cli}/bin/trash` to move files to the trash.
@@ -191,7 +193,6 @@ in {
         - Using `rmdir` to delete empty directories.
 
         It is only ever acceptible to delete files or directories using `rm`, if *you* created them in this session.
-        It is generally unacceptible to delete any non-generated code files. Trash them instead and only if needed.
 
         If you're unsure about whether a file or directory can be deleted, ask for clarification before proceeding. It's better to be safe than sorry.
         If the `trash` cli fails to execute, ask for clarification before proceeding.
@@ -242,12 +243,17 @@ in {
         - Prompt the user to restart your shell (preferred)
         - Run commands using `nix develop`.
 
-        If you need tools not specified in the flake, you should ask the user for permission to install them, and then install them using `nix-shell -p <package>`.
+        If you need tools not specified in the flake, you can "install" them using `nix-shell -p <package>`.
         Use the nixos mcp (if available) to check the naming of packages.
 
         If you can't find certain tools, libraries or packages you need, you can either use `nix-locate` to find them, or ask the user for guidance.
 
         If you update the @flake.nix yourself, always prompt the user for a shell restart. Only fall back on `nix develop` if the user declines.
+
+        ## Shared understanding
+
+        In order to establish a shared understanding, when implementing features, or if you're at a certain decision point, use the @grilling skill provided.
+        Using that skill will help you establish a shared understanding of the problem, and will help you make better decisions.
       '';
 
       agents = {
@@ -338,7 +344,7 @@ in {
           }
       ) {
         find-skill = pkgs.agent-skills.github.vercel-labs.skills.find-skills;
-        systematic-debugging = pkgs.agent-skills.github.obra.superpowers.systematic-debugging;
+        frontend-design = pkgs.agent-skills.github.anthropics.skills.frontend-design;
 
         rust-code-readability = pkgs.writeTextDir "SKILL.md" ''
           ---
@@ -558,6 +564,12 @@ in {
 
           If edits go beyond whitespace, rerun relevant verification.
         '';
+
+        inherit
+          (pkgs.agent-skills.github.obra.superpowers)
+          systematic-debugging
+          using-git-worktrees
+          ;
 
         inherit
           (pkgs.agent-skills.github.mattpocock.skills)
