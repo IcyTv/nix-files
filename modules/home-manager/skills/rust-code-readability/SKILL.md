@@ -1,68 +1,68 @@
 ---
-  name: rust-code-readability
-  description: >
-	Improve the visual readability of Rust code through semantic
-	whitespace grouping, clear function separation, and logical
-	organization. Use when writing, modifying, reviewing, or
-	finalizing Rust code, especially before declaring completion.
-  ---
+name: rust-code-readability
+description: >
+  Improve the visual readability of Rust code through semantic
+  whitespace grouping, clear function separation, and logical
+  organization. Use when writing, modifying, reviewing, or
+  finalizing Rust code, especially before declaring completion.
+---
 
-  # Rust Code Readability
+# Rust Code Readability
 
-  Write Rust code for humans who must read, understand, debug,
-  and audit it later.
+Write Rust code for humans who must read, understand, debug,
+and audit it later.
 
-  Treat visual structure as part of code quality, not decoration.
+Treat visual structure as part of code quality, not decoration.
 
-  ## 1. Function Separation
+## 1. Function Separation
 
-  Always separate adjacent function and method definitions with
-  exactly one blank line.
+Always separate adjacent function and method definitions with
+exactly one blank line.
 
-  Bad:
+Bad:
 
-  ```rust
-  fn foo() {
-	  do_something();
-  }
-  fn bar() {
-	  do_something_else();
-  }
-  ```
+```rust
+fn foo() {
+  do_something();
+}
+fn bar() {
+  do_something_else();
+}
+```
 
-  Good:
+Good:
 
-  ```rust
-  fn foo() {
-	  do_something();
-  }
+```rust
+fn foo() {
+  do_something();
+}
 
-  fn bar() {
-	  do_something_else();
-  }
-  ```
+fn bar() {
+  do_something_else();
+}
+```
 
-  Apply this consistently to free functions, impl methods,
-  test functions, and other adjacent items.
+Apply this consistently to free functions, impl methods,
+test functions, and other adjacent items.
 
-  ## 2. Semantic Whitespace Grouping
+## 2. Semantic Whitespace Grouping
 
-  Within functions, use blank lines to separate logically
-  distinct phases of an operation.
+Within functions, use blank lines to separate logically
+distinct phases of an operation.
 
-  Statements belonging to the same logical operation should
-  form a visual paragraph.
+Statements belonging to the same logical operation should
+form a visual paragraph.
 
-  Common boundaries include:
+Common boundaries include:
 
-  - Setup -> execution
-  - Initialization -> mutation
-  - Input validation -> processing
-  - Data acquisition -> transformation
-  - State modification -> verification
-  - Independent operations
-  - Preparation -> side effects
-  - Processing -> return value construction
+- Setup -> execution
+- Initialization -> mutation
+- Input validation -> processing
+- Data acquisition -> transformation
+- State modification -> verification
+- Independent operations
+- Preparation -> side effects
+- Processing -> return value construction
 
   Do not mechanically add a blank line after each statement.
 
@@ -214,4 +214,3 @@
   A readability-only pass must preserve program behavior.
 
   If edits go beyond whitespace, rerun relevant verification.
-
