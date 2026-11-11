@@ -308,6 +308,13 @@ in {
       };
     };
 
+    xdg.configFile."opencode/opencode-mem.jsonc".text = builtins.toJSON {
+      # Reuse OpenCode authentication and the active session's model for capture.
+      opencodeProvider = "openai";
+      opencodeModel = "inherit";
+      autoCaptureEnabled = true;
+    };
+
     programs.antigravity-cli = {
       enable = true;
       package = antigravity-cli;
