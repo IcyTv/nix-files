@@ -282,6 +282,7 @@ in {
           "@anthonyhaussman/opencode-agy-auth"
           "@slkiser/opencode-quota@5"
           "${opencode-latex}"
+          "opencode-mem@latest"
         ];
 
         experimental = {
