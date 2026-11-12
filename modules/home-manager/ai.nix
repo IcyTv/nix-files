@@ -150,8 +150,6 @@ in {
       context = ''
         # General Development Rules
 
-        Use the @caveman skill.
-
         ## Persistent memory
 
         Automatic memory recall is selective, not exhaustive. Missing injected context does not mean no relevant memory exists.
