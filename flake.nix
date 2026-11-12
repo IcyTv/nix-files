@@ -65,6 +65,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    caveman = {
+      url = "github:JuliusBrussee/caveman/v4.1.0";
+      flake = false;
+    };
+
     nix-filter.url = "github:numtide/nix-filter";
 
     nixcord.url = "github:FlameFlag/nixcord";

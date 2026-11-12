@@ -137,6 +137,8 @@
 in {
   options.my.hm.ai.enable = lib.mkEnableOption "AI tools (opencode, mcp)";
 
+  imports = [./ai/caveman.nix];
+
   config = lib.mkIf config.my.hm.ai.enable {
     my.hm.git.excludes = [".opencode"];
 
