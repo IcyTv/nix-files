@@ -54,6 +54,11 @@ in {
       instructions = [
         "${caveman}/src/rules/caveman-activate.md"
       ];
+
+      agents.cavecrew-reviewer = {
+        mode = "subagent";
+        model = "openai/gpt-6.1-sol";
+      };
     };
   };
 }
