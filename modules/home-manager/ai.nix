@@ -48,7 +48,7 @@
     };
 
     nativeBuildInputs = [pkgs.pkg-config];
-    buildInputs = [pkgs.openssl];
+    buildInputs = [pkgs.openssl pkgs.zstd];
 
     cargoHash = "sha256-2TwNuXzqDr5H87RJyu4/0OSaGr3a6WnleCUTou9U2Ck=";
 
