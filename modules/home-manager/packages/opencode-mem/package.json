@@ -1,0 +1,12 @@
+{
+  "name": "opencode-mem-nix",
+  "version": "2.42.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "opencode-mem": "2.42.0"
+  },
+  "overrides": {
+    "onnxruntime-node": "1.31.1"
+  }
+}

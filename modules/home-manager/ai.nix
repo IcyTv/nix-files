@@ -22,6 +22,7 @@
   antigravity-cli = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli;
 
   opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
+  opencode-mem = pkgs-unstable.callPackage ./packages/opencode-mem {};
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -137,7 +138,7 @@
 in {
   options.my.hm.ai.enable = lib.mkEnableOption "AI tools (opencode, mcp)";
 
-  imports = [./ai/caveman.nix];
+  imports = [./ai/caveman.nix ./ai/model-router.nix];
 
   config = lib.mkIf config.my.hm.ai.enable {
     my.hm.git.excludes = [".opencode"];
@@ -148,120 +149,35 @@ in {
       package = opencode;
 
       context = ''
-        # General Development Rules
+        # Development safety core
 
-        ## Persistent memory
+        Preserve user work. Never revert, overwrite, or delete unrelated changes.
+        Stay within the approved scope; ask before destructive actions or expanding it.
+        Never run rm, including for session-created files. Never bypass a denied tool
+        with another command, interpreter, or plugin.
+        For approved removals, use `${pkgs.trash-cli}/bin/trash -- <path>`.
+        Use unlink only for a verified symlink, and rmdir only for an empty directory.
+        If a target is unclear or trash fails, stop and ask the main agent or user.
 
-        Automatic memory recall is selective, not exhaustive. Missing injected context does not mean no relevant memory exists.
-        Before relying on past project decisions, constraints, or failed approaches, explicitly search the memory tool using specific technical keywords.
-        If a search returns no matches, try alternative terms or inspect recent project memories before concluding nothing was recorded.
-        Treat retrieved memories as historical context, not verified current facts; check relevant code and evidence before acting.
-        Keep mandatory rules and stable instructions in AGENTS.md, not only in memory.
+        Prefer glob, grep, and read tools over shell searches. Never search filesystem roots.
+        Search memory before relying on past decisions; retry with alternative terms
+        if needed. Verify recalled facts against current evidence. Keep stable rules
+        in AGENTS.md rather than only in memory.
 
-        ## Removal of files and directories
+        The main agent owns user questions, the overall todo list, and plan approval.
+        Before multi-step code changes, present a plan and wait for approval.
+        Delegates execute only their approved bounded task, retain these safety rules,
+        and return blockers to the main agent without restarting planning or delegating.
+        Review and verify changes before claiming completion; report unrun checks.
 
-        CRITICAL: Never, ever run `rm -rf` to delete files or directories. This command is extremely dangerous and can lead to irreversible data loss. Instead, use safer alternatives like `${pkgs.trash-cli}/bin/trash` to move files to the trash.
+        # Load detailed guidance when needed
 
-        ```
-        usage: ${pkgs.trash-cli}/bin/trash [OPTION]... FILE...
-
-        Put files in trash
-
-        positional arguments:
-          files
-
-        options:
-          -h, --help            show this help message and exit
-          --print-completion {bash,zsh,tcsh}
-                                print shell completion script
-          -d, --directory       ignored (for GNU rm compatibility)
-          -f, --force           silently ignore nonexistent files
-          -i, --interactive     prompt before every removal
-          -r, -R, --recursive   ignored (for GNU rm compatibility)
-          --trash-dir TRASHDIR  use TRASHDIR as trash folder
-          -v, --verbose         explain what is being done
-          --version             show program's version number and exit
-
-        all trash-cli commands:
-          trash-put             trash files and directories.
-          trash-list            list trashed files.
-          trash-restore         restore a trashed file.
-
-        To remove a file whose name starts with a '-', for example '-foo',
-        use one of these commands:
-
-            trash -- -foo
-
-            trash ./-foo
-        ```
-
-        Other options include:
-        - If the target is a symlink, use `unlink` to remove it.
-        - Checking the target thoroughly before running `rm` (no `-f` and no `-r`), deleting files individually.
-        - Using `rmdir` to delete empty directories.
-
-        It is only ever acceptible to delete files or directories using `rm`, if *you* created them in this session.
-
-        If you're unsure about whether a file or directory can be deleted, ask for clarification before proceeding. It's better to be safe than sorry.
-        If the `trash` cli fails to execute, ask for clarification before proceeding.
-
-        ## Searching for files or file contents
-
-        Prefer the use of builtin tools (like glob or grep) to find files.
-        Disfavor the use of command-lines or shells to find files or file contents.
-
-        NEVER use tools like glob or grep on filesystem root(s).
-
-        ## Longer/Multistep implementations
-
-        When doing long or multistep implementations, break them down into smaller, more manageable tasks before starting.
-        Try to figure out the roadblocks, and how to resolve them ahead of time, using websearches, code searches or by asking the user.
-        Before doing any code changes, use the todos tool to write a step-by-step plan. Try to include as much detail as necessary, including the solutions to possible roadblocks you've found.
-        Present that plan to the user for review and approval before proceeding with any code changes.
-
-        ### Compaction
-
-        Longer-term implementations will likely exceed any context window you have. That is, when you will need to compact the previous context to make room for new context.
-        You will be prompted for compaction automatically, and you won't have to do that yourself.
-        When you do this, you should try to compact the context in a way that preserves as much relevant information as possible, while removing irrelevant or redundant information, like old or finished tasks.
-        If you need to mention finished tasks in the compaction, try to keep it as short as possible.
-        If you need more space, for example to explain roadblocks you've overcome, for a finished task, write them to /tmp/opencode/<UNIQUE_TASK_NAME>.md and in the compacted context, write:
-          "Did <Task description>. For more details see /tmp/opencode/<UNIQUE_TASK_NAME>.md"
-
-        You should also try to preserve the structure of the context, so that it is still easy to read and understand.
-        During compaction, make sure you are aware, what the current state of the project is, what the blockers are and what is already done and relay that as concicely as possible.
-
-        ### Roadblocks
-
-        If you encounter roadblocks during your efforts, there is a multistep process you should follow (in that order):
-
-        1. Try to find a solution by doing a websearch. Oftentimes roadblocks you encounter will have been solved by someone else before.
-           You will at least be able to find some terminology and ideas for further research.
-        2. Read local code. If you are unable to find a promising solution using websearches, the next step is to look at the locally installed code and dependencies.
-           Use the glob and grep tools to find code relevant to the blocker. Try to trace any codepaths that are relevant.
-           Use the GNU `binutils` tools to explore binary files only if needed.
-        3. Ask the user for guidance. Explain the blocker you've encountered in detail.
-           Then explain to them, what research you've done, what has panned out and what hasn't.
-           Link them to relevant issues (GitHub issues preferred, other git-provider issues work as well, forums are acceptible, but not preferred).
-
-        ## Commands
-
-        You will be acting on NixOS, inside an isolated environment, generally defined at @flake.nix.
-        If any tools you expect to see, based on the flake, are missing either:
-        - Prompt the user to restart your shell (preferred)
-        - Run commands using `nix develop`.
-
-        If you need tools not specified in the flake, you can "install" them using `nix-shell -p <package>`.
-        Use the nixos mcp (if available) to check the naming of packages.
-
-        If you can't find certain tools, libraries or packages you need, you can either use `nix-locate` to find them, or ask the user for guidance.
-
-        If you update the @flake.nix yourself, always prompt the user for a shell restart. Only fall back on `nix develop` if the user declines.
-
-        ## Shared understanding
-
-        In order to establish a shared understanding, when implementing features, or if you're at a certain decision point, use the @grilling skill provided.
-        Using that skill will help you establish a shared understanding of the problem, and will help you make better decisions.
+        - Main agent: load agent-workflow before multi-step work or compaction.
+          Use grilling for feature requirements and unresolved design decisions.
+        - Load nix-environment for Nix environment changes or missing tools/libraries.
+        - Load the matching debugging, implementation, refactoring, review, or
+          language skill before that work. Delegates load only task-relevant skills.
+        Skill text is loaded on demand; the safety core always applies.
       '';
 
       agents = {
@@ -290,7 +206,7 @@ in {
           "@anthonyhaussman/opencode-agy-auth"
           "@slkiser/opencode-quota@5"
           "${opencode-latex}"
-          "opencode-mem@latest"
+          "${opencode-mem}"
         ];
 
         experimental = {
@@ -317,10 +233,13 @@ in {
     };
 
     xdg.configFile."opencode/opencode-mem.jsonc".text = builtins.toJSON {
-      # Reuse OpenCode authentication and the active session's model for capture.
-      opencodeProvider = "openai";
-      opencodeModel = "inherit";
+      # Keep background memory generation off the main session's OpenAI quota.
+      opencodeProvider = "google-agy";
+      opencodeModel = "gemini-3.8-flash";
+      opencodeVariant = "low";
       autoCaptureEnabled = true;
+      # This locally patched package is updated through Nix, not its updater.
+      autoUpdate = false;
     };
 
     programs.antigravity-cli = {
@@ -364,6 +283,8 @@ in {
 
         rust-code-readability = ./skills/rust-code-readability;
         grilling = ./skills/grilling;
+        agent-workflow = ./skills/agent-workflow;
+        nix-environment = ./skills/nix-environment;
 
         inherit
           (pkgs.agent-skills.github.obra.superpowers)

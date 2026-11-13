@@ -1,0 +1,23 @@
+--- a/dist/v2/legacy-client.js
++++ b/dist/v2/legacy-client.js
+@@ -1,5 +1,7 @@
+ import { randomUUID } from "node:crypto";
+ import { resolve } from "node:path";
+ import { isCaptureEvidenceEvent } from "../services/capture-evidence-events.js";
++import { CONFIG } from "../config.js";
++import { generateMemoryText } from "./agy-generation.js";
+ function textFromParts(parts = []) {
+     return parts
+@@ -271,10 +273,10 @@
+                                 : {}),
+                         }
+                         : undefined;
+-                    const generated = await ctx.generate.text({
++                    const generated = await generateMemoryText(ctx, {
+                         prompt: schemaPrompt(body),
+                         ...(model ? { model } : {}),
+-                    });
++                    }, CONFIG.opencodeTimeoutMs);
+                     const text = generated?.text ?? "";
+                     const structured = body.format?.type === "json_schema" ? parseJson(text) : undefined;
+                     return {
