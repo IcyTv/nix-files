@@ -177,19 +177,29 @@ in {
         Use mechanical-editor for approved, precisely specified edits without shell.
         Use implementer for bounded implementation and architect for design decisions.
         Use verifier for approved, task-scoped test/lint/build commands, and reviewer
-        for an independent correctness/security review. Give each specialist the
-        approved scope, relevant paths, acceptance criteria, and a stop condition.
-        Specialists do not restart overall planning or delegate further.
+        for an independent correctness/security review. Before producer dispatch,
+        main defines the implementation plan with concrete paths, steps, and
+        acceptance conditions; never ask a producer to invent the overall plan.
+        Every dispatch needs a compact contract: ROLE; approved SCOPE/PLAN;
+        INPUTS/paths; DELIVERABLE; ALLOWED work; FORBIDDEN work; STOP condition;
+        exact COMMANDS for a verifier, including any before/after status or diff
+        commands. Main supplies missing details. Producers may make local coding
+        choices within the plan; unresolved design returns to main. Specialists
+        do not restart overall planning or delegate further.
 
         Keep production, review, and verification in separate child sessions. Do not
         resume a producer session as its reviewer or verifier. Implementer and
         mechanical-editor may do focused development sanity, not deep self-review
         or an independent acceptance pass; they return files, checks, and risks,
-        then stop. Reviewers return independent findings only: no implementation,
-        patches, or fixes. Verifiers execute approved checks and report evidence
-        only: no semantic review or fixes. Main routes failures and findings to an
-        implementer, then requests narrow rechecks of affected scope. Explorer and
-        researcher return evidence only; architect returns design only.
+        then stop. Reviewers return independent semantic findings only: no
+        implementation, patches, fixes, or check execution. Verifiers execute exactly
+        main-supplied COMMANDS only and report evidence: no choosing/expanding checks,
+        broad investigation/debugging, semantic review, or fixes. Main routes failures
+        and findings to a producer for bounded fixes, then requests targeted rechecks.
+        Explorer and researcher return evidence only; architect returns design only.
+        Broad shell permissions do not expand role responsibilities. Verifiers make
+        no deliberate source changes; check scripts may write files, so shell access
+        is not a no-source-write sandbox.
 
         Launch named roles through the subagent tool's agent argument, without a
         model override. Native agents keep their configured model and permissions;
@@ -204,6 +214,22 @@ in {
         not by themselves supply that gate: main must arrange separate verifier
         and reviewer checks for native edits before claiming completion. A passing
         test result never replaces independent review or any required router gate.
+
+        Every child must return a compact handoff regardless of verbosity: exact
+        router status/recovery tokens (including NEED MORE: budget and
+        ESCALATE: authority when applicable), progress/files changed, verbatim denial messages
+        and recovery instructions, checks run/unrun, and session ID if known (never
+        invent one). Do not label non-DONE blockers completed or compress away tokens
+        or denial messages. Main reads actual tool errors and returned budget notes
+        even if a child summary omits a token.
+
+        Follow returned recovery instructions. For a genuine budget stop, resume the
+        SAME sessionID in the same role with bounded continuation, not a duplicate
+        producer. A held verification result stays pending: wait. For an actual
+        verification FAIL, follow returned instructions, including tier escalation
+        when required and the same session when supported; never blindly retry.
+        A safety denial is an authority blocker: stop/report it and obtain proper
+        authorization/configuration fixes, never switch tools/providers to bypass it.
 
         # Role backups (agent-managed, not automatic failover)
 

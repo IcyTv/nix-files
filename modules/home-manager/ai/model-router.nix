@@ -65,6 +65,11 @@
     review, or verification. Do not perform another role's work to satisfy those
     instructions. Global safety, approvals, and genuine router gates still apply;
     main owns completion and any router_verify calls for returned handles.
+    Always return a compact handoff regardless of verbosity: preserve exact router
+    status/recovery tokens, including NEED MORE: budget and ESCALATE: authority when
+    applicable, and denial messages/recovery instructions verbatim. Include progress,
+    files changed, checks run/unrun, and the session ID if known; never invent one.
+    Never label a non-DONE blocker completed or compress away recovery details.
   '';
   reviewTask =
     boundedTask
@@ -79,57 +84,19 @@
   verifierTask =
     boundedTask
     + ''
-      Run only main-approved test, lint, or build commands scoped to this task.
+      Execute exactly main-supplied COMMANDS in the supplied working directory and
+      scope. Do not choose, add, rewrite, or expand checks. If commands or inputs are
+      missing, stop and return the blocker; main supplies the missing details.
       Report execution evidence only, not a semantic review or acceptance judgment.
-      Do not independently analyze correctness or fix failures; main routes failures
-      to an implementer and requests a narrow recheck of the affected scope.
-      Inspect commands and relevant scripts before requesting approval. Request
-      approval for the exact command, not a blanket runner prefix. Never install
-      packages, run arbitrary interpreters/shell/eval, fix or format source, widen
-      checks, write Git state, activate an environment, or deploy. Return failures
-      to main without fixing them. Test/build scripts can modify files: this is not
-      a sandbox. Make no deliberate source changes. Inspect Git status and diff
-      before and after checks; report any resulting changes, commands, exit codes,
-      and relevant output. Do not revert generated changes. Report unrun checks.
+      Do not independently analyze correctness, investigate/debug broadly, or fix
+      failures; main routes failures to an implementer and requests a narrow recheck.
+      Never install packages, fix or format source, write Git state, activate an
+      environment, or deploy. General shell permission does not expand this role.
+      Scripts can modify files: shell access is not a no-source-write sandbox.
+      Make no deliberate source changes. Main must include any before/after status
+      or diff commands in COMMANDS. Report commands, exit codes, relevant output,
+      resulting changes, and unrun checks. Do not revert generated changes.
     '';
-  # These prefixes only permit an approval request, never unattended execution.
-  # The caller must approve the task scope and inspect the invoked project script.
-  runnerPrefixes = [
-    "npm test *"
-    "npm run test *"
-    "npm run lint *"
-    "npm run build *"
-    "pnpm test *"
-    "pnpm run test *"
-    "pnpm run lint *"
-    "pnpm run build *"
-    "cargo test *"
-    "cargo check *"
-    "cargo clippy *"
-    "cargo build *"
-    "go test *"
-    "go build *"
-    "pytest *"
-    "ruff check *"
-    "eslint *"
-    "tsc --noEmit *"
-    "alejandra --check *"
-    "nix eval --offline --no-write-lock-file *"
-    "nix build --offline --no-write-lock-file *"
-  ];
-  # Shell matching does not treat the space before '*' as optional.
-  runnerCommands =
-    lib.concatMap (pattern: [
-      (lib.removeSuffix " *" pattern)
-      pattern
-    ])
-    runnerPrefixes;
-  nixRunnerCommands = lib.concatMap (operation:
-    lib.concatMap (prefix: [prefix "${prefix} *"]) [
-      "nix develop --no-write-lock-file -c cargo ${operation}"
-      "nix develop --no-write-lock-file -c env CARGO_TARGET_DIR=* cargo ${operation}"
-    ]) ["check" "test" "clippy" "build"];
-  runnerDeniedFlags = ["* --fix*" "* --write*" "* --outputFile*" "* --eval*" "* --command*" "* -c * -c *"];
   nativeReadPermissions =
     [
       {
@@ -165,20 +132,14 @@
         effect = "allow";
       }
     ];
-  runnerPermissions =
-    map (resource: {
-      action = "shell";
-      inherit resource;
-      effect = "ask";
-    })
-    runnerCommands
-    # Keep generic interpreter -c calls denied. Only the scoped Nix runners
-    # below may request approval after that denial; forbidden flags remain last.
-    ++ [
+  # Native rules use last-match ordering. Restate high-risk asks after broad allow
+  # so execution-role autonomy does not override the inherited approval safeguards.
+  shellPermissions =
+    [
       {
         action = "shell";
-        resource = "* -c *";
-        effect = "deny";
+        resource = "*";
+        effect = "allow";
       }
     ]
     ++ map (resource: {
@@ -186,13 +147,7 @@
       inherit resource;
       effect = "ask";
     })
-    nixRunnerCommands
-    ++ map (resource: {
-      action = "shell";
-      inherit resource;
-      effect = "deny";
-    })
-    runnerDeniedFlags;
+    approvalPatterns;
 in {
   config = lib.mkIf config.my.hm.ai.enable {
     programs.opencode.settings = {
@@ -221,7 +176,7 @@ in {
       agents.researcher.permissions = denyShell;
       agents.reviewer-backup.permissions = denyShell;
       agents.architect.permissions = denyShell;
-      agents.verifier.permissions = denyShell ++ runnerPermissions;
+      agents.verifier.permissions = shellPermissions;
 
       # V2 uses system and provider/model#variant, not legacy prompt/variant.
       # Keep these IDs out of router agents/subagentTiers so tier pinning cannot
@@ -247,7 +202,7 @@ in {
             {
               action = "edit";
               resource = "*";
-              effect = "ask";
+              effect = "allow";
             }
           ];
       };
@@ -257,7 +212,7 @@ in {
         description = "Scoped approved check runner after confirmed shared Google quota exhaustion";
         system = verifierTask;
         steps = 30;
-        permissions = nativeReadPermissions ++ runnerPermissions;
+        permissions = nativeReadPermissions ++ shellPermissions;
       };
       agents.reviewer = {
         model = "google-agy/gemini-4-argon#high";
@@ -289,15 +244,19 @@ in {
       activePreset = "hybrid-agy-openai";
       activeMode = "normal";
       delegateInstructions = "keep";
+      # Relax premature write pressure, not total/cumulative limits or host steps.
       enforcement.guard = {
-        readDraftCap = 12;
-        budget = 50;
+        readDraftCap = 100;
+        budget = 100;
       };
       rules = [
         "Use subagent(agent=<role>) without a model override: explorer for code location; researcher for docs; mechanical-editor for precise edits; implementer for implementation; architect for design; verifier for approved scoped checks; reviewer for independent correctness/security review."
         "Main owns scope, questions, plan approval, completion and handoffs. Specialists execute only their named role, without replanning or delegation. Role scope takes precedence over generic tier instructions to implement/review/verify, never over safety, approvals or genuine router gates. Main uses router_verify only for returned unverified handles."
+        "Before producer dispatch, main defines the implementation plan with concrete paths, steps and acceptance conditions; never ask a producer to invent the overall plan. Every dispatch requires a compact contract: ROLE; approved SCOPE/PLAN; INPUTS/paths; DELIVERABLE; ALLOWED work; FORBIDDEN work; STOP condition; exact COMMANDS for a verifier, including any before/after status or diff commands. Main supplies missing details. Producers may make local coding choices within the plan; unresolved design returns to main."
         "Canonical fast/medium/heavy remain available. Tier/model cost guidance is advisory for native roles; do not re-pin fixed native agents or backups to a tier model. Native edits need separate verifier and reviewer checks; native dispatch alone does not supply the router gate."
-        "Producers (implementer/mechanical-editor) may perform focused development sanity only, not deep self-review or independent acceptance. Return files/checks/risks, then stop. Launch reviewer and verifier as separate child sessions, not continuations of the producer. Reviewers return findings only, never implementation/patches/fixes. Verifiers run approved checks and report evidence only, never semantic review/fixes. Main routes failures/findings to an implementer and narrowly rechecks affected scope."
+        "Producers (implementer/mechanical-editor) may perform focused development sanity only, not deep self-review or independent acceptance. Return files/checks/risks, then stop. Producer, reviewer and verifier must be separate child sessions; never resume a producer as reviewer/verifier. Reviewers return semantic findings only, never implementation/patches/fixes/check execution. Verifiers execute exactly main-supplied COMMANDS only: no choosing/expanding checks, broad investigation/debugging, semantic review or fixes. Main routes failures/findings to a producer for bounded fixes and targeted rechecks. Broad shell permissions do not expand role responsibilities."
+        "Every child returns a compact handoff regardless of verbosity: exact router status/recovery tokens (including NEED MORE: budget and ESCALATE: authority when applicable), progress/files changed, verbatim denial messages/recovery instructions, checks run/unrun and session ID if known (never invent one). Never label non-DONE blockers completed or compress away tokens/denials. Main reads actual tool errors and returned budget notes even if the summary omits a token."
+        "Follow returned recovery instructions. For a genuine budget stop, resume the SAME sessionID in the same role with bounded continuation, not a duplicate producer. A held verification result stays pending: wait. For actual verification FAIL, follow returned instructions, including tier escalation when required and the same session when supported; never blindly retry. A safety denial is an authority blocker: stop/report it and obtain proper authorization/configuration fixes, never switch tools/providers to bypass it."
         "Role fallback is agent-managed only: on confirmed Google quota exhaustion, Flash AND Argon share the exhausted pool for this task. Announce switches to verifier-backup and reviewer-backup; do not repeatedly probe either Google model. No explorer/researcher backup. Auth/config failures are blockers; test failures/review findings are NOT fallback triggers. Never claim automatic runtime failover."
         "Explicit role backups take precedence over generic provider fallback advice after confirmed Google exhaustion. Existing provider/preset fallback settings continue to govern ordinary tier dispatches."
       ];
@@ -334,6 +293,8 @@ in {
             boundedTask
             + ''
               Make the smallest coherent implementation matching repository patterns.
+              Make local coding choices within main's plan only; return missing plan
+              details or unresolved design decisions to main instead of replanning.
               Never suppress type errors. Focused development sanity checks are
               allowed, never a full suite unless approved. Do not conduct deep
               self-review or an independent acceptance pass. Stop after two consecutive
@@ -364,10 +325,7 @@ in {
           permission = {
             read = "allow";
             external_directory = "ask";
-            shell = {
-              ask = runnerCommands ++ nixRunnerCommands;
-              deny = runnerDeniedFlags;
-            };
+            shell = {"*" = "allow";} // lib.genAttrs approvalPatterns (_: "ask");
           };
         };
         reviewer-backup = {
