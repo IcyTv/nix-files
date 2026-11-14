@@ -42,5 +42,9 @@
       enable = true;
       package = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system}.libratbag;
     };
+
+    programs.localsend.enable = true;
+    networking.firewall.allowedTCPPorts = [53317];
+    networking.firewall.allowedUDPPorts = [53317];
   };
 }

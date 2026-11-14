@@ -72,6 +72,11 @@
     HandleLidSwitchDocked = "suspend-then-hibernate";
   };
 
+  services.tailscale = {
+    enable = true;
+    useRoutingFeatures = "client";
+  };
+
   systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
 
   security.pam.services.swaylock = {};
