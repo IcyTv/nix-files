@@ -1,0 +1,12 @@
+{
+  "name": "opencode-compaction",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./index.js" },
+  "peerDependencies": { "@opencode/plugin": ">=2.2.7 <3" },
+  "scripts": {
+    "test": "node --test budget.test.js",
+    "test:sdk": "node --test sdk-contract.test.js"
+  }
+}

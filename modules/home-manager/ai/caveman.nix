@@ -13,6 +13,8 @@
     cp -r ${caveman}/src/plugins/opencode/. "$out/"
     cp ${caveman}/src/hooks/caveman-config.js \
       "$out/caveman-config.cjs"
+    cp ${caveman}/src/hooks/caveman-parse.js \
+      "$out/caveman-parse.cjs"
   '';
 
   installMarkdownFiles = destination: source:

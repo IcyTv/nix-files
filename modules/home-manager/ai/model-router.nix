@@ -91,13 +91,13 @@ in {
         hybrid-agy-openai = {
           inherit (agyTiers) fast;
           medium = {
-            model = "openai/gpt-6.1-sol-fast";
+            model = "openai/gpt-6.1-sol";
             variant = "xhigh";
             costRatio = 5;
             steps = 50;
           };
           heavy = {
-            model = "openai/gpt-6-astra-fast";
+            model = "openai/gpt-6-astra";
             variant = "max";
             costRatio = 20;
             steps = 120;

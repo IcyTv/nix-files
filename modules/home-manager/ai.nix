@@ -23,6 +23,7 @@
 
   opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
   opencode-mem = pkgs-unstable.callPackage ./packages/opencode-mem {};
+  opencode-compaction = pkgs-unstable.callPackage ./packages/opencode-compaction {};
   crates-mcp = pkgs.rustPlatform.buildRustPackage rec {
     pname = "crates-mcp";
     version = "0.1.0";
@@ -170,6 +171,16 @@ in {
         and return blockers to the main agent without restarting planning or delegating.
         Review and verify changes before claiming completion; report unrun checks.
 
+        # OpenAI context budget
+
+        The local context-budget plugin advises at 240,000 input tokens, including cache,
+        and queues compaction at a configurable 500,000-token fallback. Its usage signal
+        is the latest completed request, not a strict spend ceiling. Native automatic
+        compaction is unchanged and may run earlier.
+        At an advisory, preserve a handoff and compact at the next safe milestone unless
+        the user asked otherwise. Use context_compact only for your own session; never
+        change user-controlled limits. Only the user controls /context-budget.
+
         # Load detailed guidance when needed
 
         - Main agent: load agent-workflow before multi-step work or compaction.
@@ -207,6 +218,7 @@ in {
           "@slkiser/opencode-quota@5"
           "${opencode-latex}"
           "${opencode-mem}"
+          "${opencode-compaction}"
         ];
 
         experimental = {
