@@ -124,7 +124,12 @@
       pattern
     ])
     runnerPrefixes;
-  runnerDeniedFlags = ["* --fix*" "* --write*" "* --outputFile*" "* --eval*" "* --command*" "* -c *"];
+  nixRunnerCommands = lib.concatMap (operation:
+    lib.concatMap (prefix: [prefix "${prefix} *"]) [
+      "nix develop --no-write-lock-file -c cargo ${operation}"
+      "nix develop --no-write-lock-file -c env CARGO_TARGET_DIR=* cargo ${operation}"
+    ]) ["check" "test" "clippy" "build"];
+  runnerDeniedFlags = ["* --fix*" "* --write*" "* --outputFile*" "* --eval*" "* --command*" "* -c * -c *"];
   nativeReadPermissions =
     [
       {
@@ -167,6 +172,21 @@
       effect = "ask";
     })
     runnerCommands
+    # Keep generic interpreter -c calls denied. Only the scoped Nix runners
+    # below may request approval after that denial; forbidden flags remain last.
+    ++ [
+      {
+        action = "shell";
+        resource = "* -c *";
+        effect = "deny";
+      }
+    ]
+    ++ map (resource: {
+      action = "shell";
+      inherit resource;
+      effect = "ask";
+    })
+    nixRunnerCommands
     ++ map (resource: {
       action = "shell";
       inherit resource;
@@ -269,6 +289,10 @@ in {
       activePreset = "hybrid-agy-openai";
       activeMode = "normal";
       delegateInstructions = "keep";
+      enforcement.guard = {
+        readDraftCap = 12;
+        budget = 50;
+      };
       rules = [
         "Use subagent(agent=<role>) without a model override: explorer for code location; researcher for docs; mechanical-editor for precise edits; implementer for implementation; architect for design; verifier for approved scoped checks; reviewer for independent correctness/security review."
         "Main owns scope, questions, plan approval, completion and handoffs. Specialists execute only their named role, without replanning or delegation. Role scope takes precedence over generic tier instructions to implement/review/verify, never over safety, approvals or genuine router gates. Main uses router_verify only for returned unverified handles."
@@ -341,7 +365,7 @@ in {
             read = "allow";
             external_directory = "ask";
             shell = {
-              ask = runnerCommands;
+              ask = runnerCommands ++ nixRunnerCommands;
               deny = runnerDeniedFlags;
             };
           };
