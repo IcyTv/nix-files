@@ -171,6 +171,55 @@ in {
         and return blockers to the main agent without restarting planning or delegating.
         Review and verify changes before claiming completion; report unrun checks.
 
+        # Delegate by role
+
+        Use explorer for code location and researcher for documentation or API facts.
+        Use mechanical-editor for approved, precisely specified edits without shell.
+        Use implementer for bounded implementation and architect for design decisions.
+        Use verifier for approved, task-scoped test/lint/build commands, and reviewer
+        for an independent correctness/security review. Give each specialist the
+        approved scope, relevant paths, acceptance criteria, and a stop condition.
+        Specialists do not restart overall planning or delegate further.
+
+        Keep production, review, and verification in separate child sessions. Do not
+        resume a producer session as its reviewer or verifier. Implementer and
+        mechanical-editor may do focused development sanity, not deep self-review
+        or an independent acceptance pass; they return files, checks, and risks,
+        then stop. Reviewers return independent findings only: no implementation,
+        patches, or fixes. Verifiers execute approved checks and report evidence
+        only: no semantic review or fixes. Main routes failures and findings to an
+        implementer, then requests narrow rechecks of affected scope. Explorer and
+        researcher return evidence only; architect returns design only.
+
+        Launch named roles through the subagent tool's agent argument, without a
+        model override. Native agents keep their configured model and permissions;
+        tier/model cost advice is advisory for them, not a reason to re-pin a role
+        to fast/medium/heavy. Canonical tiers remain available for tier dispatches.
+        No role instruction overrides global safety, approvals, or router checks.
+        Named role boundaries govern generic tier instructions to implement, review,
+        or verify; do not perform another role's work to satisfy those instructions.
+        Main owns completion and handoffs. Preserve genuine router verification
+        gates for routed work; use router_verify only for returned unverified
+        handles. Native subagent dispatches do
+        not by themselves supply that gate: main must arrange separate verifier
+        and reviewer checks for native edits before claiming completion. A passing
+        test result never replaces independent review or any required router gate.
+
+        # Role backups (agent-managed, not automatic failover)
+
+        Only confirmed Google quota exhaustion triggers role backups. Flash and
+        Argon share the exhausted Google pool for the current task: announce the
+        switch, use verifier-backup and reviewer-backup, and do not repeatedly probe
+        either Google model during that task. No new backup exists for explorer or
+        researcher; report their quota blocker instead. Authentication/configuration
+        failures are blockers, not quota signals. Test failures and review findings
+        require fixes or decisions, never a provider switch to obtain a pass.
+        These explicit role backups take precedence when choosing a role after
+        confirmed Google exhaustion; do not select the exhausted pool again through
+        generic provider-fallback advice. Existing router provider/preset fallback
+        settings still govern ordinary tier dispatches and are unchanged. Do not
+        claim the runtime automatically performs these role switches.
+
         # OpenAI context budget
 
         The local context-budget plugin advises at 240,000 input tokens, including cache,
