@@ -54,6 +54,16 @@ buildNpmPackage {
     runHook postInstall
   '';
 
+  # patchelf corrupts prebuilt libvips-cpp.so by overwriting DT_INIT (0x25c)
+  # and relocating .init/.plt when adding a program header. Restore the
+  # untouched upstream binary after autoPatchelfPostFixup runs.
+  preFixup = ''
+    postFixupHooks+=('
+      cp -f "$NIX_BUILD_TOP/$sourceRoot/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so."* \
+        "$out/node_modules/@img/sharp-libvips-linux-x64/lib/"
+    ')
+  '';
+
   doInstallCheck = true;
   installCheckPhase = ''
     runHook preInstallCheck
@@ -61,7 +71,10 @@ buildNpmPackage {
     node --input-type=module -e '
       await import("@tursodatabase/database");
       await import("onnxruntime-node");
+      await import("sharp");
+      await import("@huggingface/transformers");
       await import("./dist/v2/legacy-client.js");
+      await import("./dist/plugin.js");
       console.log("Memory adapter and native dependencies loaded");
     '
     runHook postInstallCheck
