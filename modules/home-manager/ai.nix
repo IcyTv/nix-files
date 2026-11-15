@@ -139,7 +139,7 @@
 in {
   options.my.hm.ai.enable = lib.mkEnableOption "AI tools (opencode, mcp)";
 
-  imports = [./ai/caveman.nix ./ai/model-router.nix];
+  imports = [./ai/caveman.nix ./ai/omniroute.nix ./ai/opencode-agents.nix];
 
   config = lib.mkIf config.my.hm.ai.enable {
     my.hm.git.excludes = [".opencode"];
@@ -203,58 +203,33 @@ in {
 
         Launch named roles through the subagent tool's agent argument, without a
         model override. Native agents keep their configured model and permissions;
-        tier/model cost advice is advisory for them, not a reason to re-pin a role
-        to fast/medium/heavy. Canonical tiers remain available for tier dispatches.
-        No role instruction overrides global safety, approvals, or router checks.
+        model advice is advisory, not a reason to override a named role's model.
+        Fast/medium/heavy are native role aliases, not a delegation plugin.
+        No role instruction overrides global safety or approvals.
         Named role boundaries govern generic tier instructions to implement, review,
         or verify; do not perform another role's work to satisfy those instructions.
-        Main owns completion and handoffs. Preserve genuine router verification
-        gates for routed work; use router_verify only for returned unverified
-        handles. Native subagent dispatches do
-        not by themselves supply that gate: main must arrange separate verifier
-        and reviewer checks for native edits before claiming completion. A passing
-        test result never replaces independent review or any required router gate.
+        Main owns completion and handoffs. Main must arrange separate verifier
+        and reviewer checks before claiming completion. A passing test result
+        never replaces independent review. Read-only roles use read/glob/grep;
+        main supplies Git diffs and context. There are no plugin Git tools,
+        read budgets, or automatic verification gates in this configuration.
 
-        Every child must return a compact handoff regardless of verbosity: exact
-        router status/recovery tokens (including NEED MORE: budget and
-        ESCALATE: authority when applicable), progress/files changed, verbatim denial messages
-        and recovery instructions, checks run/unrun, and session ID if known (never
-        invent one). Do not label non-DONE blockers completed or compress away tokens
-        or denial messages. Main reads actual tool errors and returned budget notes
-        even if a child summary omits a token.
+        Every child must return a compact handoff regardless of verbosity:
+        progress/files changed, verbatim denial messages and recovery instructions,
+        checks run/unrun, and session ID if known (never invent one). Never label
+        blockers completed. Main reads actual tool errors and budget notes.
 
         Follow returned recovery instructions. For a genuine budget stop, resume the
         SAME sessionID in the same role with bounded continuation, not a duplicate
-        producer. A held verification result stays pending: wait. For an actual
-        verification FAIL, follow returned instructions, including tier escalation
-        when required and the same session when supported; never blindly retry.
+        producer. Failed checks require a bounded fix and a targeted recheck;
+        never blindly retry or switch providers merely to obtain a pass.
         A safety denial is an authority blocker: stop/report it and obtain proper
         authorization/configuration fixes, never switch tools/providers to bypass it.
 
-        # Role backups (agent-managed, not automatic failover)
-
-        Only confirmed Google quota exhaustion triggers role backups. Flash and
-        Argon share the exhausted Google pool for the current task: announce the
-        switch, use verifier-backup and reviewer-backup, and do not repeatedly probe
-        either Google model during that task. No new backup exists for explorer or
-        researcher; report their quota blocker instead. Authentication/configuration
-        failures are blockers, not quota signals. Test failures and review findings
-        require fixes or decisions, never a provider switch to obtain a pass.
-        These explicit role backups take precedence when choosing a role after
-        confirmed Google exhaustion; do not select the exhausted pool again through
-        generic provider-fallback advice. Existing router provider/preset fallback
-        settings still govern ordinary tier dispatches and are unchanged. Do not
-        claim the runtime automatically performs these role switches.
-
-        # OpenAI context budget
-
-        The local context-budget plugin advises at 240,000 input tokens, including cache,
-        and queues compaction at a configurable 500,000-token fallback. Its usage signal
-        is the latest completed request, not a strict spend ceiling. Native automatic
-        compaction is unchanged and may run earlier.
-        At an advisory, preserve a handoff and compact at the next safe milestone unless
-        the user asked otherwise. Use context_compact only for your own session; never
-        change user-controlled limits. Only the user controls /context-budget.
+        OmniRoute combos provide explicit subscription-model fallback. They do not
+        change role permissions or replace independent review and verification.
+        Authentication/configuration failures remain blockers. Quota displays and
+        catalog labels are not proof of account billing or available capacity.
 
         # Load detailed guidance when needed
 
@@ -300,13 +275,13 @@ in {
           todo = true;
         };
 
-        provider = {
-          openai.options = {
+        providers = {
+          openai.settings = {
             websearch_cited = {
               model = "gpt-5.5";
             };
           };
-          google.options = {
+          google.settings = {
             projectId = "gen-lang-client-0198199812";
           };
         };

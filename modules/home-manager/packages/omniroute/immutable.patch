@@ -1,0 +1,51 @@
+diff --git a/src/lib/system/autoUpdate.ts b/src/lib/system/autoUpdate.ts
+--- a/src/lib/system/autoUpdate.ts
++++ b/src/lib/system/autoUpdate.ts
+@@ -293,6 +293,13 @@ export async function validateAutoUpdateRuntime(
+   execFileImpl: ExecFileLike = execFileAsync,
+   existsImpl: (targetPath: string) => Promise<boolean> = pathExists
+ ): Promise<AutoUpdateValidation> {
++  if (process.env.OMNIROUTE_NIX_PACKAGE === "1") {
++    return {
++      supported: false,
++      reason: "This immutable package is updated through Nix only.",
++      composeCommand: null,
++    };
++  }
+   if (config.mode === "source") {
+     const gitDir = path.join(PROJECT_ROOT, ".git");
+     if (!(await existsImpl(gitDir))) {
+diff --git a/src/app/api/system/version/route.ts b/src/app/api/system/version/route.ts
+--- a/src/app/api/system/version/route.ts
++++ b/src/app/api/system/version/route.ts
+@@ -129,6 +129,13 @@ export async function POST(req: NextRequest) {
+     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+   }
+ 
++  if (process.env.OMNIROUTE_NIX_PACKAGE === "1") {
++    return NextResponse.json(
++      { success: false, error: "This immutable package is updated through Nix only." },
++      { status: 403 }
++    );
++  }
++
+   const current = getCurrentVersion();
+   const latest = await resolveLatestVersionCached({ bypassCache: true });
+ 
+diff --git a/src/lib/services/installers/utils.ts b/src/lib/services/installers/utils.ts
+--- a/src/lib/services/installers/utils.ts
++++ b/src/lib/services/installers/utils.ts
+@@ -144,6 +144,13 @@ export function runNpm(
+   args: string[],
+   options: { cwd?: string; timeoutMs?: number; prefix?: string } = {}
+ ): Promise<NpmRunResult> {
++  if (process.env.OMNIROUTE_NIX_PACKAGE === "1") {
++    return Promise.reject(new InstallError(
++      "Runtime npm operations are disabled in the Nix package.",
++      "Install and update dependencies through Nix only.",
++      403
++    ));
++  }
+   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+   const isBun = Boolean(process.versions.bun);
+   const npmBin = process.platform === "win32"
