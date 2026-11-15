@@ -2,6 +2,36 @@
 
 export const SOFT_LIMIT = 240_000;
 export const HARD_LIMIT = 500_000;
+export const OMNI_SOFT_LIMIT = 500_000;
+
+const coreModels = new Set([
+  "orchestrator", "exploration", "research", "mechanical", "implementation", "verification",
+  "architecture", "review", "implementation-deep", "architecture-deep", "review-deep",
+]);
+
+/** @typedef {import('@opencode/client').ModelRef} Model */
+/**
+ * One route policy serves tool visibility, completed-step checks and request hooks.
+ * Legacy role-prefixed combos and unknown OmniRoute models are voluntary-only.
+ * @param {Model | undefined} model
+ */
+export function policy(model) {
+  const openai = model?.providerID === "openai";
+  const omni = model?.providerID === "omniroute";
+  const core = omni && coreModels.has(model.id);
+  return {
+    tool: openai || omni,
+    budget: openai || core,
+    softLimit: openai ? SOFT_LIMIT : core ? OMNI_SOFT_LIMIT : undefined,
+    hard: openai,
+    hardLimit: HARD_LIMIT,
+    label: openai ? `OpenAI (${model.id})` : core ? `OmniRoute core (${model.id})` :
+      model ? `${model.providerID}/${model.id} (no managed budget policy)` : "Current policy unproven (no authoritative model selection)",
+  };
+}
+
+/** @typedef {ReturnType<typeof policy>} Policy */
+/** @typedef {{soft?: boolean, hard?: boolean, hardLimit?: number}} Overrides */
 
 // Plugin storage is shared by plugin ID, not by location. Keep the matching
 // session lock shared across location instances and overlapping module reloads.
@@ -14,9 +44,10 @@ Reflect.set(globalThis, lockKey, locks);
 /** @typedef {import('@opencode/client').TokenUsageInfo} Tokens */
 /**
  * @typedef {object} State
- * @property {boolean} soft
- * @property {boolean} hard
- * @property {number} hardLimit
+ * @property {boolean} soft Legacy snapshot; effective controls use overrides and route defaults.
+ * @property {boolean} hard Legacy snapshot; never used as a route-independent default.
+ * @property {number} hardLimit Legacy snapshot retained for stored-session compatibility.
+ * @property {Overrides} overrides Explicit user choices, including values equal to defaults.
  * @property {boolean} notified
  * @property {boolean} attempted
  * @property {boolean} pending
@@ -27,6 +58,7 @@ Reflect.set(globalThis, lockKey, locks);
 /**
  * @typedef {object} API
  * @property {(id: string) => Promise<readonly Message[]>} context
+ * @property {(id: string) => Promise<Model | undefined>} [model]
  * @property {(id: string) => Promise<{id: string}>} compact
  * @property {(key: string) => Promise<unknown>} load
  * @property {(key: string, state: State) => Promise<void>} save
@@ -35,7 +67,7 @@ Reflect.set(globalThis, lockKey, locks);
 /** @returns {State} */
 export function defaults() {
   return {
-    soft: true, hard: true, hardLimit: HARD_LIMIT,
+    soft: true, hard: true, hardLimit: HARD_LIMIT, overrides: {},
     notified: false, attempted: false, pending: false, failed: false, checkpoint: "", pendingID: "",
   };
 }
@@ -54,7 +86,36 @@ function restore(raw) {
   if (typeof checkpoint === "string") state.checkpoint = checkpoint;
   const pendingID = Reflect.get(raw, "pendingID");
   if (typeof pendingID === "string") state.pendingID = pendingID;
+  const overrides = Reflect.get(raw, "overrides");
+  if (overrides && typeof overrides === "object") {
+    for (const key of ["soft", "hard"]) {
+      const value = Reflect.get(overrides, key);
+      if (typeof value === "boolean") Reflect.set(state.overrides, key, value);
+    }
+    const limit = Reflect.get(overrides, "hardLimit");
+    if (Number.isSafeInteger(limit) && limit > 0) state.overrides.hardLimit = limit;
+  } else {
+    // Old OpenAI defaults have no provenance. Preserve distinguishable user
+    // choices, but never reinterpret an old default hard=true as an Omni opt-in.
+    if (!state.soft) state.overrides.soft = false;
+    if (!state.hard) state.overrides.hard = false;
+    if (state.hardLimit !== HARD_LIMIT) state.overrides.hardLimit = state.hardLimit;
+  }
   return state;
+}
+
+/** @param {State} state @param {Policy} route */
+function controls(state, route) {
+  return {
+    soft: state.overrides.soft ?? true,
+    hard: state.overrides.hard ?? route.hard,
+    hardLimit: state.overrides.hardLimit ?? route.hardLimit,
+  };
+}
+
+/** @param {Model | undefined} left @param {Model | undefined} right */
+function sameModel(left, right) {
+  return left !== undefined && right !== undefined && left.providerID === right.providerID && left.id === right.id;
 }
 
 /**
@@ -69,11 +130,14 @@ export function inputTokens(tokens) {
   return parts.reduce((sum, n) => sum + n, 0);
 }
 
-/** @param {readonly Message[]} messages */
-export function observation(messages) {
+/** @param {readonly Message[]} messages @param {Model} [active] */
+export function observation(messages, active) {
   // Context can retain pre-checkpoint assistant messages beside the new summary.
   // Compare creation times, not array position, and never count the summary request.
   const checkpoint = messages.filter((m) => m.type === "compaction")
+    .reduce((last, m) => !last || m.time.created >= last.time.created ? m : last,
+      /** @type {Message | undefined} */ (undefined));
+  const switched = messages.filter((m) => m.type === "model-switched")
     .reduce((last, m) => !last || m.time.created >= last.time.created ? m : last,
       /** @type {Message | undefined} */ (undefined));
   const cutoff = messages.filter((m) => m.type === "model-switched" ||
@@ -83,9 +147,15 @@ export function observation(messages) {
     m.time.completed !== undefined && !m.error && m.tokens)
     .reduce((last, m) => !last || m.time.created >= last.time.created ? m : last,
       /** @type {Message | undefined} */ (undefined));
+  const measured = assistant?.type === "assistant" ? assistant.model : undefined;
+  const model = active ?? (switched?.type === "model-switched" &&
+    switched.time.created >= (assistant?.time.created ?? -1) ? switched.model : measured);
+  // History can prove fresh low usage for the voluntary retry gate, but cannot
+  // resolve the current agent/default selection or authorize automatic policy.
+  const route = policy(active);
   const input = assistant?.type === "assistant" && assistant.time.created > cutoff &&
-    assistant.model.providerID === "openai" ? inputTokens(assistant.tokens) : undefined;
-  return { checkpoint, input };
+    sameModel(measured, model) && policy(model).tool ? inputTokens(assistant.tokens) : undefined;
+  return { checkpoint, input, model, policy: route };
 }
 
 export class Budget {
@@ -110,9 +180,17 @@ export class Budget {
     return result;
   }
 
-  /** @param {State} state @param {readonly Message[]} messages */
-  sync(state, messages) {
-    const current = observation(messages);
+  /** @param {string} id @param {Model} [active] */
+  async current(id, active) {
+    const messages = await this.api.context(id);
+    // Session pins can change while context is loading. Read selection last;
+    // without a pin only the request hook's resolved model proves policy.
+    const model = active ?? await this.api.model?.(id);
+    return observation(messages, model);
+  }
+
+  /** @param {State} state @param {ReturnType<typeof observation>} current */
+  sync(state, current) {
     const checkpoint = current.checkpoint;
     if (checkpoint?.type === "compaction") {
       const marker = `${checkpoint.id}/${checkpoint.status}`;
@@ -127,9 +205,11 @@ export class Budget {
         if (checkpoint.status === "failed") state.failed = true;
       }
     }
-    // A completed compaction alone does not rearm automation. A fresh low-input
-    // primary request must prove it helped, avoiding repeated fixed-prompt compactions.
-    if (!state.pending && !state.failed && current.input !== undefined && current.input < state.hardLimit) {
+    // A completed compaction alone does not rearm attempts. Fresh low-input
+    // usage must prove it helped. All tool routes may rearm; this safety threshold
+    // does not authorize advisory or automatic budgets on unmanaged routes.
+    if (!state.pending && !state.failed && policy(current.model).tool && current.input !== undefined &&
+      current.input < controls(state, current.policy).hardLimit) {
       state.attempted = false;
     }
     return current.input;
@@ -165,16 +245,19 @@ export class Budget {
     });
   }
 
-  /** @param {string} id @param {{provider?: string, advisory?: boolean}} [options] */
+  /** @param {string} id @param {{model?: Model, advisory?: boolean}} [options] */
   observe(id, options = {}) {
     return this.run(id, async (state) => {
-      const input = this.sync(state, await this.api.context(id));
-      if (options.provider !== undefined && options.provider !== "openai") return;
-      if (input === undefined || state.pending) return;
-      if (state.hard && input >= state.hardLimit) await this.enqueue(id, state);
-      if (options.advisory && state.soft && !state.notified && input >= SOFT_LIMIT && !state.pending) {
+      const current = await this.current(id, options.model);
+      const input = this.sync(state, current);
+      const route = current.policy;
+      const settings = controls(state, route);
+      if (!route.budget || input === undefined || state.pending) return;
+      if (settings.hard && input >= settings.hardLimit) await this.enqueue(id, state);
+      if (options.advisory && settings.soft && !state.notified && route.softLimit !== undefined &&
+        input >= route.softLimit && !state.pending) {
         state.notified = true;
-        return `OpenAI context advisory: latest completed request used ${input.toLocaleString("en-US")} input tokens, including cache, not output. ` +
+        return `${route.label} context advisory: latest completed request used ${input.toLocaleString("en-US")} input tokens, including cache, not output. ` +
           `This is a lagging signal, not the size of this request. Recommend compaction at the next safe milestone, unless the user asked otherwise. ` +
           `Preserve a handoff first; use context_compact when ready. The user alone controls /context-budget limits.`;
       }
@@ -184,7 +267,7 @@ export class Budget {
   /** @param {string} id */
   voluntary(id) {
     return this.run(id, async (state) => {
-      this.sync(state, await this.api.context(id));
+      this.sync(state, await this.current(id));
       if (state.pending) return "Compaction already pending; no duplicate queued.";
       if (state.failed || state.attempted) return "Compaction already attempted for this high-input interval. Ask the user to /context-budget reset before retrying.";
       await this.enqueue(id, state);
@@ -196,18 +279,22 @@ export class Budget {
   /** @param {string} id @param {string} text */
   command(id, text) {
     return this.run(id, async (state) => {
-      const input = this.sync(state, await this.api.context(id));
+      const current = await this.current(id);
+      const input = this.sync(state, current);
+      const route = current.policy;
       const args = text.trim().split(/\s+/);
       const [name, value] = args;
       let acknowledgement = "Status";
       if (text.trim() === "reset") {
         // Keep any admitted control pending; reset must not create a second one.
         Object.assign(state, defaults(), {
+          hard: route.hard, hardLimit: route.hardLimit,
           pending: state.pending, pendingID: state.pendingID, checkpoint: state.checkpoint, attempted: state.pending,
         });
         acknowledgement = "Defaults restored; failure latch cleared";
       } else if (args.length === 2 && (name === "soft" || name === "hard") && (value === "on" || value === "off")) {
         state[name] = value === "on";
+        state.overrides[name] = state[name];
         if (name === "hard" && value === "on" && !state.pending) {
           state.failed = false;
           state.attempted = false;
@@ -215,13 +302,16 @@ export class Budget {
         acknowledgement = `${name} ${value}`;
       } else if (args.length === 2 && name === "hard" && /^\d+$/.test(value) && Number.isSafeInteger(Number(value)) && Number(value) > 0) {
         state.hardLimit = Number(value);
+        state.overrides.hardLimit = state.hardLimit;
         if (!state.pending) { state.failed = false; state.attempted = false; }
         acknowledgement = `Hard limit set to ${state.hardLimit}`;
       } else if (text.trim() !== "" && text.trim() !== "status") {
         return "Usage: /context-budget status | hard <positive integer tokens> | soft on/off | hard on/off | reset. No settings changed.";
       }
-      return `${acknowledgement}. OpenAI only. Soft: ${state.soft ? "on" : "off"} at ${SOFT_LIMIT}; ` +
-        `hard: ${state.hard ? "on" : "off"} at ${state.hardLimit}. Latest complete request input: ${input ?? "unknown"} ` +
+      const settings = controls(state, route);
+      return `${acknowledgement}. ${route.label}. Soft: ${settings.soft ? "on" : "off"} at ${route.softLimit ?? "n/a"}; ` +
+        `hard: ${settings.hard ? "on" : "off"} at ${settings.hardLimit}${route.budget ? "" : " (inactive: no managed budget)"}. ` +
+        `Latest complete request input: ${input ?? "unknown"} ` +
         `(includes cache; lagging, excludes output). Pending: ${state.pending}; retry blocked: ${state.failed || state.attempted}. ` +
         "Settings saved for this session only. Native automatic compaction is unchanged. Pending controls are not cancelled by off/reset.";
     });

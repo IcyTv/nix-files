@@ -36,7 +36,7 @@
   ];
   inspection = ["read" "glob" "grep" "skill"];
   allow = actions: map (action: rule action "*" "allow") actions;
-  readPermissions = [(rule "*" "*" "deny")] ++ allow inspection ++ environmentAsks;
+  readPermissions = [(rule "*" "*" "deny")] ++ allow (inspection ++ ["context_compact"]) ++ environmentAsks;
   # Fixed role permissions apply to every model in the combo, never to a model tier.
   editPermissions = readPermissions ++ allow ["edit"];
   executionPermissions =
@@ -100,13 +100,32 @@
     mode = "subagent";
     inherit description system steps permissions;
   };
+  orchestrator = {
+    model = "omniroute/orchestrator";
+    mode = "primary";
+    description = "Main agent for questions, approval, delegation, and approved work";
+    system = ''
+      You are the main agent, not a bounded-task subagent. Own user questions,
+      the overall plan and todo list, approval, delegation, and final handoffs.
+      Preserve unrelated work and all global safety rules. Obtain approval before
+      multi-step code changes, destructive actions, or scope expansion. You may
+      inspect, edit, and run checks within approved work using normal primary tools.
+      Dispatch named roles with bounded contracts and no model override. Keep
+      production, independent review, and verification in separate child sessions;
+      arrange separate reviewer and verifier checks before claiming completion.
+      Report blockers and unrun checks. Never bypass denials or role boundaries.
+    '';
+    # Keep inherited primary tools; no subagent-style broad deny. Repeat explicit
+    # safeguards for defense in depth even if permission merge behavior changes.
+    permissions = allow ["subagent" "execute" "question" "todowrite" "context_compact"] ++ shellAsks ++ environmentAsks;
+  };
   explorer =
-    agent "role-exploration" "Locate code; no shell or edits"
+    agent "exploration" "Locate code; no shell or edits"
     (boundedTask + "Find only assigned code. Return concise path:line evidence and useful symbols.")
     30
     readPermissions;
   researcher =
-    agent "role-research" "Authoritative documentation and API facts; no shell or edits"
+    agent "research" "Authoritative documentation and API facts; no shell or edits"
     (boundedTask + "Use current primary sources. Cite URLs or path:line evidence; distinguish uncertainty.")
     30 (readPermissions
       ++ allow [
@@ -121,25 +140,44 @@
         "rust-docs_*"
         "rust_docs_*"
       ]);
-  implementer = agent "role-implementation" "Approved bounded implementation" producerTask 50 executionPermissions;
+  implementer = agent "implementation" "Approved bounded implementation" producerTask 50 executionPermissions;
   architect =
-    agent "role-architecture" "Design decisions and tradeoffs; no shell or edits"
+    agent "architecture" "Design decisions and tradeoffs; no shell or edits"
     (boundedTask + "Return design only: recommendation, alternatives, risks, and unresolved choices. Do not implement.")
     60
     readPermissions;
-  reviewer = agent "role-review" "Independent correctness/security review; no shell or edits" reviewTask 40 readPermissions;
+  reviewer = agent "review" "Independent correctness/security review; no shell or edits" reviewTask 40 readPermissions;
   verifier =
-    agent "role-verification" "Run exactly approved scoped checks; no deliberate source changes"
+    agent "verification" "Run exactly approved scoped checks; no deliberate source changes"
     verifierTask
     30 (readPermissions ++ allow ["shell"] ++ shellAsks);
 in {
   config = lib.mkIf config.my.hm.ai.enable {
     programs.opencode.settings = {
-      model = "omniroute/role-implementation";
+      default_agent = "orchestrator";
+      model = "omniroute/orchestrator";
       agents = {
-        inherit explorer researcher implementer architect reviewer verifier;
+        inherit orchestrator explorer researcher implementer architect reviewer verifier;
+        implementer-deep =
+          implementer
+          // {
+            model = "omniroute/implementation-deep";
+            description = "Approved bounded implementation requiring deeper effort";
+          };
+        architect-deep =
+          architect
+          // {
+            model = "omniroute/architecture-deep";
+            description = "Complex design decisions and tradeoffs; no shell or edits";
+          };
+        reviewer-deep =
+          reviewer
+          // {
+            model = "omniroute/review-deep";
+            description = "Complex independent correctness/security review; no shell or edits";
+          };
         mechanical-editor =
-          agent "role-mechanical" "Precisely specified approved edits; no shell"
+          agent "mechanical" "Precisely specified approved edits; no shell"
           (boundedTask
             + ''
               Apply only precisely specified edits in approved paths. Do not infer a
@@ -155,9 +193,9 @@ in {
         fast = explorer;
         medium = implementer;
         heavy = architect;
-        build.model = "omniroute/role-implementation";
+        build.model = "omniroute/implementation";
         execution = {
-          model = "omniroute/role-implementation";
+          model = "omniroute/implementation";
           mode = "primary";
           description = "Main execution agent using the implementation combo";
         };

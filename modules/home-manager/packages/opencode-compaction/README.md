@@ -1,8 +1,32 @@
-# OpenAI context budget (OpenCode V2)
+# OpenAI and OmniRoute context budgets (OpenCode V2)
 
 Local server-only plugin. Requires the host's external `@opencode/plugin` V2 SDK;
 verified against **2.2.7**. No legacy `@opencode-ai/plugin`, extra runtime dependency,
 provider configuration change, or replacement of native automatic compaction.
+
+## Route policies
+
+| Active route | Advisory input threshold | Plugin automatic fallback by default | Voluntary tool |
+| --- | --- | --- | --- |
+| Direct `openai`, any model | 240,000 | On at 500,000 | Yes |
+| `omniroute`, exact managed core IDs below | 500,000 | **Off** | Yes |
+| Other `omniroute` models, including legacy `role-*` combos | None | None; budget controls inactive | Yes |
+| Other providers | None | None; budget controls inactive | No |
+
+Managed OmniRoute IDs are exactly `orchestrator`, `exploration`, `research`,
+`mechanical`, `implementation`, `verification`, `architecture`, `review`,
+`implementation-deep`, `architecture-deep`, and `review-deep`. Their separately
+configured metadata is **872,000 context / 839,232 input / 32,768 output**. This
+plugin does not change that metadata or infer an upstream model's capacity.
+Old `role-*` combos have only 200,000 configured context; they are not large-core
+routes. `cloudflare-free` remains a separate 131,072-context route, not a managed
+large-core route. There is no Copilot policy entry.
+
+At 500,000 completed input tokens, managed OmniRoute gets advice to preserve a
+handoff and **call `context_compact` voluntarily at a safe milestone**. The plugin
+never automatically queues compaction there unless the user explicitly enables
+hard fallback. Native automatic compaction and capacity protection stay unchanged
+for every route; these policies are not context guarantees or billing caps.
 
 ## User controls
 
@@ -20,14 +44,29 @@ not the source session's overrides (copied history can still cross a threshold).
 /context-budget reset
 ```
 
-Defaults: advisory on at **240,000 input tokens**; automatic fallback on at
-**500,000 input tokens**. Limits are inclusive. Hard counts must be positive safe
-integers. Soft and hard switches are independent. `reset` restores defaults and
-clears a failure latch; `hard on` and setting a new hard count also explicitly rearm
-a failed attempt. Disabling/resetting cannot cancel a control already admitted by
-OpenCode. Only user commands change settings. The model gets a no-argument
-`context_compact` tool; it uses the executor's session, never a supplied session ID,
-and never edits limits. It works even when both automatic controls are off.
+Limits are inclusive and count **input**, including cache, not output. Hard counts
+must be positive safe integers. Soft and hard switches are independent. `hard N`
+sets a count but does not enable fallback; use `hard on` to opt in on OmniRoute core.
+Explicit session toggles and hard counts survive provider/model switches. Without
+an explicit override, defaults follow the active route policy above. On unmanaged
+routes, status reports no managed budget and controls remain inactive; saved
+explicit controls still apply if the session returns to a managed route.
+
+`reset` clears explicit overrides, restores the **current route's** defaults, and
+clears a failure latch. `hard on` and setting a new hard count also explicitly
+rearm a failed attempt. Disabling/resetting cannot cancel a control already
+admitted by OpenCode. Only user commands change settings. The model gets a strict,
+no-argument `context_compact` tool; it uses the executor's session, never a supplied
+session ID or parent, and never edits limits. It works on all OpenAI and OmniRoute
+requests, even smaller/unknown OmniRoute routes and when both controls are off.
+
+Old stored OpenAI settings have no explicit-override markers. Nondefault hard
+counts and disabled soft/hard switches remain explicit choices. Old default
+`hard: true` is **not** treated as an OmniRoute opt-in: it cannot be distinguished
+from an old explicit `hard on`. Such sessions retain direct OpenAI's default on,
+but must issue `hard on` again to opt in on OmniRoute. New explicit on/off commands
+are marked and survive switches even when equal to current defaults. Read-only
+inspection does not force a storage migration or rewrite.
 
 **Command acknowledgement:** V2 server command executors return `void`, not display
 text. This plugin queues a synthetic status notice with `resume: false`, using the
@@ -45,23 +84,42 @@ We use the **latest completed, successful primary assistant request** from
 estimate. Stored V2 `TokenUsage.Info` separates non-cached `input`, `cache.read`,
 and `cache.write`: add those three exactly once; exclude `output` and `reasoning`.
 Compaction/title/generate usage is not primary assistant usage. A newer model
-selection invalidates older usage; non-OpenAI usage never triggers these controls.
-Until a fresh request completes after a switch/checkpoint, input is unknown.
+selection invalidates older usage. The current provider **and exact model ID** must
+match the measured request, both in request hooks and event observers. Until a
+fresh request completes after a switch/checkpoint, input is unknown. Unmanaged
+routes never trigger advisory or automatic fallback, even with saved overrides.
+
+Request hooks supply the exact resolved model. Outside a request hook, only an
+explicit `session.get().model` pin proves policy; the plugin reads it **after**
+awaiting history so a switch during that read cannot reuse the old pin. Without a
+pin, OpenCode may select a current agent model or its default instead. The plugin
+does not duplicate that resolver or treat historical assistant/model-switch
+messages as current selection. Event checks therefore fail closed for automation,
+and command status says **Current policy unproven** instead of claiming the old
+route's defaults are active. Settings remain saved, and request-hook checks still
+work once OpenCode supplies the resolved model. History-only observations may
+supply fresh-usage evidence for the voluntary retry safety gate, never policy.
 
 Evidence: published `@opencode/core@2.2.7`, `src/session/usage.ts` (distributed in
 `dist/chunks/skill-4f25tdd0.js`), maps `nonCachedInputTokens` to `tokens.input` and
-maps cached reads/writes separately. `@opencode/schema@2.2.7` defines assistant
-completion timestamps and separate compaction messages. The SDK's context hook
+maps cached reads/writes separately. The OmniRoute OpenAI-compatible chat path in
+`@opencode/ai@2.2.7`, `dist/protocols/openai-compatible-chat.js`, reuses
+`openai-chat.js`; its `mapUsage` derives non-cached input by subtracting cache reads
+and writes from `prompt_tokens`. Thus stored `input + cache.read + cache.write`
+reconstructs inclusive prompt input once. Do **not** add cache again to raw gateway
+`prompt_tokens`. `@opencode/schema@2.2.7` defines assistant completion timestamps
+and separate compaction messages. The SDK's context hook
 does not contain usage. `sdk-contract.test.js` validates fixtures against the real
 encoded V2 schemas; strict `checkJs` checks the adapter against the real SDK.
 
-The soft advisory is injected once per checkpoint into the next OpenAI primary
-model request. It recommends compaction at the next safe milestone **unless the
-user asked otherwise**, rather than interrupting ongoing work. No extra model
-request is created for the advisory. Switching providers does not repeatedly
-reset the advisory. Returning to OpenAI needs fresh OpenAI usage.
+The soft advisory is injected once per checkpoint into the next eligible primary
+model request, using that route's threshold. It recommends compaction at the next
+safe milestone **unless the user asked otherwise**, rather than interrupting
+ongoing work. No extra model request is created for the advisory. Switching
+providers/models does not repeatedly reset the advisory. Returning to a route
+needs fresh usage matching that provider and model.
 
-Hard checks run before primary model calls and after step-completion events.
+Enabled hard checks run before primary model calls and after step-completion events.
 `session.compact` only admits a control and returns immediately; OpenCode runs it
 at the next safe step boundary, before waiting prompts. This is **not a strict
 spend ceiling**: usage lags, a request can already be in flight, and native auto
@@ -74,10 +132,17 @@ storage. This assumes one OpenCode server owns a session, not distributed access
 from independent server processes. OpenCode also merges concurrent compaction
 controls. Summary requests
 do not run the primary context hook. Failed admission or compaction requires an
-explicit user rearm, not automatic retries. After success, a fresh primary request
-below the hard threshold must rearm automation; oversized fixed instructions cannot
-cause an endless compact/continue loop. Old retained assistant usage and the summary
-request's own large input do not immediately retrigger compaction.
+explicit user rearm, not automatic retries. After success, fresh low-input primary
+usage must rearm the attempt gate. This also permits later voluntary compactions
+on unmanaged OmniRoute routes: all tool-eligible routes can rearm below the saved
+hard count (500,000 by default). On unmanaged routes, that count is **only a retry
+safety threshold**, not a budget, capacity claim, advisory, or automatic fallback.
+When current selection is unproven, only voluntary retry evidence may use history;
+usage must still be newer than the checkpoint/switch and match the latest measured
+route. Fresh high input, failure, cancellation, and pending controls keep retry
+blocked. Oversized fixed instructions cannot cause an endless compact/continue
+loop. Old retained assistant usage and the summary request's own large input do
+not immediately retrigger compaction.
 
 Global event handlers reject foreign directory/workspace references and check the
 session's current directory before touching budget state, including cancellation

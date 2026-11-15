@@ -205,6 +205,13 @@ in {
         model override. Native agents keep their configured model and permissions;
         model advice is advisory, not a reason to override a named role's model.
         Fast/medium/heavy are native role aliases, not a delegation plugin.
+        Use balanced named roles by default. Choose implementer-deep, architect-deep,
+        or reviewer-deep only with a stated task-specific reason: normal effort is
+        insufficient or the task's complexity requires deeper effort. Never make
+        deep roles the default or escalate automatically after an error. Escalation
+        cannot bypass denials, approvals, or role boundaries. Resume the same session
+        and role for genuine budget stops; do not substitute a deep role or override
+        its model to evade a stop.
         No role instruction overrides global safety or approvals.
         Named role boundaries govern generic tier instructions to implement, review,
         or verify; do not perform another role's work to satisfy those instructions.
@@ -226,8 +233,9 @@ in {
         A safety denial is an authority blocker: stop/report it and obtain proper
         authorization/configuration fixes, never switch tools/providers to bypass it.
 
-        OmniRoute combos provide explicit subscription-model fallback. They do not
-        change role permissions or replace independent review and verification.
+        Core OmniRoute role combos provide explicit subscription-model fallback;
+        cloudflare-free is manual-only and never a fallback. Combos do not change
+        role permissions or replace independent review and verification.
         Authentication/configuration failures remain blockers. Quota displays and
         catalog labels are not proof of account billing or available capacity.
 

@@ -1,12 +1,13 @@
 // @ts-check
 import { Plugin } from "@opencode/plugin";
-import { Budget } from "./budget.js";
+import { Budget, policy } from "./budget.js";
 
 export default Plugin.define({
   id: "local.context-budget",
   async setup(ctx) {
     const budget = new Budget({
       context: (sessionID) => ctx.session.context({ sessionID }),
+      model: async (sessionID) => (await ctx.session.get({ sessionID })).model,
       compact: (sessionID) => ctx.session.compact({ sessionID }),
       load: (key) => ctx.storage.get(key),
       save: (key, value) => ctx.storage.set(key, { ...value }),
@@ -15,7 +16,7 @@ export default Plugin.define({
     await ctx.command.transform((editor) => {
       editor.add({
         name: "context-budget",
-        description: "Session-only OpenAI context budget: status, hard <tokens>, soft/hard on/off, reset",
+        description: "Session-only OpenAI/OmniRoute context budget: status, hard <tokens>, soft/hard on/off, reset",
         async execute({ sessionID, prompt, delivery }) {
           const text = await budget.command(sessionID, prompt.text);
           // V2 commands return void, not display text. Queue an explicit no-wake
@@ -37,9 +38,9 @@ export default Plugin.define({
     });
 
     await ctx.session.hook("context", async (event) => {
-      if (event.model.providerID !== "openai") delete event.tools.context_compact;
+      if (!policy(event.model).tool) delete event.tools.context_compact;
       try {
-        const text = await budget.observe(event.sessionID, { provider: event.model.providerID, advisory: true });
+        const text = await budget.observe(event.sessionID, { model: event.model, advisory: true });
         if (text) event.system.push({ type: "text", text });
       } catch (error) {
         // An optional budget plugin must not break otherwise valid model requests.

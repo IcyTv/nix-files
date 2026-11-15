@@ -42,6 +42,7 @@ test("actual V2 plugin registers strict executor-only tool and no-wake command a
       set: async (key, value) => { storage.set(key, structuredClone(value)); },
     },
     session: {
+      get: async () => ({ model: assistant.model }),
       context: async () => [assistant],
       compact: async ({ sessionID }) => { compacted.push(sessionID); return { id: "msg_control" }; },
       synthetic: async (notice) => { notices.push(notice); },
@@ -116,26 +117,33 @@ function eventFeed() {
 async function locationInstance(directory, shared, context = shared.context, workspaceID) {
   const feed = eventFeed();
   const commands = [];
+  const tools = [];
+  const hooks = new Map();
+  const notices = [];
   const cleanup = await plugin.setup({
     location: { directory, workspaceID, project: { id: "project_test", directory, canonical: directory } },
-    tool: { transform: async (edit) => edit({ add() {} }) },
+    tool: { transform: async (edit) => edit({ add: (tool) => tools.push(tool) }) },
     command: { transform: async (edit) => edit({ add: (command) => commands.push(command) }) },
     storage: {
       get: async (key) => structuredClone(shared.storage.get(key)),
       set: async (key, value) => { shared.writes.push(directory); shared.storage.set(key, structuredClone(value)); },
     },
     session: {
-      get: async ({ sessionID }) => ({ location: { directory: shared.owners.get(sessionID) } }),
+      get: async ({ sessionID }) => ({ location: { directory: shared.owners.get(sessionID) },
+        model: shared.model ? shared.model() : assistant.model }),
       context,
       compact: async ({ sessionID }) => { shared.compacted.push({ directory, sessionID }); return { id: "msg_control" }; },
-      synthetic: async () => {},
-      hook: async () => {},
+      synthetic: async (notice) => { notices.push(notice); },
+      hook: async (name, hook) => { hooks.set(name, hook); },
     },
     event: feed,
   });
   return {
     emit: feed.emit,
     command: (sessionID, text) => commands[0].execute({ sessionID, prompt: { text }, delivery: "queue" }),
+    voluntary: (sessionID) => tools[0].execute({}, { sessionID }),
+    hook: (event) => hooks.get("context")(event),
+    notices,
     cleanup,
   };
 }
@@ -212,6 +220,195 @@ test("every global subscription type rejects foreign, stale, and unowned workspa
     await foreign.cleanup?.();
     await workspace.cleanup?.();
     await sameDirectory.cleanup?.();
+  }
+});
+
+test("OmniRoute hooks expose voluntary tool for every route but advisory only for managed core", async () => {
+  const tools = [];
+  const hooks = new Map();
+  const storage = new Map();
+  const compacted = [];
+  let model = { providerID: "omniroute", id: "orchestrator" };
+  let messages = [{ ...assistant, model, tokens: { ...usage, input: 500_000, cache: { read: 0, write: 0 } } }];
+  const cleanup = await plugin.setup({
+    location: { directory: "/project-a", project: { id: "project_a", directory: "/project-a", canonical: "/project-a" } },
+    tool: { transform: async (edit) => edit({ add: (tool) => tools.push(tool) }) },
+    command: { transform: async (edit) => edit({ add() {} }) },
+    storage: {
+      get: async (key) => structuredClone(storage.get(key)),
+      set: async (key, value) => { storage.set(key, structuredClone(value)); },
+    },
+    session: {
+      get: async () => ({ model }),
+      context: async () => messages,
+      compact: async ({ sessionID }) => { compacted.push(sessionID); return { id: "msg_control" }; },
+      hook: async (name, hook) => { hooks.set(name, hook); },
+    },
+    event: { subscribe: async function* () {} },
+  });
+  const request = (sessionID) => ({ sessionID, model, tools: { context_compact: {} }, system: [] });
+  try {
+    const core = request("ses_core");
+    await hooks.get("context")(core);
+    assert.equal("context_compact" in core.tools, true);
+    assert.match(core.system[0].text, /OmniRoute core.*500,000 input tokens/);
+    assert.deepEqual(compacted, []);
+    const duplicate = request("ses_core");
+    await hooks.get("context")(duplicate);
+    assert.deepEqual(duplicate.system, []);
+    for (const id of ["role-implementation", "cloudflare-free", "unknown"]) {
+      model = { providerID: "omniroute", id };
+      messages = [{ ...assistant, model, tokens: { ...usage, input: 900_000 } }];
+      const small = request(`ses_${id}`);
+      await hooks.get("context")(small);
+      assert.equal("context_compact" in small.tools, true);
+      assert.deepEqual(small.system, []);
+    }
+    assert.deepEqual(compacted, []);
+    await tools[0].execute({ sessionID: "ses_parent", hard: true }, { sessionID: "ses_unknown" });
+    assert.deepEqual(compacted, ["ses_unknown"]);
+    assert.equal(storage.has("session/ses_parent"), false);
+    assert.deepEqual(storage.get("session/ses_unknown").overrides, {});
+    model = { providerID: "omniroute", id: "review" };
+    const switched = request("ses_switched");
+    await hooks.get("context")(switched);
+    assert.deepEqual(switched.system, []);
+    assert.equal("context_compact" in switched.tools, true);
+  } finally {
+    await cleanup?.();
+  }
+});
+
+test("owned OmniRoute step events use active route policy, not legacy OpenAI hard defaults or stale usage", async () => {
+  let model = { providerID: "omniroute", id: "orchestrator" };
+  let measured = model;
+  const shared = {
+    storage: new Map([["session/ses_owner", {
+      soft: true, hard: true, hardLimit: 500_000, notified: false, attempted: false,
+      pending: false, failed: false, checkpoint: "", pendingID: "",
+    }]]),
+    writes: [], compacted: [], owners: new Map([["ses_owner", "/project-a"]]),
+    model: () => model,
+    context: async () => [{ ...assistant, model: measured, tokens: { ...usage, input: 800_000 } }],
+  };
+  const owner = await locationInstance("/project-a", shared);
+  const event = globalEvent("session.step.ended", { directory: "/project-a" });
+  try {
+    await owner.emit(event);
+    assert.deepEqual(shared.compacted, []);
+    assert.deepEqual(shared.writes, []);
+    await owner.command("ses_owner", "hard on");
+    model = { providerID: "omniroute", id: "review" };
+    await owner.emit(event);
+    model = { providerID: "openai", id: "gpt-6.1-sol" };
+    await owner.emit(event);
+    assert.deepEqual(shared.compacted, []);
+    measured = model;
+    await owner.emit(event);
+    await owner.emit(event);
+    assert.deepEqual(shared.compacted, [{ directory: "/project-a", sessionID: "ses_owner" }]);
+  } finally {
+    await owner.cleanup?.();
+  }
+});
+
+test("unpinned events fail closed when the agent or default model differs from old OpenAI history", async () => {
+  for (const selection of ["agent", "default"]) {
+    const current = { providerID: "omniroute", id: "orchestrator" };
+    let messages = [{ ...assistant, tokens: { ...usage, input: 800_000 } }];
+    const shared = {
+      storage: new Map(), writes: [], compacted: [], owners: new Map([["ses_owner", "/project-a"]]),
+      // Core resolves this through agent/default state, not session.model.
+      agentModel: selection === "agent" ? current : undefined,
+      defaultModel: current,
+      model: () => undefined,
+      context: async () => messages,
+    };
+    const owner = await locationInstance("/project-a", shared);
+    try {
+      await owner.emit(globalEvent("session.step.ended", { directory: "/project-a" }));
+      assert.deepEqual(shared.compacted, []);
+      assert.deepEqual(shared.writes, []);
+      await owner.command("ses_owner", "status");
+      assert.match(owner.notices[0].text, /Current policy unproven/);
+      assert.doesNotMatch(owner.notices[0].text, /OpenAI|hard: on/);
+      messages = [{ ...assistant, model: current, tokens: { ...usage, input: 500_000, cache: { read: 0, write: 0 } } }];
+      const event = { sessionID: "ses_owner", model: current, tools: { context_compact: {} }, system: [] };
+      await owner.hook(event);
+      assert.equal("context_compact" in event.tools, true);
+      assert.match(event.system[0].text, /OmniRoute core.*500,000 input tokens/);
+      assert.deepEqual(shared.compacted, []);
+    } finally {
+      await owner.cleanup?.();
+    }
+  }
+});
+
+test("owned event reads selection after a blocked history read instead of using the old pin", async () => {
+  let model = assistant.model;
+  const entered = deferred();
+  const release = deferred();
+  let block = true;
+  const shared = {
+    storage: new Map(), writes: [], compacted: [], owners: new Map([["ses_owner", "/project-a"]]),
+    model: () => model,
+    context: async () => {
+      if (block) { entered.resolve(); await release.promise; }
+      return [{ ...assistant, tokens: { ...usage, input: 800_000 } }];
+    },
+  };
+  const owner = await locationInstance("/project-a", shared);
+  const event = globalEvent("session.step.ended", { directory: "/project-a" });
+  try {
+    const delivery = owner.emit(event);
+    await entered.promise;
+    model = { providerID: "omniroute", id: "orchestrator" };
+    release.resolve();
+    await delivery;
+    assert.deepEqual(shared.compacted, []);
+    block = false;
+    model = assistant.model;
+    await owner.emit(event);
+    assert.deepEqual(shared.compacted, [{ directory: "/project-a", sessionID: "ses_owner" }]);
+  } finally {
+    release.resolve();
+    await owner.cleanup?.();
+  }
+});
+
+test("unpinned unmanaged OmniRoute executor tool supports two successful cycles without enabling event budgets", async () => {
+  for (const id of ["cloudflare-free", "role-implementation", "unknown"]) {
+    const model = { providerID: "omniroute", id };
+    let messages = [{ ...assistant, model, tokens: { ...usage, input: 800_000 } }];
+    const shared = {
+      storage: new Map(), writes: [], compacted: [], owners: new Map([["ses_owner", "/project-a"]]),
+      model: () => undefined,
+      context: async () => messages,
+    };
+    const owner = await locationInstance("/project-a", shared);
+    try {
+      await owner.command("ses_owner", "hard on");
+      assert.match((await owner.voluntary("ses_owner")).content, /queued/);
+      messages = [{ type: "compaction", id: "msg_first", reason: "manual", status: "completed",
+        time: { created: 30 }, summary: "first checkpoint" },
+      { ...assistant, model, time: { created: 40, completed: 41 },
+        tokens: { ...usage, input: 100_000, cache: { read: 0, write: 0 } } }];
+      assert.match((await owner.voluntary("ses_owner")).content, /queued/);
+      messages = [{ type: "compaction", id: "msg_second", reason: "manual", status: "completed",
+        time: { created: 50 }, summary: "second checkpoint" },
+      { ...assistant, model, time: { created: 60, completed: 61 },
+        tokens: { ...usage, input: 800_000 } }];
+      await owner.emit(globalEvent("session.step.ended", { directory: "/project-a" }));
+      const event = { sessionID: "ses_owner", model, tools: { context_compact: {} }, system: [] };
+      await owner.hook(event);
+      assert.equal("context_compact" in event.tools, true);
+      assert.deepEqual(event.system, []);
+      assert.match((await owner.voluntary("ses_owner")).content, /already attempted/);
+      assert.equal(shared.compacted.length, 2);
+      assert.equal(shared.storage.get("session/ses_owner").pending, false);
+    } finally {
+      await owner.cleanup?.();
+    }
   }
 });
 

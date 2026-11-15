@@ -29,7 +29,7 @@ stdenvNoCC.mkDerivation {
   '';
 
   meta = {
-    description = "Session-scoped OpenAI context advisories and safe-boundary compaction for OpenCode V2";
+    description = "Session-scoped OpenAI and OmniRoute context advisories and safe-boundary compaction for OpenCode V2";
     license = lib.licenses.mit;
     platforms = lib.platforms.all;
   };
