@@ -143,7 +143,7 @@ in {
   imports = [./ai/caveman.nix ./ai/omniroute.nix ./ai/opencode-agents.nix];
 
   config = lib.mkIf config.my.hm.ai.enable {
-    my.hm.git.excludes = [".opencode"];
+    my.hm.git.excludes = [".opencode" ".serena/"];
 
     programs.opencode = {
       enable = true;
