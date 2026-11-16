@@ -161,6 +161,13 @@ in {
         Use unlink only for a verified symlink, and rmdir only for an empty directory.
         If a target is unclear or trash fails, stop and ask the main agent or user.
 
+        When Serena is available and supports the project language, prefer its
+        symbolic tools for code navigation, references, and symbol-level edits.
+        Read Serena's initial instructions and confirm the active project before
+        using project tools. Use glob, grep, and read for configuration, prose,
+        unsupported files, or searches Serena cannot answer. Serena never overrides
+        role boundaries, edit approval requirements, or tool denials.
+
         Prefer glob, grep, and read tools over shell searches. Never search filesystem roots.
         Search memory before relying on past decisions; retry with alternative terms
         if needed. Verify recalled facts against current evidence. Keep stable rules
