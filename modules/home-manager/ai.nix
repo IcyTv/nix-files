@@ -20,6 +20,7 @@
   };
 
   antigravity-cli = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli;
+  serena = inputs.serena.packages.${pkgs.stdenv.hostPlatform.system}.serena;
 
   opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
   opencode-mem = pkgs-unstable.callPackage ./packages/opencode-mem {};
@@ -320,6 +321,17 @@ in {
     programs.mcp = {
       enable = true;
       servers = {
+        serena = {
+          command = "${serena}/bin/serena";
+          args = [
+            "start-mcp-server"
+            "--context"
+            "ide"
+            "--project-from-cwd"
+            "--open-web-dashboard"
+            "false"
+          ];
+        };
         mcp-nixos = {
           command = "nix";
           args = [

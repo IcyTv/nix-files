@@ -6,6 +6,7 @@
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
     llm-agents.url = "github:numtide/llm-agents.nix";
+    serena.url = "github:oraios/serena";
 
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
