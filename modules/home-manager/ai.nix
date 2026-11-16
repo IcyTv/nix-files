@@ -304,8 +304,8 @@ in {
 
     xdg.configFile."opencode/opencode-mem.jsonc".text = builtins.toJSON {
       # Keep background memory generation off the main session's OpenAI quota.
-      opencodeProvider = "google-agy";
-      opencodeModel = "gemini-3.8-flash";
+      opencodeProvider = "openai";
+      opencodeModel = "gpt-6.1-luna";
       opencodeVariant = "low";
       autoCaptureEnabled = true;
       # This locally patched package is updated through Nix, not its updater.
