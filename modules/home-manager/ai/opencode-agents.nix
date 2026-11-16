@@ -29,6 +29,7 @@
   ];
   shellAsks = map (pattern: rule "shell" pattern "ask") (lib.concatMap commandPatterns approvalCommands);
   environmentAsks = [
+    (rule "external_directory" "*" "allow")
     (rule "read" "*.env" "ask")
     (rule "read" "*.env.*" "ask")
     (rule "read" "*.env.example" "allow")
