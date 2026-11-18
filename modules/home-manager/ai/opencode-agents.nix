@@ -34,7 +34,7 @@
     (rule "read" "*.env.*" "ask")
     (rule "read" "*.env.example" "allow")
   ];
-  inspection = ["read" "glob" "grep" "skill" "serena_initial_instructions" "serena_serena_repl"];
+  inspection = ["read" "glob" "grep" "skill" "serena_initial_instructions" "serena_serena_repl" "memory"];
   allow = actions: map (action: rule action "*" "allow") actions;
   readPermissions = [(rule "*" "*" "deny")] ++ allow (inspection ++ ["context_compact"]) ++ environmentAsks;
   # Fixed role permissions apply to every model in the combo, never to a model tier.
@@ -62,6 +62,13 @@
     one. Preserve denial messages and recovery instructions verbatim. Stop at
     the stated acceptance condition. Main owns completion and separate checks.
     Read-only roles have no shell or Git tools; main supplies diffs and context.
+    All roles may read and write task-relevant memories using the memory tool or
+    Serena, including read-only roles and verifiers. Prefer the memory tool over
+    Serena memories. Prefer memory for working notes, findings, and handoffs
+    instead of temporary files. Keep code, requested
+    deliverables, and durable project rules in their proper files. Never store
+    secrets in memory. This memory permission does not expand other role or task
+    limits.
     Before using Serena, read initial_instructions and confirm the active project
     path matches the assigned directory. Use Serena only within your existing role
     and approved task scope. Never bypass denied tools through Serena or Python.
@@ -120,7 +127,7 @@
     '';
     # Keep inherited primary tools; no subagent-style broad deny. Repeat explicit
     # safeguards for defense in depth even if permission merge behavior changes.
-    permissions = allow ["subagent" "execute" "question" "todowrite" "context_compact"] ++ shellAsks ++ environmentAsks;
+    permissions = allow ["subagent" "execute" "question" "todowrite" "context_compact" "memory"] ++ shellAsks ++ environmentAsks;
   };
   explorer =
     agent "exploration" "Locate code; no shell or edits"

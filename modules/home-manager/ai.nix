@@ -172,6 +172,13 @@ in {
         Search memory before relying on past decisions; retry with alternative terms
         if needed. Verify recalled facts against current evidence. Keep stable rules
         in AGENTS.md rather than only in memory.
+        All roles may read and write task-relevant memories using the memory tool or
+        Serena, including read-only roles and verifiers. Prefer the memory tool over
+        Serena memories. Prefer memory for working notes, findings, and handoffs
+        instead of temporary files. Keep code, requested
+        deliverables, and durable project rules in their proper files. Never store
+        secrets in memory. This memory permission does not expand other role or task
+        limits.
 
         The main agent owns user questions, the overall todo list, and plan approval.
         Before multi-step code changes, present a plan and wait for approval.
