@@ -21,6 +21,148 @@
 
   antigravity-cli = inputs.llm-agents.packages.${pkgs.stdenv.hostPlatform.system}.antigravity-cli;
   serena = inputs.serena.packages.${pkgs.stdenv.hostPlatform.system}.serena;
+  serenaConfigMerge = pkgs.writeText "serena-config-merge.py" ''
+    import copy
+    import io
+    import os
+    from pathlib import Path
+    import stat
+    import sys
+    import tempfile
+    from collections.abc import Mapping, MutableMapping
+
+    from filelock import FileLock
+    from ruamel.yaml import YAML
+    from ruamel.yaml.comments import CommentedMap
+
+
+    def mapping(parent, key):
+        if key not in parent:
+            parent[key] = CommentedMap()
+        value = parent[key]
+        if not isinstance(value, MutableMapping):
+            raise ValueError(f"{key} must be a YAML mapping")
+        return value
+
+
+    def merge_defaults(target, defaults):
+        for key, value in defaults.items():
+            if key not in target:
+                target[key] = copy.deepcopy(value)
+            elif isinstance(value, Mapping):
+                merge_defaults(mapping(target, key), value)
+
+
+    def target_stat(path):
+        try:
+            info = path.lstat()
+        except FileNotFoundError:
+            return None
+        if not stat.S_ISREG(info.st_mode):
+            raise ValueError(f"Refusing symlink or nonregular config: {path}")
+        return info
+
+
+    def fingerprint(info):
+        if info is None:
+            return None
+        return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
+                info.st_mtime_ns, info.st_ctime_ns)
+
+
+    def merge_config(path):
+        previous = target_stat(path)
+        original = b""
+        if previous is not None:
+            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            with os.fdopen(fd, "rb") as source:
+                opened = os.fstat(source.fileno())
+                if not stat.S_ISREG(opened.st_mode) or fingerprint(opened) != fingerprint(previous):
+                    raise ValueError(f"Config changed while opening: {path}")
+                original = source.read()
+
+        yaml = YAML(typ="rt")
+        yaml.preserve_quotes = True
+        document = yaml.load(original.decode("utf-8"))
+        empty_comments = ""
+        if document is None:
+            if yaml.compose(original.decode("utf-8")) is not None:
+                raise ValueError("Serena config must be a YAML mapping or empty")
+            empty_comments = "".join(
+                line + "\n" for line in original.decode("utf-8").splitlines()
+                if not line.strip() or line.lstrip().startswith("#")
+            )
+            document = CommentedMap()
+        if not isinstance(document, MutableMapping):
+            raise ValueError("Serena config must be a YAML mapping or empty")
+
+        if "projects" not in document:
+            document["projects"] = []
+        settings = mapping(document, "ls_specific_settings")
+        rust = mapping(settings, "rust")
+        options = mapping(rust, "initializationOptions")
+        cargo = mapping(options, "cargo")
+        # Serena shallowly replaces cargo; retain its pinned base defaults.
+        merge_defaults(cargo, {
+            "autoreload": True,
+            "buildScripts": {
+                "enable": True,
+                "invocationLocation": "workspace",
+                "invocationStrategy": "per_workspace",
+                "overrideCommand": None,
+                "useRustcWrapper": True,
+            },
+            "cfgs": [],
+            "extraArgs": [],
+            "extraEnv": {},
+            "features": [],
+            "noDefaultFeatures": False,
+            "sysroot": "discover",
+            "sysrootSrc": None,
+            "target": None,
+            "unsetTest": ["core"],
+        })
+        args = cargo["extraArgs"]
+        if not isinstance(args, list) or not all(isinstance(arg, str) for arg in args):
+            raise ValueError("cargo.extraArgs must be a list of strings")
+        if "--locked" not in args:
+            args.append("--locked")
+        options["checkOnSave"] = False
+
+        output = io.StringIO()
+        yaml.dump(document, output)
+        rendered = (empty_comments + output.getvalue()).encode("utf-8")
+        if previous is not None and rendered == original:
+            return
+
+        temporary = None
+        try:
+            fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+            with os.fdopen(fd, "wb") as destination:
+                os.fchmod(destination.fileno(), stat.S_IMODE(previous.st_mode) if previous else 0o600)
+                destination.write(rendered)
+                destination.flush()
+                os.fsync(destination.fileno())
+            if fingerprint(target_stat(path)) != fingerprint(previous):
+                raise ValueError(f"Config changed before replacement: {path}")
+            os.replace(temporary, path)
+        except BaseException:
+            if temporary is not None:
+                # Leave the session-created file for approved cleanup, never unlink it.
+                sys.stderr.write(f"Serena config merge failed; temporary file retained: {temporary}\n")
+            raise
+
+
+    def main():
+        path = Path(sys.argv[1])
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with FileLock(str(path) + ".lock"):
+            merge_config(path)
+
+
+    if __name__ == "__main__":
+        main()
+  '';
 
   opencode-latex = pkgs-unstable.callPackage ./packages/opencode-latex {};
   opencode-mem = pkgs-unstable.callPackage ./packages/opencode-mem {};
@@ -161,14 +303,20 @@ in {
         Use unlink only for a verified symlink, and rmdir only for an empty directory.
         If a target is unclear or trash fails, stop and ask the main agent or user.
 
-        When Serena is available and supports the project language, prefer its
-        symbolic tools for code navigation, references, and symbol-level edits.
+        Prefer native grep (ripgrep-backed where available) and glob for broad text
+        and file discovery. Use read for configuration, prose, and unsupported files.
+        When Serena supports the project language, use its targeted symbolic tools
+        for symbols, references, and symbol-level edits, not broad repository discovery.
         Read Serena's initial instructions and confirm the active project before
-        using project tools. Use glob, grep, and read for configuration, prose,
-        unsupported files, or searches Serena cannot answer. Serena never overrides
-        role boundaries, edit approval requirements, or tool denials.
+        using project tools. Scope Serena queries with relative_path to a known file
+        or narrow directory. Serena never overrides role boundaries, edit approval
+        requirements, or tool denials.
 
-        Prefer glob, grep, and read tools over shell searches. Never search filesystem roots.
+        Prefer native tools over shell searches; bounded rg shell searches are allowed
+        when needed and permitted by the role. Never search filesystem roots or bypass
+        a denied tool. Use the project's explicitly approved build/check route for
+        compiler diagnostics. Empty LSP diagnostics do not prove compilation or a
+        successful build; report the actual checks run and any unrun checks.
         Search memory before relying on past decisions; retry with alternative terms
         if needed. Verify recalled facts against current evidence. Keep stable rules
         in AGENTS.md rather than only in memory.
@@ -332,12 +480,18 @@ in {
       package = antigravity-cli;
     };
 
+    home.activation.serenaConfigMerge = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      if [ -z "''${DRY_RUN_CMD:-}" ]; then
+        ${pkgs.python3.withPackages (ps: [ps.ruamel-yaml ps.filelock])}/bin/python \
+          ${serenaConfigMerge} ${lib.escapeShellArg "${config.home.homeDirectory}/.serena/serena_config.yml"}
+      fi
+    '';
+
     # Share the memory budget across Serena instances and their child language servers.
     systemd.user.slices.serena = {
       Unit.Description = "Shared memory budget for Serena MCP servers";
       Slice = {
         MemoryAccounting = true;
-        MemoryHigh = "6G";
         MemoryMax = "8G";
         MemorySwapMax = 0;
       };
@@ -347,6 +501,7 @@ in {
       enable = true;
       servers = {
         serena = {
+          env.CARGO_BUILD_JOBS = "2";
           command = "${pkgs.systemd}/bin/systemd-run";
           args = [
             "--user"
