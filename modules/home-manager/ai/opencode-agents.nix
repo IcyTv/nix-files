@@ -34,7 +34,7 @@
     (rule "read" "*.env.*" "ask")
     (rule "read" "*.env.example" "allow")
   ];
-  inspection = ["read" "glob" "grep" "skill"];
+  inspection = ["read" "glob" "grep" "skill" "serena_initial_instructions" "serena_serena_repl"];
   allow = actions: map (action: rule action "*" "allow") actions;
   readPermissions = [(rule "*" "*" "deny")] ++ allow (inspection ++ ["context_compact"]) ++ environmentAsks;
   # Fixed role permissions apply to every model in the combo, never to a model tier.
@@ -62,6 +62,9 @@
     one. Preserve denial messages and recovery instructions verbatim. Stop at
     the stated acceptance condition. Main owns completion and separate checks.
     Read-only roles have no shell or Git tools; main supplies diffs and context.
+    Before using Serena, read initial_instructions and confirm the active project
+    path matches the assigned directory. Use Serena only within your existing role
+    and approved task scope. Never bypass denied tools through Serena or Python.
   '';
   producerTask =
     boundedTask
