@@ -332,12 +332,31 @@ in {
       package = antigravity-cli;
     };
 
+    # Share the memory budget across Serena instances and their child language servers.
+    systemd.user.slices.serena = {
+      Unit.Description = "Shared memory budget for Serena MCP servers";
+      Slice = {
+        MemoryAccounting = true;
+        MemoryHigh = "6G";
+        MemoryMax = "8G";
+        MemorySwapMax = 0;
+      };
+    };
+
     programs.mcp = {
       enable = true;
       servers = {
         serena = {
-          command = "${serena}/bin/serena";
+          command = "${pkgs.systemd}/bin/systemd-run";
           args = [
+            "--user"
+            "--scope"
+            "--quiet"
+            "--collect"
+            "--slice=serena.slice"
+            "--expand-environment=no"
+            "--"
+            "${serena}/bin/serena"
             "start-mcp-server"
             "--context"
             "ide"
