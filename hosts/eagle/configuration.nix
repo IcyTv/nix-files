@@ -104,7 +104,7 @@
     "nouveau.modeset=0"
     "initcall_blacklist=simpledrm_platform_driver_init"
     "acpi_enforce_resources=lax"
-    "resume_offset=9563072"
+    "resume_offset=70788352"
     "mem_sleep_default=deep"
   ];
   boot.blacklistedKernelModules = ["nouveau" "nct6683"];
