@@ -10,6 +10,9 @@
     config.allowUnfree = true;
   };
   omniroute = unstable.callPackage ../packages/omniroute {};
+  quotaBridge = unstable.callPackage ../packages/omniroute-quota {};
+  managementKeyFile = "${config.xdg.configHome}/omniroute/quota-management.key";
+  quotaCombosFile = pkgs.writeText "omniroute-quota-combos.json" (builtins.toJSON (map (entry: entry.name) coreCombos));
   dataDir = "${config.xdg.dataHome}/omniroute";
   target = provider: model: {
     inherit model;
@@ -130,6 +133,42 @@ in {
         PrivateTmp = true;
       };
       Install.WantedBy = ["default.target"];
+    };
+    systemd.user.services.omniroute-quota = {
+      Unit = {
+        Description = "OmniRoute subscription quota bridge";
+        After = ["omniroute.service"];
+        ConditionPathExists = managementKeyFile;
+      };
+      Service = {
+        Type = "simple";
+        ExecStart = "${quotaBridge}/bin/omniroute-quota";
+        LoadCredential = "management-key:${managementKeyFile}";
+        Environment = [
+          "OMNIROUTE_QUOTA_KEY_FILE=%d/management-key"
+          "OMNIROUTE_QUOTA_COMBOS_FILE=${quotaCombosFile}"
+        ];
+        UMask = "0077";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+      Install.WantedBy = ["default.target"];
+    };
+    programs.opencode.settings.experimental.quotaToast = {
+      onlyCurrentModel = true;
+      quotaProviders =
+        map (entry: {
+          id = "omniroute-${entry.name}";
+          providerId = "omniroute";
+          modelIds = [entry.name];
+          label = "OmniRoute ${entry.name}";
+          mode = "remote-api";
+          format = "quota-v1";
+          url = "http://127.0.0.1:20129/combos/${entry.name}";
+        })
+        coreCombos;
     };
     # Portable API schema: src/lib/combos/portable.ts + createComboSchema.
     # Import explicitly. Merge skips existing names; never replace a user's DB.
