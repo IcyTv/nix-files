@@ -14,6 +14,7 @@
   my.hm.chromium.enable = true;
   my.hm.daw.enable = true;
   my.hm.minecraft.enable = true;
+  my.hm.helium.enable = true;
 
   programs.git.signing.key = "433D8E22007D3A9762D54780ED06A3B7C8B9C6B0!";
 
