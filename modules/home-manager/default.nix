@@ -20,8 +20,10 @@
     ./gammastep.nix
     ./ghostty.nix
     ./git.nix
+    ./helium.nix
     ./hyprland.nix
     ./kitty.nix
+    ./minecraft.nix
     ./niri.nix
     ./nix.nix
     ./nushell.nix
@@ -39,6 +41,5 @@
     ./waybar.nix
     ./yazi.nix
     ./zsh.nix
-    ./minecraft.nix
   ];
 }

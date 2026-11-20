@@ -517,6 +517,26 @@
         "type": "github"
       }
     },
+    "helium-flake": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1795021042,
+        "narHash": "sha256-XlujG//pSVsAnqOtL5OsogghW2pASLXmmB169fuKc8o=",
+        "owner": "oxcl",
+        "repo": "nix-flake-helium-browser",
+        "rev": "6b7088a2caec0218ceddee38097800afb9f37b04",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxcl",
+        "repo": "nix-flake-helium-browser",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -1142,6 +1162,7 @@
         "caveman": "caveman",
         "disko": "disko",
         "hardware": "hardware",
+        "helium-flake": "helium-flake",
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
         "neovim": "neovim",
