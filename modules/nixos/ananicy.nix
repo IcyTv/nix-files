@@ -7,6 +7,13 @@
   options.my.nixos.ananicy.enable = lib.mkEnableOption "Ananicy auto nice daemon";
 
   config = lib.mkIf config.my.nixos.ananicy.enable {
+    boot.kernelModules = ["mq-deadline"];
+
+    # Favor best-effort desktop I/O over idle build I/O on supported NVMe disks.
+    services.udev.extraRules = ''
+      ACTION=="add|change", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="nvme*n*", ATTR{queue/scheduler}=="*mq-deadline*", ATTR{queue/scheduler}="mq-deadline"
+    '';
+
     services.ananicy = {
       enable = true;
       package = pkgs.ananicy-cpp;
