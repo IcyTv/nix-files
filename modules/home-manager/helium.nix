@@ -13,17 +13,64 @@
     behind-the-overlay = "ljipkdpcjbmhkdjjmbbaggebcednbbme";
   };
 
-  globalPolicies = {
-    "MetricsReportingEnabled" = false;
-    "PasswordManagerEnabled" = false;
-    "AutofillAddressEnabled" = false;
-    "AutofillCreditCardEnabled" = false;
-    "BookmarksBarEnabled" = true;
-  };
+  sharedSettings =
+    lib.recursiveUpdate {
+      browser = {
+        custom_chrome_frame = false;
+        show_home_button = false;
+        theme.color_scheme2 = 2;
+      };
+      helium.browser = {
+        centered_location_bar = false;
+        layout = 0;
+        minimal_location_bar = false;
+        zen_mode = false;
+        zen_mode_top_chrome_pinned = true;
+      };
+      intl = {
+        accept_languages = "en-US,en,de";
+        selected_languages = "en-US,en,de";
+      };
+      spellcheck = {
+        dictionaries = ["en-US" "de"];
+        dictionary = "";
+      };
+      translate_blocked_languages = ["en" "de"];
+      session.restore_on_startup = 1;
+      toolbar.pinned_actions = ["kActionShowChromeLabs" "kActionDevTools"];
+      vertical_tabs = {
+        collapsed_state = false;
+        uncollapsed_width = 200;
+      };
+      webkit.webprefs = {
+        default_fixed_font_size = 13;
+        default_font_size = 16;
+        fonts = {
+          sansserif.Zyyy = "Sans";
+          serif.Zyyy = "Serif";
+          standard.Zyyy = "Sans";
+        };
+      };
+      bookmark_bar.show_on_all_tabs = true;
+    } (lib.optionalAttrs (config.stylix.enable or false) {
+      browser.theme.color_scheme2 =
+        if config.stylix.polarity == "dark"
+        then 2
+        else if config.stylix.polarity == "light"
+        then 1
+        else 0;
+      webkit.webprefs.fonts = {
+        sansserif.Zyyy = config.stylix.fonts.sansSerif.name;
+        standard.Zyyy = config.stylix.fonts.sansSerif.name;
+        serif.Zyyy = config.stylix.fonts.serif.name;
+        fixed.Zyyy = config.stylix.fonts.monospace.name;
+      };
+    });
 
   profiles = {
     "Default" = {
       displayName = null;
+      settings = {};
       bookmarksFile =
         if config.icy.personalSecrets
         then builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-default.json)
@@ -41,6 +88,7 @@
 
     "Yes" = {
       displayName = "Yes";
+      settings = {};
       bookmarksFile =
         if config.icy.personalSecrets
         then builtins.fromJSON (builtins.readFile ../../secrets/bookmarks-yes.json)
@@ -130,6 +178,7 @@
             else "Helium";
           exec = "${heliumPkg}/bin/helium --profile-directory=${lib.escapeShellArg dirName} %U";
           icon = "helium";
+          comment = "Access the Internet";
           categories = ["Network" "WebBrowser"];
           mimeTypes = ["text/html" "x-scheme-handler/http" "x-scheme-handler/https"];
         }
@@ -141,6 +190,14 @@
       dirName: cfg:
         pkgs.writeText "helium-bookmarks-${lib.toLower dirName}.json"
         (mkChromiumBookmarks cfg.bookmarksFile)
+    )
+    profiles;
+
+  generatedSettingsFiles =
+    lib.mapAttrs (
+      dirName: cfg:
+        pkgs.writeText "helium-settings-${lib.toLower dirName}.json"
+        (builtins.toJSON (lib.recursiveUpdate sharedSettings cfg.settings))
     )
     profiles;
 
@@ -164,6 +221,51 @@
     while [ -e "$LOCK_FILE" ] || [ -L "$LOCK_FILE" ] || ${pkgs.procps}/bin/pgrep -u "$(id -u)" -x helium >/dev/null 2>&1; do
       sleep 2
     done
+
+    merge_preferences() {
+      local preferences="$1" patch="$2" input missing=false temporary
+      input="$preferences"
+      if [ ! -e "$preferences" ]; then
+        input=/dev/null
+        missing=true
+      fi
+
+      # Validate before creating a temporary file; never reset invalid preferences.
+      if ! ${pkgs.jq}/bin/jq -e -s --argjson missing "$missing" '
+        (length == 0 and $missing) or
+        (length == 1 and (.[0] | type == "object"))
+      ' "$input" >/dev/null; then
+        echo "Refusing to merge invalid Helium Preferences: $preferences" >&2
+        return 1
+      fi
+
+      temporary=$(mktemp "$preferences.tmp.XXXXXX") || return 1
+      if ! chmod 600 "$temporary"; then
+        echo "Could not secure Helium Preferences temporary file: $temporary" >&2
+        return 1
+      fi
+      if ! ${pkgs.jq}/bin/jq -e -s --argjson missing "$missing" --slurpfile patch "$patch" '
+        (if length == 0 and $missing then {}
+         elif length == 1 and (.[0] | type == "object") then .[0]
+         else error("Preferences must contain exactly one JSON object") end)
+        * (if ($patch | length) == 1 and ($patch[0] | type == "object")
+           then $patch[0]
+           else error("Settings patch must contain exactly one JSON object") end)
+      ' "$input" > "$temporary"; then
+        echo "Helium Preferences merge failed; temporary file retained: $temporary" >&2
+        return 1
+      fi
+      if ! mv -- "$temporary" "$preferences"; then
+        echo "Helium Preferences replacement failed; temporary file retained: $temporary" >&2
+        return 1
+      fi
+    }
+
+    ${lib.concatStringsSep "\n" (lib.mapAttrsToList (dirName: settingsStorePath: ''
+        mkdir -p ${lib.escapeShellArg "${heliumDataDir}/${dirName}"}
+        merge_preferences ${lib.escapeShellArg "${heliumDataDir}/${dirName}/Preferences"} ${lib.escapeShellArg (toString settingsStorePath)} || exit 1
+      '')
+      generatedSettingsFiles)}
 
     if [ ! -f "$LOCAL_STATE" ]; then
       echo '{}' > "$LOCAL_STATE"
@@ -206,16 +308,11 @@ in {
       ]
       ++ profileDesktopEntries;
 
-    xdg.configFile =
-      {
-        "net.imput.helium/policies/managed/helium.json".text = builtins.toJSON globalPolicies;
-        "chromium/policies/managed/helium.json".text = builtins.toJSON globalPolicies;
-      }
-      // perProfileExtensionFiles;
+    xdg.configFile = perProfileExtensionFiles;
 
     systemd.user.services.helium-profile-sync = {
       Unit = {
-        Description = "Sync declarative Helium profiles and bookmarks";
+        Description = "Sync declarative Helium profiles, settings and bookmarks";
       };
       Service = {
         # Complete startup once the worker is launched, even while it waits for Helium.

@@ -3,6 +3,7 @@
     ./identity.nix
     ./ananicy.nix
     ./bluetooth.nix
+    ./chromium.nix
     ./console-font.nix
     ./core.nix
     ./disko.nix
