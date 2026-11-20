@@ -9,6 +9,7 @@
   heliumPkg = inputs.helium-flake.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   defaultExtensions = {
+    chrome-lock = "dfncaoemjmmnbcfldoochfgkhenhegjl";
     video-speed-controller = "nffaoalbilbmmfgbnbgppjihopabppdk";
     behind-the-overlay = "ljipkdpcjbmhkdjjmbbaggebcednbbme";
   };
