@@ -193,6 +193,7 @@
           done
 
           if "$valid_preferences"; then
+            chromium_version=""
             for id in "''${declared_ids[@]}"; do
               registered=false
               for registered_id in "''${registered_ids[@]}"; do
@@ -202,7 +203,17 @@
                 fi
               done
               if ! "$registered"; then
-                missing_urls+=("https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion="${lib.escapeShellArg heliumPkg.version}"&x=id%3D$id%26uc")
+                if [[ -z "$chromium_version" ]]; then
+                  chromium_version_pattern='[(]Chromium ([0-9]+[.][0-9]+[.][0-9]+[.][0-9]+)[)]'
+                  if version_output=$(${lib.escapeShellArg "${heliumPkg}/bin/helium"} --version) &&
+                    [[ "$version_output" =~ $chromium_version_pattern ]]; then
+                    chromium_version="''${BASH_REMATCH[1]}"
+                  else
+                    printf 'Could not determine Helium Chromium version; skipping extension prompts\n' >&2
+                    break
+                  fi
+                fi
+                missing_urls+=("https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion=$chromium_version&x=id%3D$id%26uc")
               fi
             done
           fi
