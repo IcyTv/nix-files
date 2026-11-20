@@ -150,23 +150,70 @@
       };
     };
 
-  # Fixed: mapAttrs' (with prime) + fixed typo "net.imput.helium"
-  perProfileExtensionFiles = lib.foldl' (
-    acc: dirName: let
-      exts = profiles.${dirName}.extensions;
-      files =
-        lib.mapAttrs' (
-          _name: id:
-            lib.nameValuePair "net.imput.helium/${dirName}/External Extensions/${id}.json" {
-              text = builtins.toJSON {
-                external_update_url = "https://clients2.google.com/service/update2/crx";
-              };
-            }
-        )
-        exts;
-    in
-      acc // files
-  ) {} (builtins.attrNames profiles);
+  profileLaunchers =
+    lib.mapAttrs (
+      dirName: cfg: let
+        extensionIds = lib.unique (lib.attrValues cfg.extensions);
+      in
+        pkgs.writeShellScript "helium-${lib.toLower dirName}" ''
+          declared_ids=(${lib.escapeShellArgs extensionIds})
+          registered_ids=()
+          missing_urls=()
+          preferences_files=(
+            ${lib.escapeShellArg "${heliumDataDir}/${dirName}/Preferences"}
+            ${lib.escapeShellArg "${heliumDataDir}/${dirName}/Secure Preferences"}
+          )
+          valid_preferences=true
+
+          for preferences in "''${preferences_files[@]}"; do
+            if [ ! -e "$preferences" ]; then
+              continue
+            fi
+
+            if ! registrations=$(${pkgs.jq}/bin/jq -r -s --argjson declared ${lib.escapeShellArg (builtins.toJSON extensionIds)} '
+              if length == 1 and (.[0] | type == "object") then .[0]
+              else error("Preferences must contain exactly one JSON object") end
+              | (if has("extensions") then .extensions else {} end)
+              | if type == "object" then .
+                else error("extensions must be an object") end
+              | (if has("settings") then .settings else {} end)
+              | if type == "object" then .
+                else error("extensions.settings must be an object") end
+              | keys[]
+              | select(. as $id | $declared | index($id))
+            ' "$preferences"); then
+              printf 'Invalid Helium preferences; skipping extension prompts: %s\n' "$preferences" >&2
+              valid_preferences=false
+              break
+            fi
+
+            while IFS= read -r registered_id; do
+              registered_ids+=("$registered_id")
+            done <<< "$registrations"
+          done
+
+          if "$valid_preferences"; then
+            for id in "''${declared_ids[@]}"; do
+              registered=false
+              for registered_id in "''${registered_ids[@]}"; do
+                if [[ "$id" == "$registered_id" ]]; then
+                  registered=true
+                  break
+                fi
+              done
+              if ! "$registered"; then
+                missing_urls+=("https://clients2.google.com/service/update2/crx?response=redirect&acceptformat=crx2,crx3&prodversion="${lib.escapeShellArg heliumPkg.version}"&x=id%3D$id%26uc")
+              fi
+            done
+          fi
+
+          exec ${lib.escapeShellArg "${heliumPkg}/bin/helium"} \
+            ${lib.escapeShellArg "--profile-directory=${dirName}"} \
+            --extension-mime-request-handling=always-prompt-for-install \
+            "$@" "''${missing_urls[@]}"
+        ''
+    )
+    profiles;
 
   profileDesktopEntries =
     lib.mapAttrsToList (
@@ -177,7 +224,7 @@
             if cfg.displayName != null
             then "Helium (${cfg.displayName})"
             else "Helium";
-          exec = "${heliumPkg}/bin/helium --profile-directory=${lib.escapeShellArg dirName} %U";
+          exec = "${profileLaunchers.${dirName}} %U";
           icon = "helium";
           comment = "Access the Internet";
           categories = ["Network" "WebBrowser"];
@@ -308,8 +355,6 @@ in {
         pkgs.xdg-utils
       ]
       ++ profileDesktopEntries;
-
-    xdg.configFile = perProfileExtensionFiles;
 
     systemd.user.services.helium-profile-sync = {
       Unit = {

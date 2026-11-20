@@ -465,6 +465,11 @@ in {
       };
     };
 
+    xdg.configFile."opencode/cli.json".text = builtins.toJSON {
+      "$schema" = "https://opencode.ai/v2/cli.json";
+      session.grouping = "none";
+    };
+
     xdg.configFile."opencode/opencode-mem.jsonc".text = builtins.toJSON {
       # Keep background memory generation off the main session's OpenAI quota.
       opencodeProvider = "openai";
