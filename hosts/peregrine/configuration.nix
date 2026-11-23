@@ -27,9 +27,18 @@
   # Always exits 0: this sits on the real-password success path (see
   # fprintGateAuthStamp below), and a transient /run write failure must not
   # turn a correct password into a denial.
+  #
+  # chown to $PAM_USER explicitly rather than relying on the calling
+  # process's uid: sudo's real uid is already the target user (so this is a
+  # no-op there), but polkit-1's auth check runs inside polkitd, a daemon
+  # that is always root regardless of who's authenticating. Without this the
+  # stamp ends up root-owned, and the sticky bit then blocks the user's own
+  # unprivileged lock/logout invalidation from ever deleting it.
   fprintGateStampScript = pkgs.writeShellScript "fprint-gate-stamp" ''
     if [ -n "$PAM_USER" ]; then
-      : > "${fprintGateDir}/$PAM_USER" 2>/dev/null || true
+      f="${fprintGateDir}/$PAM_USER"
+      : > "$f" 2>/dev/null || true
+      ${pkgs.coreutils}/bin/chown "$PAM_USER" "$f" 2>/dev/null || true
     fi
     exit 0
   '';
@@ -56,10 +65,7 @@
     order = unixAuthOrder + 1;
     control = "sufficient";
     modulePath = "${pamPkg}/lib/security/pam_exec.so";
-    # seteuid: the file must be owned by the target user, not root, so the
-    # user's own unprivileged lock/logout hooks can delete it later despite
-    # the sticky bit on fprintGateDir.
-    args = ["quiet" "seteuid" "${fprintGateStampScript}"];
+    args = ["quiet" "${fprintGateStampScript}"];
   };
   # No realistic sudo/polkit session lasts this long; it's effectively
   # "until the gate is explicitly invalidated", not a real timeout.
@@ -142,7 +148,7 @@ in {
         order = config.security.pam.services.greetd.rules.session.unix.order + 5;
         control = "optional";
         modulePath = "${pamPkg}/lib/security/pam_exec.so";
-        args = ["quiet" "type=close_session" "seteuid" "${fprintGateInvalidateScript}"];
+        args = ["quiet" "type=close_session" "${fprintGateInvalidateScript}"];
       };
     };
 
