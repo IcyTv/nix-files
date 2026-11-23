@@ -24,9 +24,14 @@
       found=$(${pkgs.findutils}/bin/find ${fprintGateDir} -maxdepth 1 -name "$PAM_USER" -mmin -${toString timeoutMinutes} 2>/dev/null)
       [ -n "$found" ]
     '';
+  # Always exits 0: this sits on the real-password success path (see
+  # fprintGateAuthStamp below), and a transient /run write failure must not
+  # turn a correct password into a denial.
   fprintGateStampScript = pkgs.writeShellScript "fprint-gate-stamp" ''
-    [ -n "$PAM_USER" ] || exit 0
-    : > "${fprintGateDir}/$PAM_USER"
+    if [ -n "$PAM_USER" ]; then
+      : > "${fprintGateDir}/$PAM_USER" 2>/dev/null || true
+    fi
+    exit 0
   '';
   fprintGateInvalidateScript = pkgs.writeShellScript "fprint-gate-invalidate" ''
     [ -n "$PAM_USER" ] || exit 0
@@ -39,9 +44,17 @@
     modulePath = "${pamPkg}/lib/security/pam_exec.so";
     args = ["quiet" "${fprintGateCheck timeoutMinutes}"];
   };
-  fprintGateStamp = unixSessionOrder: {
-    order = unixSessionOrder + 5;
-    control = "optional";
+  # sudo -v/polkit checks never open a PAM session (only a real privileged
+  # command does), so the stamp can't live in the session phase. Instead,
+  # flip the existing "unix" auth rule from plain `sufficient` to a jump that
+  # falls through to this stamp-and-succeed line on a correct password, and
+  # skips it (going straight to the pre-existing deny) on a wrong one -- the
+  # same verified [success=ignore default=1] + sufficient pair already used
+  # for fprintGate itself, just gating the password line instead of fprintd.
+  fprintGateUnixControl = "[success=ignore default=1]";
+  fprintGateAuthStamp = unixAuthOrder: {
+    order = unixAuthOrder + 1;
+    control = "sufficient";
     modulePath = "${pamPkg}/lib/security/pam_exec.so";
     # seteuid: the file must be owned by the target user, not root, so the
     # user's own unprivileged lock/logout hooks can delete it later despite
@@ -100,12 +113,14 @@ in {
       sudo = {
         fprintAuth = true;
         rules.auth.fprintGate = fprintGateAuth noExpiryMinutes config.security.pam.services.sudo.rules.auth.fprintd.order;
-        rules.session.fprintGateStamp = fprintGateStamp config.security.pam.services.sudo.rules.session.unix.order;
+        rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+        rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.sudo.rules.auth.unix.order;
       };
       polkit-1 = {
         fprintAuth = true;
         rules.auth.fprintGate = fprintGateAuth noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.fprintd.order;
-        rules.session.fprintGateStamp = fprintGateStamp config.security.pam.services.polkit-1.rules.session.unix.order;
+        rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+        rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.polkit-1.rules.auth.unix.order;
       };
       swaylock = {
         fprintAuth = true;
