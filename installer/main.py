@@ -117,6 +117,21 @@ def stage_files(repo, files):
         run(["git", "add", "--", *names[offset:offset + 100]], cwd=repo)
 
 
+CRYPT_MAGIC = b"\0GITCRYPT\0"
+BOOKMARKS = ("bookmarks-default.json", "bookmarks-yes.json")
+
+
+def snapshot_ignore(directory, names):
+    """Skip tooling/keys, and bookmark files unless they are git-crypt ciphertext."""
+    skipped = {n for n in names if n in ("__pycache__", ".keys")}
+    for name in names:
+        if name in BOOKMARKS:
+            with open(Path(directory) / name, "rb") as handle:
+                if handle.read(len(CRYPT_MAGIC)) != CRYPT_MAGIC:
+                    skipped.add(name)
+    return skipped
+
+
 def writable_snapshot(repo):
     # copytree preserves Nix store's read-only directory modes. Modify only the
     # session-owned copy, never symlink referents or the immutable source.
@@ -132,13 +147,15 @@ def prepare(work, source, update=True):
     history = False
     if update:
         try:
-            run(["git", "clone", "--no-checkout", REMOTE, repo], env=env)
-            revision = run(["git", "rev-parse", "refs/remotes/origin/HEAD"], cwd=repo).strip()
-            run(["git", "checkout", "--detach", revision], cwd=repo, env=env)
+            run(["git", "clone", "--no-checkout", REMOTE, repo], env=env, show_errors=True)
+            revision = run(["git", "rev-parse", "HEAD"], cwd=repo, show_errors=True).strip()
+            run(["git", "checkout", "--detach", revision], cwd=repo, env=env, show_errors=True)
             history = True
-        except RuntimeError:
-            notice("Repository download failed. Using embedded/local snapshot; full installation still requires downloads.")
-            repo = work / "snapshot"
+        except RuntimeError as exc:
+            raise RuntimeError(
+                "Failed to prepare upstream Git repository; refusing to substitute a synthetic snapshot. "
+                "Use --no-update for an explicit offline snapshot."
+            ) from exc
     if not (repo / "flake.nix").exists():
         if not source.is_dir():
             raise ValueError("No usable installer snapshot")
@@ -153,7 +170,7 @@ def prepare(work, source, update=True):
             repo.mkdir()
             run(["git", "init", repo])
         allowed = {"flake.nix", "flake.lock", "rebuild.sh", "installer", "modules", "scripts", "secrets", "hosts", ".gitattributes", ".gitignore"}
-        ignore_private = shutil.ignore_patterns("__pycache__", ".keys", "bookmarks-default.json", "bookmarks-yes.json")
+        ignore_private = snapshot_ignore
         for entry in source.iterdir():
             if entry.name not in allowed:
                 continue
@@ -171,6 +188,12 @@ def prepare(work, source, update=True):
         # Scope initial snapshot staging to supplied configuration roots; never
         # enumerate incidental ignored tooling directories from a local clone.
         stage_files(repo, [repo / name for name in sorted(allowed) if (repo / name).exists()])
+        if not history:
+            # git-crypt unlock needs a valid HEAD and a clean tree. No git-crypt
+            # filter is configured yet, so staged ciphertext blobs are stored verbatim.
+            run(["git", "-c", "user.name=Installer snapshot", "-c", "user.email=installer@localhost",
+                 "-c", "commit.gpgsign=false", "commit", "--quiet", "--no-verify", "-m", "Offline installer snapshot"],
+                cwd=repo, env=env)
         if not history or run(["git", "status", "--porcelain"], cwd=repo).strip():
             revision = snapshot_digest(repo)
     try:
@@ -478,8 +501,11 @@ def prepare_target_parent(target):
 
 
 def encrypted_bookmark(repo, name):
-    content = subprocess.check_output(["git", "show", ":secrets/" + name], cwd=repo)
-    if not content.startswith(b"\0GITCRYPT\0"):
+    try:
+        content = subprocess.check_output(["git", "show", ":secrets/" + name], cwd=repo, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as exc:
+        raise ValueError(f"Encrypted {name} is missing from this snapshot. Build the ISO from a locked checkout (ciphertext), or use online mode.") from exc
+    if not content.startswith(CRYPT_MAGIC):
         raise ValueError("Expected encrypted Git bookmark blob; refusing to persist plaintext")
     return content
 
@@ -643,7 +669,10 @@ def main():
         # Snapshot source intentionally lacks unlocked bookmarks and Git crypt state.
         has_history = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=repo, capture_output=True).returncode == 0
         if m["personalSecrets"] and not has_history:
-            raise ValueError("Personal setup requires a real repository clone with git-crypt metadata")
+            raise ValueError("Personal setup requires a Git repository with a valid HEAD")
+        if m["personalSecrets"]:
+            for name in BOOKMARKS:
+                encrypted_bookmark(repo, name)
         hardware = scan_hardware(work)
         # In dry-run, no key prompts/imports or hardware-token operations.
         identity = certificate = token = None

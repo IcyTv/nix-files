@@ -164,11 +164,17 @@
 
     packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
     packages.x86_64-linux.installer = nixpkgs.legacyPackages.x86_64-linux.callPackage ./installer {
-      source = nixpkgs.lib.cleanSourceWith {
-        src = filtered-src;
-        # Never bake unlocked git-crypt bookmark plaintext into the ISO snapshot.
-        filter = path: _: !(builtins.elem (baseNameOf path) ["bookmarks-default.json" "bookmarks-yes.json"]);
-      };
+      # Keep bookmark files only when they are git-crypt ciphertext, so the offline
+      # snapshot can still be unlocked. Never bake unlocked plaintext into the ISO.
+      source = nixpkgs.legacyPackages.x86_64-linux.runCommand "installer-source" {} ''
+        cp -r --no-preserve=mode ${nixpkgs.lib.cleanSource filtered-src} "$out"
+        for name in bookmarks-default.json bookmarks-yes.json; do
+          file="$out/secrets/$name"
+          if [ -e "$file" ] && [ "$(head -c 10 "$file" | od -An -tx1 | tr -d ' \n')" != "00474954435259505400" ]; then
+            rm "$file"
+          fi
+        done
+      '';
     };
 
     installerApi = 1;
