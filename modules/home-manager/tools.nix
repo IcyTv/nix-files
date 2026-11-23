@@ -55,6 +55,9 @@
 
       pkgs.anki-bin
       pkgs.mpv
+
+      pkgs.p7zip
+      pkgs.appimage-run
     ];
 
     programs.obsidian.enable = true;
