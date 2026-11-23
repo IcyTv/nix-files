@@ -13,6 +13,10 @@
       "docker": {
         "enable": true
       },
+      "eduroam": {
+        "enable": true,
+        "identity": "uyhum@kit.edu"
+      },
       "geoclue": {
         "enable": true
       },

@@ -2,9 +2,39 @@
   pkgs,
   config,
   lib,
+  osConfig,
   ...
-}: {
+}: let
+  # Invalidate the shared fingerprint-gate timestamp before locking, so
+  # sudo/polkit fall back to requiring a real auth again after a lock,
+  # matching the swaylock/greetd invalidation in hosts/peregrine/configuration.nix.
+  invalidateFprintGate = "${osConfig.security.pam.package}/bin/pam_timestamp_check -k || true";
+  lockScreen = pkgs.writeShellScript "niri-lock-screen" ''
+    ${invalidateFprintGate}
+    exec ${pkgs.swaylock}/bin/swaylock
+  '';
+  # swayidle's before-sleep/lock hooks must return promptly, so swaylock has
+  # to fork into the background instead of blocking like the keybind variant.
+  lockScreenDaemonized = pkgs.writeShellScript "niri-lock-screen-daemonized" ''
+    ${invalidateFprintGate}
+    exec ${pkgs.swaylock}/bin/swaylock --daemonize
+  '';
+in {
   options.my.hm.niri.enable = lib.mkEnableOption "Niri Wayland compositor home-manager configuration";
+
+  options.my.hm.niri.lockCommand = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    default = "${lockScreen}";
+    description = "Invalidates the fingerprint grace gate, then locks the screen (foreground; for keybinds).";
+  };
+
+  options.my.hm.niri.lockCommandDaemonized = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    default = "${lockScreenDaemonized}";
+    description = "Same as lockCommand, but backgrounds swaylock immediately (for swayidle's before-sleep/lock hooks).";
+  };
 
   config = lib.mkIf config.my.hm.niri.enable {
     programs.niri.settings = {
@@ -83,6 +113,9 @@
       spawn-at-startup = [
         {
           sh = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri";
+        }
+        {
+          sh = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
         }
       ];
       screenshot-path = "~/Pictures/Screenshots/screenshot-%Y%m%d-%H-%M-%S.png";
@@ -195,7 +228,7 @@
           "Mod+Space".action.spawn = ["subniri" "launcher" "open"];
           "Mod+B".action.spawn = ["firefox"];
           "Mod+E".action.spawn = ["thunar"];
-          "Mod+Alt+L".action.spawn = ["${pkgs.swaylock}/bin/swaylock"];
+          "Mod+Alt+L".action.spawn = [config.my.hm.niri.lockCommand];
 
           "XF86AudioRaiseVolume" = {
             action.spawn = [

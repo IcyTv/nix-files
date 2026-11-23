@@ -367,6 +367,19 @@ in {
       ]
       ++ profileDesktopEntries;
 
+    # Bitwarden desktop's own browser-integration setup only writes native
+    # messaging manifests for a fixed list of known browsers (chrome, chromium,
+    # edge, ...); Helium's profile lives under a different product directory,
+    # so it never gets detected. Wire the manifest declaratively instead.
+    home.file."${heliumDataDir}/NativeMessagingHosts/com.8bit.bitwarden.json".text = builtins.toJSON {
+      name = "com.8bit.bitwarden";
+      description = "Bitwarden desktop integration";
+      path = "${pkgs.bitwarden-desktop}/libexec/desktop_proxy";
+      type = "stdio";
+      # Same Chrome Web Store id used in profiles.Default.extensions.bitwarden above.
+      allowed_origins = ["chrome-extension://nngceckbapebfimnlniiiahkandclblb/"];
+    };
+
     systemd.user.services.helium-profile-sync = {
       Unit = {
         Description = "Sync declarative Helium profiles, settings and bookmarks";

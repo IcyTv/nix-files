@@ -33,6 +33,8 @@
     "my.nixos.bluetooth.enable": true,
     "my.nixos.console-font.enable": true,
     "my.nixos.docker.enable": true,
+    "my.nixos.eduroam.enable": true,
+    "my.nixos.eduroam.identity": "uyhum@kit.edu",
     "my.nixos.geoclue.enable": true,
     "my.nixos.greetd.enable": true,
     "my.nixos.hyprland.enable": false,

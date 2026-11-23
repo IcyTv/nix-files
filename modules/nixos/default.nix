@@ -8,6 +8,7 @@
     ./core.nix
     ./disko.nix
     ./docker.nix
+    ./eduroam.nix
     ./games.nix
     ./geoclue.nix
     ./greetd.nix
