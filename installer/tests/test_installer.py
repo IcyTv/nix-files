@@ -41,11 +41,20 @@ class ModelTests(unittest.TestCase):
         m = manifest() | {"swapGiB": 0, "hibernate": True}
         validate(m, [])
         self.assertTrue(any("will not work" in w for w in swap_warnings(0, 32, True)))
-        main.check_capacity(m, 64 * 1024 ** 3, 8 * 1024 ** 3, 0)
+        main.check_capacity(m, 128 * 1024 ** 3, 0)
 
     def test_impossible_layout_rejected_before_erasure(self):
         with self.assertRaisesRegex(ValueError, "cannot fit"):
-            main.check_capacity(manifest() | {"swapGiB": 100}, 64 * 1024 ** 3, 0, 0)
+            main.check_capacity(manifest() | {"swapGiB": 100}, 128 * 1024 ** 3, 0)
+
+    def test_capacity_reserves_a_fixed_system_minimum(self):
+        gib = 1024 ** 3
+        m = manifest() | {"swapGiB": 4}
+        main.check_capacity(m, (main.MIN_SYSTEM_GIB + 4 + 2) * gib, 0)
+        with self.assertRaisesRegex(ValueError, "cannot fit"):
+            main.check_capacity(m, (main.MIN_SYSTEM_GIB + 4 + 2) * gib, 1)
+        with self.assertRaisesRegex(ValueError, "cannot fit"):
+            main.check_capacity(m | {"swapGiB": 0}, 60 * gib, 0)
 
     def test_keys_and_injection_rejected(self):
         for changes in ({"password": "secret"}, {"hostname": "../../eagle"}, {"username": "root"},
@@ -114,6 +123,7 @@ class SafetyTests(unittest.TestCase):
             with patch.object(main, "ask_path", side_effect=[missing, str(key), missing, str(age)]) as prompts, \
                  patch.object(main, "run", return_value="") as run, \
                  patch.object(main, "encrypted_bookmark", return_value=b"\0GITCRYPT\0"), \
+                 patch.object(main, "relock"), \
                  patch.object(main.subprocess, "run", return_value=subprocess_result(0)), \
                  patch.object(main, "confirm", return_value=False):
                 with self.assertRaises(ValueError):
@@ -153,8 +163,10 @@ class SafetyTests(unittest.TestCase):
             with patch.object(main, "run", side_effect=fake_run) as run, \
                  patch.object(main.subprocess, "run", return_value=subprocess_result(0)), \
                  patch.object(main, "nix_eval", return_value=1), patch.object(main, "engine_digest", return_value="same"):
-                repo, revision = main.prepare(work, source, update=False)
+                repo, revision, history = main.prepare(work, source, update=False)
                 self.assertEqual(revision, "a" * 40)
+                self.assertTrue(history)
+                self.assertTrue((work / ".prepared").is_file())
                 staging = [call.args[0] for call in run.call_args_list if call.args[0][:2] == ["git", "add"]]
                 self.assertTrue(staging)
                 self.assertFalse(any(".opencode" in str(command) for command in staging))
@@ -335,30 +347,447 @@ class ResumeAndRetryTests(unittest.TestCase):
 
     def test_session_round_trip_and_fallback(self):
         with tempfile.TemporaryDirectory() as tmp:
-            work = Path(tmp)
-            main.save_session(work, "a" * 40, {"hostname": "falcon"})
-            self.assertEqual(main.load_session(work, work), {"revision": "a" * 40, "manifest": {"hostname": "falcon"}})
+            work = Path(tmp) / "work"
+            repo = work / "repository"
+            repo.mkdir(parents=True)
+            (repo / "flake.nix").write_text("{}")
+            main.save_session(work, "a" * 40, {"hostname": "falcon"}, history=True)
+            self.assertEqual(main.load_session(work, repo),
+                             {"revision": "a" * 40, "manifest": {"hostname": "falcon"}, "history": True})
+            # Missing session.json: a snapshot without Git history falls back to its content digest.
+            (work / "session.json").unlink()
+            fallback = main.load_session(work, repo)
+            self.assertEqual(fallback, {"revision": main.snapshot_digest(repo), "manifest": None, "history": False})
+            # With a Git HEAD the fallback is that commit.
+            with patch.object(main.subprocess, "run", return_value=subprocess_result(0, "b" * 40 + "\n")):
+                self.assertEqual(main.load_session(work, repo),
+                                 {"revision": "b" * 40, "manifest": None, "history": True})
+            # A later save (with answers) keeps the snapshot flag instead of dropping it.
+            main.save_session(work, "c" * 64, {"hostname": "falcon"}, False)
+            self.assertIs(main.load_session(work, repo)["history"], False)
             (work / "session.json").write_text("not json at all")
             with self.assertRaises(ValueError):
-                main.load_session(work, work)
+                main.load_session(work, repo)
+            (work / "session.json").write_text(json.dumps({"revision": "a" * 40, "manifest": ["not", "a", "dict"]}))
+            with self.assertRaisesRegex(ValueError, "JSON object"):
+                main.load_session(work, repo)
+
+    def make_workspace(self, base, name, stamp=100):
+        directory = base / name
+        (directory / "repository").mkdir(parents=True, mode=0o700)
+        directory.chmod(0o700)
+        (directory / "repository").chmod(0o700)
+        (directory / "repository" / "flake.nix").write_text("{}")
+        (directory / ".prepared").touch()
+        (directory / "stages.log").write_text("workspace-created\n")
+        os.utime(directory / "stages.log", (stamp, stamp))
+        return directory
 
     def test_find_workspaces_newest_first_and_requires_repository(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
-            for name, stamp in (("icy-install-old", 100), ("icy-install-new", 200), ("icy-install-empty", 300)):
-                directory = base / name
-                if name != "icy-install-empty":
-                    (directory / "repository").mkdir(parents=True)
-                    (directory / "repository" / "flake.nix").write_text("{}")
-                else:
-                    directory.mkdir()
-                (directory / "stages.log").write_text("workspace-created\n")
-                os.utime(directory / "stages.log", (stamp, stamp))
+            self.make_workspace(base, "icy-install-old", 100)
+            self.make_workspace(base, "icy-install-new", 200)
+            (base / "icy-install-empty").mkdir(mode=0o700)
+            (base / "icy-install-empty" / "stages.log").write_text("workspace-created\n")
             self.assertEqual([d.name for d in main.find_workspaces(base)], ["icy-install-new", "icy-install-old"])
             with patch.object(main, "choose", side_effect=lambda title, values, *a: values[0]):
                 self.assertEqual(main.pick_workspace(base).name, "icy-install-new")
             with self.assertRaises(ValueError):
                 main.pick_workspace(base / "missing")
+
+    def test_find_workspaces_skips_untrusted_or_unprepared(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            self.make_workspace(base, "icy-install-good")
+            (self.make_workspace(base, "icy-install-unprepared") / ".prepared").unlink()
+            self.make_workspace(base, "icy-install-open").chmod(0o755)
+            (self.make_workspace(base, "icy-install-openrepo") / "repository").chmod(0o750)
+            real = self.make_workspace(Path(tmp) / "elsewhere", "target")
+            (base / "icy-install-link").symlink_to(real)
+            linked = self.make_workspace(base, "icy-install-linkedrepo")
+            shutil.move(str(linked / "repository"), str(Path(tmp) / "elsewhere" / "repo"))
+            (linked / "repository").symlink_to(Path(tmp) / "elsewhere" / "repo")
+            # The run lock file must not hide a workspace.
+            main.os.close(main.lock_workspace(base / "icy-install-good"))
+            self.assertEqual([d.name for d in main.find_workspaces(base)], ["icy-install-good"])
+            with patch.object(main.os, "geteuid", return_value=os.geteuid() + 1):
+                self.assertEqual(main.find_workspaces(base), [])
+
+    def test_workspace_lock_is_exclusive(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            first = main.lock_workspace(work)
+            try:
+                # flock locks belong to the open file description, so a second open conflicts.
+                with self.assertRaisesRegex(ValueError, "Another installer"):
+                    main.lock_workspace(work)
+            finally:
+                os.close(first)
+            os.close(main.lock_workspace(work))
+
+    def test_gum_escape_is_cancelled_but_ctrl_c_interrupts(self):
+        def outcome(code):
+            with patch.object(main.os, "open", return_value=99), patch.object(main.os, "close"), \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(code)):
+                try:
+                    main.run_interactive(["gum", "choose"])
+                except KeyboardInterrupt as exc:
+                    return type(exc)
+        self.assertIs(outcome(1), main.Cancelled)
+        self.assertIs(outcome(130), KeyboardInterrupt)
+
+    def test_cancelled_prompts_in_ask_file_mean_no(self):
+        with tempfile.NamedTemporaryFile() as chosen:
+            with patch.object(main, "ask_path", side_effect=[main.Cancelled, "", chosen.name]), \
+                 patch.object(main, "confirm", side_effect=[main.Cancelled, False]) as asked, \
+                 patch.object(main, "notice"):
+                self.assertEqual(main.ask_file("Key"), Path(chosen.name))
+                self.assertEqual(asked.call_count, 2)
+            with patch.object(main, "ask_path", return_value=""), \
+                 patch.object(main, "confirm", side_effect=KeyboardInterrupt), patch.object(main, "notice"):
+                with self.assertRaises(KeyboardInterrupt) as exc:
+                    main.ask_file("Key")
+                self.assertNotIsInstance(exc.exception, main.Cancelled)
+
+    def test_ask_file_rejection_message_is_described(self):
+        with tempfile.NamedTemporaryFile() as chosen:
+            def check(path):
+                raise OSError(2, "No such file", "/secret/path")
+            with patch.object(main, "ask_path", side_effect=[chosen.name, ""]), \
+                 patch.object(main, "confirm", return_value=True), patch.object(main, "notice") as said:
+                with self.assertRaises(KeyboardInterrupt):
+                    main.ask_file("Key", check)
+            self.assertNotIn("/secret/path", str(said.call_args_list))
+
+    def test_enroll_escape_on_recovery_confirmation_reprompts(self):
+        m = manifest() | {"encrypted": True, "fido2": True}
+        with patch.object(main, "run", side_effect=["", RuntimeError("failed")]), \
+             patch.object(main, "confirm", side_effect=[main.Cancelled, True]) as asked, \
+             patch.object(main, "choose", side_effect=[main.Cancelled, "Continue passphrase + recovery only"]) as picked, \
+             patch.object(main, "notice"):
+            main.enroll(m, "/dev/test", "/dev/hidraw0")
+        self.assertEqual(asked.call_count, 2)
+        self.assertEqual(picked.call_count, 2)
+        self.assertFalse(m["fido2"])
+        with patch.object(main, "run", return_value=""), patch.object(main, "confirm", side_effect=KeyboardInterrupt):
+            with self.assertRaises(KeyboardInterrupt):
+                main.enroll(manifest(), "/dev/test", None)
+
+    def test_preflight_builds_only_the_disk_script_in_the_live_store(self):
+        data = [dict(d) for d in disks()]
+        data[1]["size"] = 1024 ** 4
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            with patch.object(main, "inventory", return_value=(data, {"8:1"}, set())), \
+                 patch.object(main, "device_key", return_value="8:16"), patch.object(main, "notice"), \
+                 patch.object(main, "build") as build, patch.object(main, "run") as run:
+                main.preflight_stage(work, work, manifest())
+            self.assertEqual([call.args[2] for call in build.call_args_list], ["system.build.diskoScript"])
+            self.assertIsNone(build.call_args.kwargs.get("store"))
+            run.assert_not_called()  # no closure-size query, no toplevel build
+            self.assertEqual(main.last_stage(work), "prebuilt")
+
+    def test_target_build_command_keeps_everything_on_the_target(self):
+        argv = main.build_command(Path("/w/repository"), "falcon", "system.build.toplevel",
+                                  Path("/w/toplevel"), main.TARGET_STORE)
+        self.assertEqual(argv[argv.index("--store") + 1], "/mnt")
+        self.assertEqual(argv[argv.index("--extra-substituters") + 1], "auto?trusted=1")
+        option = argv.index("--option")
+        self.assertEqual(argv[option + 1:option + 3], ["build-dir", "/mnt/nix/var/nix/builds"])
+        self.assertIn("-L", argv)
+        self.assertEqual(argv[-1], "/w/repository#nixosConfigurations.falcon.config.system.build.toplevel")
+        live = main.build_command(Path("/w/repository"), "falcon", "system.build.diskoScript", Path("/w/diskoScript"))
+        self.assertNotIn("--store", live)
+
+    def run_main(self, argv):
+        # Patch print, not notice(), so the persistent log is still written.
+        with patch.object(sys, "argv", ["run-installer", *argv]), patch.object(main.os, "umask"), \
+             patch("builtins.print") as said:
+            code = main.main()
+        return code, [str(call.args[0]) for call in said.call_args_list if call.args]
+
+    def test_resume_reverifies_repository_and_aborts_on_incompatible_api(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "repository").mkdir()
+            with patch.object(main, "pick_workspace", return_value=work), \
+                 patch.object(main, "load_session", return_value={"revision": "a" * 40, "manifest": None, "history": True}), \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(0, "a" * 40 + "\n")), \
+                 patch.object(main, "verify_repo", side_effect=ValueError("incompatible with this installer API")) as verify, \
+                 patch.object(main, "nix_eval") as evaluated:
+                code, said = self.run_main(["--resume"])
+            self.assertEqual(code, 1)
+            verify.assert_called_once_with(work / "repository", "a" * 40, True)
+            evaluated.assert_not_called()
+            self.assertTrue(any("incompatible" in line for line in said))
+            self.assertFalse(any("Formatting had started" in line for line in said))
+
+    def test_resume_refuses_a_moved_head(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "repository").mkdir()
+            with patch.object(main, "pick_workspace", return_value=work), \
+                 patch.object(main, "load_session", return_value={"revision": "a" * 40, "manifest": None, "history": True}), \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(0, "b" * 40 + "\n")), \
+                 patch.object(main, "verify_repo") as verify:
+                code, said = self.run_main(["--resume"])
+            self.assertEqual(code, 1)
+            verify.assert_not_called()
+            self.assertTrue(any("no longer matches the saved revision" in line for line in said))
+
+    def test_failure_stop_relocks_and_reports_log_without_secret_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "repository" / ".git").mkdir(parents=True)
+            (work / ".prepared").touch()
+            secret = OSError(13, "Permission denied", "/secret/age-identity-path")
+            with patch.object(main, "pick_workspace", return_value=work), \
+                 patch.object(main, "load_session", return_value={"revision": "c" * 64, "manifest": None, "history": False}), \
+                 patch.object(main, "verify_repo", side_effect=secret), \
+                 patch.object(main, "relock") as relock:
+                code, said = self.run_main(["--resume"])
+            self.assertEqual(code, 1)
+            relock.assert_called_once_with(work / "repository")
+            log = work / "installer.log"
+            self.assertEqual(log.stat().st_mode & 0o777, 0o600)
+            self.assertIn(f"Log: {log}", said)
+            self.assertIn(f"Copy it off this machine with: scp {log} user@host:", said)
+            self.assertIn("Continue later with: run-installer --resume", said)
+            self.assertIn("Permission denied", log.read_text())
+            self.assertNotIn("/secret/age-identity-path", log.read_text())
+            self.assertIsNone(main.LOG)
+
+    def test_cleanup_steps_run_even_when_one_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp) / "repository"
+            (repo / ".git" / "git-crypt" / "keys").mkdir(parents=True)
+            order = []
+            lock = main.lock_workspace(Path(tmp))
+            with patch.object(main.shutil, "rmtree", side_effect=lambda p: (order.append("cache"), (_ for _ in ()).throw(OSError(1, "busy")))), \
+                 patch.object(main, "relock", side_effect=lambda r: (order.append("relock"), (_ for _ in ()).throw(RuntimeError("git failed")))), \
+                 patch.object(main, "notice"):
+                main.cleanup(repo, lock)
+            self.assertEqual(order, ["cache", "relock"])
+            with self.assertRaises(OSError):
+                os.close(lock)  # already closed by cleanup
+
+    def test_sigint_exit_code_interrupts(self):
+        import signal
+        with patch.object(main.os, "open", return_value=99), patch.object(main.os, "close"), \
+             patch.object(main.subprocess, "run", return_value=subprocess_result(-signal.SIGINT)):
+            with self.assertRaises(KeyboardInterrupt) as exc:
+                main.run_interactive(["bash", "-c", "read"])
+        self.assertNotIsInstance(exc.exception, main.Cancelled)
+
+    def test_ask_file_gives_up_on_a_dead_terminal(self):
+        with patch.object(main, "ask_path", side_effect=main.Cancelled), \
+             patch.object(main, "confirm", side_effect=main.Cancelled), patch.object(main, "notice"):
+            with self.assertRaisesRegex(RuntimeError, "terminal may be gone"):
+                main.ask_file("Key")
+
+    def test_enroll_gives_up_on_a_dead_terminal(self):
+        with patch.object(main, "run", return_value=""), \
+             patch.object(main, "confirm", side_effect=main.Cancelled), patch.object(main, "notice"):
+            with self.assertRaisesRegex(RuntimeError, "terminal may be gone. Stopped after formatting"):
+                main.enroll(manifest() | {"encrypted": True}, "/dev/test", None)
+        m = manifest() | {"encrypted": True, "fido2": True}
+        with patch.object(main, "run", side_effect=["", RuntimeError("failed")]), \
+             patch.object(main, "confirm", return_value=True), \
+             patch.object(main, "choose", side_effect=main.Cancelled), patch.object(main, "notice"):
+            with self.assertRaisesRegex(RuntimeError, "terminal may be gone"):
+                main.enroll(m, "/dev/test", "/dev/hidraw0")
+
+    def test_enroll_token_reselection_failure_returns_to_the_choice(self):
+        m = manifest() | {"encrypted": True, "fido2": True}
+        with patch.object(main, "run", side_effect=["", RuntimeError("failed"), ""]) as run, \
+             patch.object(main, "confirm", return_value=True), \
+             patch.object(main, "choose", side_effect=["Retry", "Retry", "Retry"]) as picked, \
+             patch.object(main, "select_fido", side_effect=[ValueError("No compatible FIDO2"), main.Cancelled, "/dev/hidraw1"]), \
+             patch.object(main, "notice"):
+            main.enroll(m, "/dev/test", "/dev/hidraw0")
+        self.assertTrue(m["fido2"])
+        self.assertEqual(picked.call_count, 3)
+        self.assertIn("--fido2-device=/dev/hidraw1", run.call_args.args[0])
+
+    def test_signing_diagnostics_report_found_card_fingerprints(self):
+        other = "F" * 40
+        listing = (f"sec:u:255:22:{'1' * 16}:1:::::::::\nfpr:::::::::{main.PRIMARY}:\n"
+                   f"ssb:u:255:22:{'2' * 16}:1::::::s:::D2760001240100000006:\nfpr:::::::::{other}:\n")
+        public = f"pub:u:\nfpr:::::::::{main.PRIMARY}:\nfpr:::::::::{main.SIGNING}:\nuid:u::::::::Name:\n"
+
+        def fake_run(args, **kwargs):
+            if "show-only" in args:
+                return public
+            if "--list-secret-keys" in args:
+                return listing
+            return ""
+
+        with tempfile.TemporaryDirectory() as tmp, patch.object(main, "run", side_effect=fake_run), \
+             patch.object(main.subprocess, "run", return_value=subprocess_result(0)):
+            with self.assertRaises(ValueError) as exc:
+                main.fetch_public(Path(tmp))
+        self.assertIn(f"Expected {main.SIGNING}", str(exc.exception))
+        self.assertIn(other, str(exc.exception))
+        self.assertNotIn("D2760001240100000006", str(exc.exception))
+
+        def no_card(args, **kwargs):
+            if "--card-status" in args:
+                raise RuntimeError("gpg failed (exit 2)")
+            return fake_run(args, **kwargs)
+
+        with tempfile.TemporaryDirectory() as tmp, patch.object(main, "run", side_effect=no_card), \
+             patch.object(main.subprocess, "run", return_value=subprocess_result(0)):
+            with self.assertRaisesRegex(ValueError, "No OpenPGP smartcard detected"):
+                main.fetch_public(Path(tmp))
+
+    def test_failed_command_stderr_goes_to_the_log(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            log = Path(tmp) / "installer.log"
+            with patch.object(main, "LOG", log), patch("builtins.print"), \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(1)):
+                with self.assertRaises(RuntimeError):
+                    main.run(["nix", "eval"], show_errors=True)
+                with self.assertRaises(RuntimeError):
+                    main.run(["git-crypt", "unlock", "/secret/key"])  # hidden diagnostics stay hidden
+            self.assertEqual(log.read_text(), "secret diagnostic\n")
+
+    def test_retry_after_install_failure_reruns_preflight(self):
+        args = type("Args", (), {"dry_run": False})()
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            calls = []
+            with patch.object(main, "relock") as relock, patch.object(main, "reset_generated"), \
+                 patch.object(main, "reset_all_generated"), patch.object(main, "ram_gib", return_value=16), \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(0)), \
+                 patch.object(main, "scan_hardware", return_value="hw"), patch.object(main.os, "geteuid", return_value=0), \
+                 patch.object(Path, "exists", return_value=True), \
+                 patch.object(main, "prepare_runtime", return_value=work / "private"), \
+                 patch.object(main, "generate_stage", return_value=work / "host"), \
+                 patch.object(main, "preflight_stage", side_effect=lambda *a: calls.append("preflight") or ("8:16",)), \
+                 patch.object(main, "execute_install", side_effect=[RuntimeError("nixos-install failed (exit 1)"), None]) as install, \
+                 patch.object(main, "choose", return_value="Retry"), patch.object(main, "notice"), \
+                 patch.object(main, "save_session"):
+                main.pipeline(args, work, work / "repository", "a" * 40, [], manifest(), True)
+            relock.assert_called_once_with(work / "repository")
+            self.assertEqual(calls, ["preflight", "preflight"])
+            self.assertEqual(install.call_count, 2)
+
+    def test_system_is_built_on_the_target_only_after_formatting(self):
+        data = disks()
+        identity = check_target(data, "8:16", {"8:1"}, set())
+        events = []
+        with tempfile.TemporaryDirectory() as tmp:
+            work, host = Path(tmp) / "work", Path(tmp) / "host"
+            work.mkdir()
+            host.mkdir()
+
+            def fake_build(repo, hostname, attribute, work_, store=None, link_name=None):
+                events.append(("build", attribute, store))
+                return Path("/nix/store/" + "s" * 32 + "-nixos-system")
+
+            def fake_run(args, **kwargs):
+                if args[0] == "nixos-install":
+                    events.append(("nixos-install", str(args[args.index("--system") + 1])))
+                    raise RuntimeError("nixos-install failed (exit 1)")
+                return ""
+
+            with patch.object(main.os, "geteuid", return_value=0), \
+                 patch.object(main, "inventory", return_value=(data, {"8:1"}, set())), \
+                 patch.object(main, "device_key", return_value="8:16"), \
+                 patch.object(main, "ask", return_value=manifest()["disk"]), \
+                 patch.object(main, "secret_twice", return_value="pw"), \
+                 patch.object(main, "progress", side_effect=lambda w, s: events.append(("stage", s))), \
+                 patch.object(main, "run", side_effect=fake_run), patch.object(main, "build", side_effect=fake_build), \
+                 patch.object(main, "stage_files"), patch.object(main, "prepare_target_parent"), \
+                 patch.object(main, "copy_install_repository"), patch.object(main.shutil, "chown"), \
+                 patch.object(main, "TARGET", Path(tmp) / "mnt"), \
+                 patch.object(main, "REPOSITORY", "/etc/nixos/nix-files"), \
+                 patch.object(main, "Path", side_effect=lambda p: Path(tmp) / str(p).lstrip("/") if str(p).startswith("/mnt") else Path(p)), \
+                 patch.object(main, "notice"):
+                with self.assertRaisesRegex(RuntimeError, "nixos-install failed"):
+                    main.execute_install(Path("/repo"), host, manifest(), work, Path("/private"), None, None, None, identity)
+        stages = [e for e in events if e[0] != "nixos-install"]
+        self.assertEqual(stages, [("stage", "formatting-started"), ("stage", "formatted-and-mounted"),
+                                  ("build", "system.build.toplevel", main.TARGET_STORE),
+                                  ("stage", "final-system-built")])
+        self.assertEqual(events[-1], ("nixos-install", "/nix/store/" + "s" * 32 + "-nixos-system"))
+
+    def test_failure_after_formatting_offers_no_retry_and_prints_recovery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "repository" / ".git").mkdir(parents=True)
+            (work / "stages.log").write_text("workspace-created\nformatting-started\nformatted-and-mounted\n")
+
+            def failing_stage():
+                raise RuntimeError("nix failed (exit 1)")
+
+            with patch.object(main, "choose") as pick, patch.object(main, "notice"):
+                with self.assertRaises(RuntimeError):
+                    main.attempt(work, "Build and install", failing_stage)
+                pick.assert_not_called()
+            with patch.object(main.tempfile, "mkdtemp", return_value=str(work)), \
+                 patch.object(main, "prepare", return_value=(work / "repository", "a" * 40, True)), \
+                 patch.object(main, "nix_eval", side_effect=RuntimeError("nix failed (exit 1)")), \
+                 patch.object(main, "relock"):
+                code, said = self.run_main([])
+            self.assertEqual(code, 1)
+            text = "\n".join(said)
+            self.assertIn("Disk is formatted but the build/install did not finish", text)
+            self.assertIn("Do NOT rerun the installer's formatting", text)
+            self.assertIn("--store /mnt", text)
+            self.assertIn("nixos-install --root /mnt --system", text)
+            self.assertNotIn("run-installer --resume", text)
+            self.assertNotIn("Retry", text)
+            self.assertIn("Disk is formatted but the build/install did not finish", (work / "installer.log").read_text())
+
+    def test_cancelled_disk_confirmation_aborts_before_formatting(self):
+        data = disks()
+        identity = check_target(data, "8:16", {"8:1"}, set())
+        with patch.object(main.os, "geteuid", return_value=0), patch.object(Path, "exists", return_value=True), \
+             patch.object(main, "inventory", return_value=(data, {"8:1"}, set())), \
+             patch.object(main, "device_key", return_value="8:16"), patch.object(main, "ask", side_effect=main.Cancelled), \
+             patch.object(main, "progress") as progress, patch.object(main, "run", return_value="") as run, \
+             patch.object(main, "notice"):
+            with self.assertRaises(KeyboardInterrupt):
+                main.execute_install(Path("/test"), Path("/test/host"), manifest(), Path("/work"), Path("/private"), None, None, None, identity)
+        progress.assert_not_called()
+        self.assertEqual([call.args[0][0] for call in run.call_args_list], ["lsblk"])
+
+    def test_no_resume_hint_without_prepared_workspace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            with patch.object(main.tempfile, "mkdtemp", return_value=str(work)), \
+                 patch.object(main, "prepare", side_effect=RuntimeError("clone failed")):
+                code, said = self.run_main([])
+            self.assertEqual(code, 1)
+            self.assertIn("Nothing was formatted.", said)
+            self.assertFalse(any("--resume" in line for line in said))
+
+    def test_malformed_manifest_is_a_clean_value_error(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "repository").mkdir()
+            malformed = json.dumps(manifest() | {"hostname": 5})  # validate() would raise TypeError
+            for content, message in (("[1, 2]", "JSON object"), (malformed, "missing or has malformed")):
+                (work / "manifest.json").write_text(content)
+                with self.subTest(content=content), patch.object(main, "pick_workspace", return_value=work), \
+                     patch.object(main, "load_session", return_value={"revision": "a" * 40, "manifest": None, "history": False}), \
+                     patch.object(main, "verify_repo"), patch.object(main, "nix_eval", return_value=[]):
+                    code, said = self.run_main(["--resume", "--manifest", str(work / "manifest.json")])
+                    self.assertEqual(code, 1)
+                    self.assertTrue(any(message in line for line in said))
+
+    def test_error_before_workspace_does_not_claim_formatting(self):
+        with patch.object(main, "pick_workspace", side_effect=ValueError("No earlier installer workspace")):
+            code, said = self.run_main(["--resume"])
+        self.assertEqual(code, 1)
+        self.assertIn("Stopped before a workspace was selected. Nothing was formatted.", said)
+        self.assertFalse(any("Formatting had started" in line for line in said))
+        with patch.object(main, "pick_workspace", side_effect=KeyboardInterrupt):
+            code, said = self.run_main(["--resume"])
+        self.assertIn("Stopped before a workspace was selected. Nothing was formatted.", said)
+        self.assertFalse(any("formatting started" in line for line in said))
 
     def test_formatting_workspace_cannot_be_resumed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -413,12 +842,15 @@ class ResumeAndRetryTests(unittest.TestCase):
     def test_wizard_saved_answers_are_kept_not_reset(self):
         saved = manifest()
         saved["hostname"] = "kept-host"
-        with patch.object(main, "notice"), patch.object(main, "ask", side_effect=lambda t, d="": d), \
+        with patch.object(main, "notice"), patch.object(main, "ask", side_effect=lambda t, d="": d) as asked, \
              patch.object(main, "confirm", side_effect=lambda t, d=False: d), \
              patch.object(main, "inventory", side_effect=ValueError("stop here")):
             with self.assertRaisesRegex(ValueError, "stop here"):
                 with patch.object(main, "choose", return_value="Continue"):
                     main.wizard(Path("/repo"), saved["revision"], [], saved=saved)
+        hostname_prompt = asked.call_args_list[0]
+        self.assertIn("hostname", hostname_prompt.args[0])
+        self.assertEqual(hostname_prompt.args[1], "kept-host")
         self.assertEqual(saved["hostname"], "kept-host")
 
 
@@ -470,10 +902,101 @@ class GitBackedTests(unittest.TestCase):
                 self.assertEqual((repo / "secrets" / name).read_bytes(), cipher)
             self.assertEqual(self.git(repo, "status", "--porcelain").strip(), "")
 
+    def test_relock_restores_ciphertext_through_an_active_filter(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            (repo / "secrets").mkdir()
+            (repo / ".gitattributes").write_text("secrets/bookmarks-*.json filter=git-crypt diff=git-crypt\n")
+            # Stand-in for git-crypt: smudge strips the magic header, clean adds it back.
+            self.git(repo, "config", "filter.git-crypt.smudge", "tail -c +11")
+            self.git(repo, "config", "filter.git-crypt.clean", "sh -c 'printf \"\\000GITCRYPT\\000\"; cat'")
+            for name in main.BOOKMARKS:
+                (repo / "secrets" / name).write_text('["plaintext"]')
+            self.git(repo, "add", "-A")
+            self.git(repo, "commit", "-qm", "secrets")
+            for name in main.BOOKMARKS:
+                (repo / "secrets" / name).unlink()
+            self.git(repo, "checkout", "--", "secrets")
+            self.assertEqual((repo / "secrets" / main.BOOKMARKS[0]).read_text(), '["plaintext"]')
+            main.relock(repo)
+            for name in main.BOOKMARKS:
+                self.assertEqual((repo / "secrets" / name).read_bytes(), b"\0GITCRYPT\0" + b'["plaintext"]')
+            self.assertNotIn("git-crypt", self.git(repo, "config", "--list"))
 
-def subprocess_result(code):
+    def test_relock_refuses_plaintext_in_the_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            (repo / "secrets").mkdir()
+            (repo / "secrets" / main.BOOKMARKS[0]).write_text('["plaintext"]')
+            self.git(repo, "add", "-A")
+            self.git(repo, "commit", "-qm", "plaintext")
+            with self.assertRaisesRegex(ValueError, "ciphertext could not be restored"):
+                main.relock(repo)
+
+    def test_hand_copied_host_without_installer_marker_is_kept(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            (repo / "hosts" / "manual").mkdir()
+            (repo / "hosts" / "manual" / "configuration.nix").write_text("{}")
+            main.reset_all_generated(repo)
+            self.assertTrue((repo / "hosts" / "manual" / "configuration.nix").exists())
+
+    def test_stale_host_from_an_earlier_hostname_is_reset(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            for name in ("old-name", "new-name"):
+                (repo / "hosts" / name).mkdir()
+                (repo / "hosts" / name / "install.json").write_text("{}")
+            self.git(repo, "add", "-A")
+            main.reset_all_generated(repo)
+            self.assertFalse((repo / "hosts" / "old-name").exists())
+            self.assertFalse((repo / "hosts" / "new-name").exists())
+            self.assertTrue((repo / "hosts" / "upstream" / "x.nix").exists())
+            self.assertNotIn("old-name", self.git(repo, "ls-files"))
+
+    def test_relock_without_personal_setup_keeps_ciphertext_and_skips_missing_bookmarks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            main.relock(repo)  # snapshot without any bookmark files
+            (repo / "secrets").mkdir()
+            cipher = b"\0GITCRYPT\0" + b"y" * 20
+            (repo / "secrets" / main.BOOKMARKS[0]).write_bytes(cipher)
+            self.git(repo, "add", "-A")
+            self.git(repo, "commit", "-qm", "one bookmark")
+            main.relock(repo)
+            self.assertEqual((repo / "secrets" / main.BOOKMARKS[0]).read_bytes(), cipher)
+            self.assertFalse((repo / "secrets" / main.BOOKMARKS[1]).exists())
+            self.assertEqual(self.git(repo, "status", "--porcelain").strip(), "")
+
+    def test_resume_snapshot_revision_is_the_new_head(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = self.repo_with_host(tmp)
+            (source / "flake.nix").write_text("{}")
+            self.git(source, "add", "-A")
+            self.git(source, "commit", "-qm", "flake")
+            original = self.git(source, "rev-parse", "HEAD").strip()
+            (source / "flake.nix").write_text("{ edited = true; }")  # uncommitted local change
+            work = Path(tmp) / "work"
+            work.mkdir()
+            real_run = main.run
+
+            def run_without_lfs(args, **kwargs):  # git-lfs is not available in the check sandbox
+                return "" if list(args[:2]) == ["git", "lfs"] else real_run(args, **kwargs)
+
+            with patch.object(main, "verify_repo") as verify, patch.object(main, "notice"), \
+                 patch.object(main, "run", side_effect=run_without_lfs):
+                repo, revision, history = main.prepare(work, source, update=False)
+            head = self.git(repo, "rev-parse", "HEAD").strip()
+            self.assertTrue(history)
+            self.assertNotEqual(head, original)
+            self.assertEqual(revision, head)
+            self.assertEqual(verify.call_args.args, (repo, head, True))
+            self.assertTrue((work / ".prepared").is_file())
+
+
+def subprocess_result(code, stdout=""):
     from subprocess import CompletedProcess
-    return CompletedProcess([], code, stdout="", stderr="secret diagnostic")
+    return CompletedProcess([], code, stdout=stdout, stderr="secret diagnostic")
 
 
 if __name__ == "__main__":

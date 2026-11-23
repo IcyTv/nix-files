@@ -26,6 +26,15 @@
 
   networking.networkmanager.enable = true;
 
+  # The live store (/nix/.rw-store) is a RAM-backed tmpfs and the image has no disk
+  # swap (installation-cd-base sets swapDevices = []). Compressed RAM swap lets the
+  # live system degrade instead of thrashing under evaluation/disko memory pressure;
+  # the installer builds the full system on the target disk, not here.
+  zramSwap = {
+    enable = true;
+    memoryPercent = 100;
+  };
+
   boot.loader.limine.efiSupport = true;
   boot.kernelPackages = pkgs.linuxPackages;
 

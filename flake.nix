@@ -165,7 +165,10 @@
     packages.x86_64-linux.iso = self.nixosConfigurations.iso.config.system.build.isoImage;
     packages.x86_64-linux.installer = nixpkgs.legacyPackages.x86_64-linux.callPackage ./installer {
       # Keep bookmark files only when they are git-crypt ciphertext, so the offline
-      # snapshot can still be unlocked. Never bake unlocked plaintext into the ISO.
+      # snapshot can still be unlocked. Dropping plaintext from $out keeps it out of
+      # this derivation's output only: an unlocked checkout still copies plaintext into
+      # the filtered-src input store path. Build the ISO from a locked checkout; the
+      # installer relocks its own workspace so it never leaves an unlocked checkout.
       source = nixpkgs.legacyPackages.x86_64-linux.runCommand "installer-source" {} ''
         cp -r --no-preserve=mode ${nixpkgs.lib.cleanSource filtered-src} "$out"
         for name in bookmarks-default.json bookmarks-yes.json; do
@@ -181,7 +184,7 @@
     checks.x86_64-linux.installer = let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
     in
-      pkgs.runCommand "installer-safety-tests" {nativeBuildInputs = [pkgs.python3 pkgs.psmisc];} ''
+      pkgs.runCommand "installer-safety-tests" {nativeBuildInputs = [pkgs.python3 pkgs.psmisc pkgs.git];} ''
         export PYTHONDONTWRITEBYTECODE=1
         python3 -m unittest discover -s ${./installer}/tests -p 'test_*.py' -v
         touch "$out"
