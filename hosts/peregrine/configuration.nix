@@ -29,6 +29,7 @@ in {
     efiSupport = true;
   };
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.limine.secureBoot.enable = true;
   boot.kernelPackages = pkgs.linuxPackages;
   boot.initrd.systemd.enable = true;
   users.users.root.hashedPassword = "!";
