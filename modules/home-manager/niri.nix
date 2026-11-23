@@ -2,13 +2,14 @@
   pkgs,
   config,
   lib,
-  osConfig,
   ...
 }: let
-  # Invalidate the shared fingerprint-gate timestamp before locking, so
+  # Invalidate the shared fingerprint-gate stamp before locking, so
   # sudo/polkit fall back to requiring a real auth again after a lock,
   # matching the swaylock/greetd invalidation in hosts/peregrine/configuration.nix.
-  invalidateFprintGate = "${osConfig.security.pam.package}/bin/pam_timestamp_check -k || true";
+  # /run/fprint-gate is that host's fprintGateDir; kept as a literal here too
+  # since this module isn't peregrine-specific.
+  invalidateFprintGate = ''${pkgs.coreutils}/bin/rm -f "/run/fprint-gate/$(${pkgs.coreutils}/bin/id -un)"'';
   lockScreen = pkgs.writeShellScript "niri-lock-screen" ''
     ${invalidateFprintGate}
     exec ${pkgs.swaylock}/bin/swaylock
