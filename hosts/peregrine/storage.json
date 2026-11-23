@@ -1,0 +1,7 @@
+{
+  "mapper": "icy-peregrine",
+  "partitionUUIDs": {
+    "efi": "3d71f089-a990-5aab-2479-c7951a64924a",
+    "root": "ab3af446-411f-f91c-95d1-07372b2d3430"
+  }
+}
