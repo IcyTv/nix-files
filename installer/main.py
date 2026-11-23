@@ -22,9 +22,20 @@ def run(args, *, cwd=None, input=None, capture=True, env=None, private=False, sh
     """Never include argument values in exceptions (some are sensitive paths)."""
     if private:
         # Bypass stdout/stderr redirection and tee: recovery output is terminal-only.
-        with open("/dev/tty", "r+") as tty:
-            result = subprocess.run([str(x) for x in args], cwd=cwd, text=True,
-                                    stdin=tty, stdout=tty, stderr=tty, env=env, pass_fds=pass_fds)
+        fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
+        try:
+            result = subprocess.run(
+                [str(x) for x in args],
+                cwd=cwd,
+                text=True,
+                stdin=fd,
+                stdout=fd,
+                stderr=fd,
+                env=env,
+                pass_fds=pass_fds,
+            )
+        finally:
+            os.close(fd)
     else:
         result = subprocess.run([str(x) for x in args], cwd=cwd, input=input, text=True,
                                 stdout=subprocess.PIPE if capture else None,
@@ -37,12 +48,35 @@ def run(args, *, cwd=None, input=None, capture=True, env=None, private=False, sh
     return result.stdout if capture else ""
 
 
+def run_interactive(args, *, cwd=None, env=None):
+    fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
+    try:
+        result = subprocess.run(
+            [str(arg) for arg in args],
+            cwd=cwd,
+            env=env,
+            stdin=fd,
+            stdout=subprocess.PIPE,
+            stderr=fd,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    finally:
+        os.close(fd)
+
+
 def choose(title, values):
-    return run(["gum", "choose", "--header", title, "--", *values]).strip()
+    return run_interactive([
+        "gum", "choose", "--header", title, "--", *values
+    ]).strip()
 
 
 def ask(title, default=""):
-    return run(["gum", "input", "--header", title, "--value", str(default)]).strip()
+    return run_interactive([
+        "gum", "input", "--header", title,
+        "--value", str(default)
+    ]).strip()
 
 
 def confirm(title, default=False):
