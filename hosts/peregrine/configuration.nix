@@ -102,10 +102,17 @@ in {
     # own "$username" entry, but not another user's.
     systemd.tmpfiles.rules = ["d ${fprintGateDir} 1777 root root -"];
 
+    # logind treats the system as "docked" whenever more than one display is
+    # connected (e.g. an external monitor through the dock's DP output), not
+    # just when a real docking-station sysfs entry is present -- so this
+    # covers any dock that exposes a working display, not only the current
+    # one. Closing the lid while docked should just let the external
+    # monitor(s) keep running; only fall back to suspending when truly
+    # undocked.
     services.logind.settings.Login = {
       HandleLidSwitch = "suspend-then-hibernate";
       HandleLidSwitchExternalPower = "suspend-then-hibernate";
-      HandleLidSwitchDocked = "suspend-then-hibernate";
+      HandleLidSwitchDocked = "ignore";
     };
     systemd.sleep.settings.Sleep.HibernateDelaySec = "30min";
 
