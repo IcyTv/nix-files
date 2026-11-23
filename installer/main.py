@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """IcyOS coordinator. Only execute_install crosses the destructive boundary."""
 import argparse
+import copy
 import getpass
 import hashlib
 import json
@@ -48,6 +49,10 @@ def run(args, *, cwd=None, input=None, capture=True, env=None, private=False, sh
     return result.stdout if capture else ""
 
 
+class BackToWizard(Exception):
+    """Raised by a failed stage when the operator wants to change their answers."""
+
+
 def run_interactive(args, *, cwd=None, env=None):
     fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
     try:
@@ -59,17 +64,33 @@ def run_interactive(args, *, cwd=None, env=None):
             stdout=subprocess.PIPE,
             stderr=fd,
             text=True,
-            check=True,
         )
+        if result.returncode:
+            # Ctrl+C / Esc in gum or bash: treat as a cancel, not a crash.
+            raise KeyboardInterrupt
         return result.stdout.strip()
     finally:
         os.close(fd)
 
 
-def choose(title, values):
-    return run_interactive([
-        "gum", "choose", "--header", title, "--", *values
-    ]).strip()
+def list_height(count):
+    try:
+        fd = os.open("/dev/tty", os.O_RDONLY | os.O_NOCTTY)
+        try:
+            rows = os.get_terminal_size(fd).lines
+        finally:
+            os.close(fd)
+    except OSError:
+        rows = 24
+    return max(5, min(count, rows - 6))
+
+
+def choose(title, values, current=None):
+    """`current` keeps the cursor (and page) on that entry. gum splits --selected on commas."""
+    args = ["gum", "choose", "--header", title, "--height", str(list_height(len(values)))]
+    if current is not None and current in values and "," not in current:
+        args += ["--selected", current]
+    return run_interactive([*args, "--", *values]).strip()
 
 
 def ask(title, default=""):
@@ -77,6 +98,32 @@ def ask(title, default=""):
         "gum", "input", "--header", title,
         "--value", str(default)
     ]).strip()
+
+
+def ask_path(title):
+    # bash's readline gives Tab completion and history; the prompt and echo go to the tty.
+    return run_interactive(["bash", "-c", 'read -e -r -p "$1: " value && printf %s "$value"', "_", title]).strip()
+
+
+def ask_file(title, check=None):
+    """Prompt until a readable file (accepted by `check`) is given; never exits on a typo."""
+    while True:
+        text = ask_path(title + " (Tab completes, empty to cancel)")
+        if not text:
+            if confirm("Cancel the installer?"):
+                raise KeyboardInterrupt
+            continue
+        path = Path(text).expanduser()
+        if not path.is_file():
+            notice("Not a readable file. Try again.")
+            continue
+        try:
+            if check is None or check(path):
+                return path
+        except (OSError, ValueError, RuntimeError) as exc:
+            notice(f"Rejected: {exc}")
+        else:
+            notice("Rejected. Try again.")
 
 
 def confirm(title, default=False):
@@ -117,6 +164,9 @@ def stage_files(repo, files):
         run(["git", "add", "--", *names[offset:offset + 100]], cwd=repo)
 
 
+SYSTEM_PRESET = ["ananicy", "bluetooth", "console-font", "docker", "geoclue", "greetd", "keyd", "keymap",
+                 "limine", "niri", "plymouth", "printing", "rebuild", "stylix", "subniri", "sudo-rs", "tools", "zsh"]
+HOME_DISABLED = ["ai", "anyrun", "games", "unifiedremote"]
 CRYPT_MAGIC = b"\0GITCRYPT\0"
 BOOKMARKS = ("bookmarks-default.json", "bookmarks-yes.json")
 
@@ -159,16 +209,27 @@ def prepare(work, source, update=True):
     if not (repo / "flake.nix").exists():
         if not source.is_dir():
             raise ValueError("No usable installer snapshot")
+        # A retained workspace from an older run may have .git but no commit; treat it as a snapshot.
+        # The installer runs as root but --source is often owned by another user;
+        # trust only this explicitly chosen source for read-only clone/inspection.
+        trust = ["-c", f"safe.directory={source}", "-c", f"safe.directory={source / '.git'}"]
+        source_has_head = False
         if (source / ".git").exists():
+            probe = subprocess.run(["git", *trust, "rev-parse", "--verify", "HEAD"], cwd=source,
+                                   capture_output=True, text=True)
+            source_has_head = probe.returncode == 0
+            if not source_has_head:
+                notice(f"Source has no commit ({probe.stderr.strip() or 'no HEAD'}); treating it as a file snapshot.")
+        if source_has_head:
             # Restart from an explicitly chosen checkout without losing history
             # or copying .git/git-crypt's private symmetric-key cache.
-            run(["git", "clone", "--no-hardlinks", "--no-checkout", source, repo], env=env)
-            revision = run(["git", "rev-parse", "HEAD"], cwd=repo).strip()
-            run(["git", "checkout", "--detach", revision], cwd=repo, env=env)
+            run(["git", *trust, "clone", "--no-hardlinks", "--no-checkout", source, repo], env=env, show_errors=True)
+            revision = run(["git", "rev-parse", "HEAD"], cwd=repo, show_errors=True).strip()
+            run(["git", "checkout", "--detach", revision], cwd=repo, env=env, show_errors=True)
             history = True
         else:
             repo.mkdir()
-            run(["git", "init", repo])
+            run(["git", "init", repo], show_errors=True)
         allowed = {"flake.nix", "flake.lock", "rebuild.sh", "installer", "modules", "scripts", "secrets", "hosts", ".gitattributes", ".gitignore"}
         ignore_private = snapshot_ignore
         for entry in source.iterdir():
@@ -184,16 +245,18 @@ def prepare(work, source, update=True):
                 shutil.copyfile(entry, repo / entry.name)
         (repo / "wallpapers").mkdir(exist_ok=True)
         writable_snapshot(repo)
-        run(["git", "lfs", "install", "--local"], cwd=repo)
+        run(["git", "lfs", "install", "--local"], cwd=repo, show_errors=True)
         # Scope initial snapshot staging to supplied configuration roots; never
         # enumerate incidental ignored tooling directories from a local clone.
         stage_files(repo, [repo / name for name in sorted(allowed) if (repo / name).exists()])
-        if not history:
-            # git-crypt unlock needs a valid HEAD and a clean tree. No git-crypt
-            # filter is configured yet, so staged ciphertext blobs are stored verbatim.
+        # git-crypt unlock needs a valid HEAD and a clean tree. No git-crypt filter
+        # is configured yet, so staged ciphertext blobs are stored verbatim.
+        staged = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=repo).returncode != 0
+        if not history or staged:
             run(["git", "-c", "user.name=Installer snapshot", "-c", "user.email=installer@localhost",
-                 "-c", "commit.gpgsign=false", "commit", "--quiet", "--no-verify", "-m", "Offline installer snapshot"],
-                cwd=repo, env=env)
+                 "-c", "commit.gpgsign=false", "commit", "--quiet", "--no-verify", "--allow-empty",
+                 "-m", "Offline installer snapshot" if not history else "Installer resume snapshot"],
+                cwd=repo, env=env, show_errors=True)
         if not history or run(["git", "status", "--porcelain"], cwd=repo).strip():
             revision = snapshot_digest(repo)
     try:
@@ -207,14 +270,14 @@ def prepare(work, source, update=True):
         notice(f"  nix run '{repo}#installer' -- --source '{repo}' --no-update")
         if not confirm("Continue with this installer version instead? Compatibility API matches."):
             raise KeyboardInterrupt
-    run(["git", "lfs", "install", "--local"], cwd=repo)
+    run(["git", "lfs", "install", "--local"], cwd=repo, show_errors=True)
     if history:
-        run(["git", "remote", "set-url", "origin", REMOTE], cwd=repo)
+        run(["git", "remote", "set-url", "origin", REMOTE], cwd=repo, show_errors=True)
         run(["git", "lfs", "pull"], cwd=repo, capture=False)
         run(["git", "lfs", "fsck"], cwd=repo, capture=False)
     # Snapshot repositories need an origin for later user pushes, without publishing anything now.
     if not run(["git", "remote"], cwd=repo).strip():
-        run(["git", "remote", "add", "origin", REMOTE], cwd=repo)
+        run(["git", "remote", "add", "origin", REMOTE], cwd=repo, show_errors=True)
     if len(revision) == 64:
         revision = snapshot_digest(repo)
     return repo, revision
@@ -253,7 +316,7 @@ def scan_hardware(work):
     # probes mounted Btrfs filesystems first (requiring root). Scan PCI/CPU/sysfs
     # against an empty target prefix instead of probing the live root filesystem.
     probe = work / "hardware-probe"
-    probe.mkdir()
+    probe.mkdir(exist_ok=True)
     return run(["nixos-generate-config", "--root", probe, "--no-filesystems", "--show-hardware-config"])
 
 
@@ -263,13 +326,19 @@ def edit_options(schema, scope, answers):
         if scope == "home" and answers.get("my.hm.default.enable", False):
             return option.get("presetDefault", option["default"])
         return option["default"]
+    last = None
     while True:
-        entries = ["Done"] + [f"{name} = {json.dumps(answers.get(name, effective(o)))}"
-                              for name, o in sorted(available.items())]
-        selection = choose(f"{scope}: all user-facing my.* options", entries)
+        # Labels never contain commas (gum --selected splits on them), so the
+        # cursor can return to the entry just edited instead of jumping to the top.
+        labels = {f"{name} = {json.dumps(answers.get(name, effective(o))).replace(',', ';')}": name
+                  for name, o in sorted(available.items())}
+        entries = ["Done", *labels]
+        current = next((label for label, name in labels.items() if name == last), "Done")
+        selection = choose(f"{scope}: all user-facing my.* options", entries, current)
         if selection == "Done":
             return
-        name = selection.split(" = ", 1)[0]
+        name = labels[selection]
+        last = name
         option = available[name]
         if not option["supported"]:
             notice(f"Unsupported type {option['type']}: {option['description']}. Edit host configuration manually later.")
@@ -290,16 +359,45 @@ def edit_options(schema, scope, answers):
                 notice("Expected a JSON list of strings; answer unchanged.")
 
 
-def wizard(repo, revision, schema):
+def host_taken(repo, name):
+    """True when the host exists in the selected revision's HEAD (or that cannot be proven)."""
+    head = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=repo, capture_output=True)
+    if head.returncode:
+        return (repo / "hosts" / name).exists()
+    return subprocess.run(["git", "cat-file", "-e", f"HEAD:hosts/{name}"], cwd=repo,
+                          capture_output=True).returncode == 0
+
+
+def reset_generated(repo, name):
+    """Remove only a host this installer generated earlier, so a retry can regenerate it."""
+    host = repo / "hosts" / name
+    if not host.exists():
+        return
+    if host_taken(repo, name):
+        raise ValueError("Host already exists")
+    subprocess.run(["git", "rm", "-r", "-f", "--cached", "--quiet", "--ignore-unmatch", "--", f"hosts/{name}"],
+                   cwd=repo, capture_output=True)
+    shutil.rmtree(host)
+
+
+def default_answers(repo, revision, schema):
     m = {"api": API, "revision": revision, "hostname": "", "username": "michael", "disk": "",
          "encrypted": True, "fido2": False, "personalSecrets": False, "signing": True,
          "swapGiB": 0, "hibernate": False, "timezone": "Europe/Berlin", "locale": "en_US.UTF-8",
          "gitName": "Michael Finger", "gitEmail": "michael.finger@icytv.de",
          "stateVersion": nix_eval(repo, "installerStateVersion"),
          "system": {}, "home": {"my.hm.default.enable": True}, "hardware": detect_hardware()}
-    system_preset = ["bluetooth", "greetd", "limine", "niri", "printing", "rebuild", "stylix", "tools", "zsh"]
+    # Only options present in this revision's schema are set; unknown names are never invented.
     names = {".".join(o["path"]) for o in schema if o["scope"] == "system"}
-    m["system"] = {f"my.nixos.{name}.enable": True for name in system_preset if f"my.nixos.{name}.enable" in names}
+    m["system"] = {f"my.nixos.{name}.enable": True for name in SYSTEM_PRESET if f"my.nixos.{name}.enable" in names}
+    home_names = {".".join(o["path"]) for o in schema if o["scope"] == "home"}
+    m["home"].update({f"my.hm.{name}.enable": False for name in HOME_DISABLED if f"my.hm.{name}.enable" in home_names})
+    return m
+
+
+def wizard(repo, revision, schema, saved=None):
+    # "Edit answers" after a failed stage keeps every earlier choice.
+    m = copy.deepcopy(saved) if saved is not None else default_answers(repo, revision, schema)
     step = 0
     while True:
         notice(f"IcyOS Installer — step {step + 1}/6 — source {revision}")
@@ -325,7 +423,8 @@ def wizard(repo, revision, schema):
                 options[label] = path
             if not options:
                 raise ValueError("No safe whole-disk installation target found")
-            m["disk"] = options[choose("Select disk (not formatted yet)", list(options))]
+            previous = next((label for label, path in options.items() if path == m["disk"]), None)
+            m["disk"] = options[choose("Select disk (not formatted yet)", list(options), previous)]
             m["encrypted"] = confirm("Enable LUKS2 encryption?", m["encrypted"])
             m["fido2"] = m["encrypted"] and confirm("Enroll a YubiKey for PIN + touch disk unlocking?", m["fido2"])
             m["hibernate"] = confirm("Enable hibernation?", m["hibernate"])
@@ -362,7 +461,7 @@ def wizard(repo, revision, schema):
             edit_options(schema, "system" if step == 3 else "home", m["system" if step == 3 else "home"])
         else:
             validate(m, schema)
-            if (repo / "hosts" / m["hostname"]).exists():
+            if host_taken(repo, m["hostname"]):
                 notice("Host already exists; choose a new hostname.")
                 step = 0
                 continue
@@ -378,31 +477,52 @@ def wizard(repo, revision, schema):
 
 def private_file(directory, name, contents):
     path = directory / name
+    path.unlink(missing_ok=True)  # a retried stage recreates its own session file
     fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     with os.fdopen(fd, "w") as stream:
         stream.write(contents)
     return path
 
 
+def relock(repo):
+    """Return the secrets to committed ciphertext so `git-crypt unlock` sees a clean tree.
+
+    Removing the filter sections first means git copies index blobs verbatim, which also
+    works after the session key cache was deleted.
+    """
+    for section in ("filter.git-crypt", "diff.git-crypt"):
+        subprocess.run(["git", "config", "--remove-section", section], cwd=repo, capture_output=True)
+    names = [f"secrets/{name}" for name in BOOKMARKS]
+    run(["git", "checkout", "--", *names], cwd=repo, show_errors=True)
+
+
 def prepare_personal(repo, private):
-    crypt = Path(ask("Explicit git-crypt key file path (not retained)"))
-    # Suppress command diagnostics so key paths never enter persistent output.
-    with crypt.open("rb") as key:
-        run(["git-crypt", "unlock", f"/proc/self/fd/{key.fileno()}"], cwd=repo, pass_fds=(key.fileno(),))
+    def unlock(path):
+        # Suppress command diagnostics so key paths never enter persistent output.
+        with path.open("rb") as key:
+            run(["git-crypt", "unlock", f"/proc/self/fd/{key.fileno()}"], cwd=repo, pass_fds=(key.fileno(),))
+        return True
+
+    def decrypts_all(path):
+        for name in ("id_ed25519.age", "github-token.age", "pay-respects-api-key.age"):
+            with open(os.devnull, "w") as sink:
+                result = subprocess.run(["age", "--decrypt", "--identity", path, repo / "secrets" / name],
+                                        stdout=sink, stderr=sink)
+            if result.returncode:
+                raise ValueError("Age identity cannot decrypt all personal credentials")
+        return True
+
+    relock(repo)  # a retry or resume starts from ciphertext; the key cache is never retained
+    ask_file("Explicit git-crypt key file path (not retained)", unlock)
     for name in ("bookmarks-default.json", "bookmarks-yes.json"):
         json.loads((repo / "secrets" / name).read_text())
         encrypted_bookmark(repo, name)
-    age_path = Path(ask("Explicit age identity file path"))
+    age_path = ask_file("Explicit age identity file path", decrypts_all)
     identity = private / "age-identity"
+    identity.unlink(missing_ok=True)
     with age_path.open("rb") as src, identity.open("xb") as dst:
         os.chmod(identity, 0o600)
         shutil.copyfileobj(src, dst)
-    for name in ("id_ed25519.age", "github-token.age", "pay-respects-api-key.age"):
-        with open(os.devnull, "w") as sink:
-            result = subprocess.run(["age", "--decrypt", "--identity", identity, repo / "secrets" / name],
-                                    stdout=sink, stderr=sink)
-        if result.returncode:
-            raise ValueError("Age identity cannot decrypt all personal credentials")
     if not confirm("Copy the age identity into your installed user's private .keys directory?"):
         raise ValueError("Personal setup needs the age identity after reboot. Rerun with personal setup disabled.")
     return identity
@@ -411,19 +531,24 @@ def prepare_personal(repo, private):
 def fetch_public(private):
     certificate = private / "signing-public.asc"
     run(["curl", "--fail", "--silent", "--show-error", "--max-time", "60", "--proto", "=https", "--tlsv1.2", "--output", certificate,
-         f"https://keys.openpgp.org/vks/v1/by-fingerprint/{PRIMARY}"])
+         f"https://keys.openpgp.org/vks/v1/by-fingerprint/{PRIMARY}"], show_errors=True)
     gnupg = private / "gnupg"
-    gnupg.mkdir(mode=0o700)
-    env = os.environ | {"GNUPGHOME": str(gnupg), "GPG_TTY": os.ttyname(sys.stdin.fileno())}
-    listing = run(["gpg", "--batch", "--with-colons", "--import-options", "show-only", "--import", certificate], env=env)
+    subprocess.run(["gpgconf", "--homedir", gnupg, "--kill", "all"], capture_output=True)
+    gnupg.mkdir(mode=0o700, exist_ok=True)
+    try:
+        tty = os.ttyname(sys.stdin.fileno())
+    except OSError:
+        tty = "/dev/tty"
+    env = os.environ | {"GNUPGHOME": str(gnupg), "GPG_TTY": tty}
+    listing = run(["gpg", "--batch", "--with-colons", "--import-options", "show-only", "--import", certificate], env=env, show_errors=True)
     fingerprints = [line.split(":")[9] for line in listing.splitlines() if line.startswith("fpr:")]
     if not fingerprints or fingerprints[0] != PRIMARY or SIGNING not in fingerprints:
         raise ValueError("Keyserver certificate fingerprint/subkey mismatch")
     if not any(line.startswith("uid:") for line in listing.splitlines()):
         raise ValueError("Published public key has no verified identity. Complete the keys.openpgp.org verification email before signing setup.")
-    run(["gpg", "--batch", "--import", certificate], env=env)
-    run(["gpg", "--card-status"], env=env)
-    keys = run(["gpg", "--batch", "--with-colons", "--with-keygrip", "--list-secret-keys", PRIMARY], env=env)
+    run(["gpg", "--batch", "--import", certificate], env=env, show_errors=True)
+    run(["gpg", "--card-status"], env=env, show_errors=True)
+    keys = run(["gpg", "--batch", "--with-colons", "--with-keygrip", "--list-secret-keys", PRIMARY], env=env, show_errors=True)
     rows = keys.splitlines()
     card_signer = False
     for i, line in enumerate(rows):
@@ -434,7 +559,7 @@ def fetch_public(private):
         raise ValueError("Required signing subkey is not available as a smartcard-backed key")
     challenge = private_file(private, "signing-check.txt", "IcyOS installer signing verification\n")
     run(["gpg", "--local-user", SIGNING + "!", "--detach-sign", challenge], env=env, capture=False, private=True)
-    run(["gpg", "--verify", str(challenge) + ".sig", challenge], env=env)
+    run(["gpg", "--verify", str(challenge) + ".sig", challenge], env=env, show_errors=True)
     return certificate
 
 
@@ -642,90 +767,237 @@ def progress(work, stage):
     notice("Stage: " + stage)
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, default=Path(os.environ.get("ICY_INSTALLER_SOURCE", HERE.parent)))
-    parser.add_argument("--no-update", action="store_true", help="Explicitly use the local snapshot; do not fetch latest Git revision")
-    parser.add_argument("--dry-run", action="store_true", help="Generate/evaluate only: never format, mount, enroll, or install")
-    parser.add_argument("--manifest", type=Path, help="Use nonsecret choices from JSON instead of the wizard; still confirm erasure interactively")
-    args = parser.parse_args()
-    os.umask(0o077)
-    work = Path(tempfile.mkdtemp(prefix="icy-install-", dir="/var/tmp"))
-    notice(f"Recoverable private workspace: {work}. It may contain decrypted configuration; protect it.")
-    progress(work, "workspace-created")
-    private = None
-    repo = None
-    try:
-        repo, revision = prepare(work, args.source.resolve(), not args.no_update)
-        notice(f"Selected immutable source: {revision}")
-        schema = nix_eval(repo, "installerSchema.x86_64-linux")
-        m = json.loads(args.manifest.read_text()) if args.manifest else wizard(repo, revision, schema)
-        m["revision"] = revision
-        validate(m, schema)
-        if (repo / "hosts" / m["hostname"]).exists():
-            raise ValueError("Host already exists")
+RUNTIME = Path("/run/icy-installer")
+SKIP = object()
+
+
+def describe(exc):
+    """Message safe to print: subprocess argument values and I/O file names never appear."""
+    if isinstance(exc, (RuntimeError, ValueError)):
+        return str(exc)
+    return (getattr(exc, "strerror", None) or "I/O failed") + "; check available space and permissions."
+
+
+def destructive_started(work):
+    log = work / "stages.log"
+    return log.is_file() and "formatting-started" in log.read_text().split()
+
+
+def last_stage(work):
+    log = work / "stages.log"
+    lines = log.read_text().split() if log.is_file() else []
+    return lines[-1] if lines else "none"
+
+
+def save_session(work, revision, manifest=None):
+    """Nonsecret answers only (validate() rejects anything else); keys are never stored."""
+    write_json(work / "session.json", {"revision": revision, "manifest": manifest})
+
+
+def load_session(work, repo):
+    path = work / "session.json"
+    if path.is_file():
+        data = json.loads(path.read_text())
+        if isinstance(data, dict) and isinstance(data.get("revision"), str):
+            return data
+    head = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=repo, capture_output=True, text=True)
+    return {"revision": head.stdout.strip() if head.returncode == 0 else snapshot_digest(repo), "manifest": None}
+
+
+def find_workspaces(base=Path("/var/tmp")):
+    def age(directory):
+        log = directory / "stages.log"
+        return (log if log.exists() else directory).stat().st_mtime
+    found = [d for d in base.glob("icy-install-*") if (d / "repository" / "flake.nix").is_file()]
+    return sorted(found, key=age, reverse=True)
+
+
+def pick_workspace(base=Path("/var/tmp")):
+    found = find_workspaces(base)
+    if not found:
+        raise ValueError(f"No earlier installer workspace with a repository in {base}. Start without --resume.")
+    if len(found) == 1:
+        notice(f"Resuming {found[0].name} (last stage: {last_stage(found[0])})")
+        return found[0]
+    labels = {f"{d.name} | last stage: {last_stage(d)}": d for d in found}
+    return labels[choose("Which installer workspace should be resumed? (newest first)", list(labels))]
+
+
+def prepare_runtime(path=None):
+    path = path or RUNTIME
+    if path.exists():
+        if not confirm(f"{path} exists from an interrupted run (it may hold session secrets). Remove it and continue? Say No if another installer is running."):
+            raise ValueError(f"{path} still exists; stop the other installer or remove it, then retry.")
+        shutil.rmtree(path)
+    path.mkdir(mode=0o700)  # session-owned; removed again when this run ends
+    return path
+
+
+def attempt(work, label, func, skip=None):
+    """Run one stage. A failure offers Retry / Edit answers / Abort instead of exiting.
+
+    Once formatting has started nothing here is safe to repeat automatically, so the
+    error is passed to the caller, which reports manual recovery.
+    """
+    while True:
+        try:
+            return func()
+        except (RuntimeError, ValueError, OSError) as exc:
+            notice(f"{label} failed: {describe(exc)}")
+            if destructive_started(work):
+                raise
+            options = ["Retry", "Edit answers"] + ([skip] if skip else []) + ["Abort (continue later: run-installer --resume)"]
+            picked = choose(f"{label} failed. The disk has not been formatted.", options)
+            if picked == "Retry":
+                continue
+            if picked == "Edit answers":
+                raise BackToWizard from exc
+            if skip and picked == skip:
+                return SKIP
+            raise KeyboardInterrupt from exc
+
+
+def generate_stage(repo, work, m, schema, hardware):
+    reset_generated(repo, m["hostname"])  # only a host this installer generated earlier
+    host = generate(repo, m, schema, hardware)
+    branch = "hosts/" + m["hostname"]
+    known = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}"],
+                           cwd=repo, capture_output=True).returncode == 0
+    run(["git", "switch", *([] if known else ["-c"]), branch], cwd=repo, show_errors=True)
+    stage_files(repo, list(host.iterdir()))
+    nix_eval(repo, f"nixosConfigurations.{m['hostname']}.config.system.build.toplevel.drvPath")
+    progress(work, "generated-and-evaluated")
+    return host
+
+
+def preflight_stage(repo, work, m):
+    data, protected, held = inventory(run)
+    snapshot = check_target(data, device_key(m["disk"]), protected, held)
+    check_storage_names(m)
+    notice(f"Free live store: {shutil.disk_usage('/nix/store').free // 1024**3} GiB; workspace: {shutil.disk_usage(work).free // 1024**3} GiB. Build completes before formatting.")
+    build(repo, m["hostname"], "toplevel", work)
+    build(repo, m["hostname"], "diskoScript", work)
+    sizes = json.loads(run(["nix", "path-info", "--json", "--closure-size", (work / "toplevel").resolve()]))
+    record = sizes[0] if isinstance(sizes, list) else next(iter(sizes.values()))
+    source_bytes = sum(p.stat().st_size for p in repo.rglob("*") if p.is_file() and not p.is_symlink())
+    check_capacity(m, snapshot[1], record["closureSize"], source_bytes)
+    progress(work, "prebuilt")
+    return snapshot
+
+
+def pipeline(args, work, repo, revision, schema, m):
+    def check_selection():
+        reset_generated(repo, m["hostname"])
         for warning in swap_warnings(m["swapGiB"], ram_gib(), m["hibernate"]):
             notice("WARNING: " + warning)
-        # Snapshot source intentionally lacks unlocked bookmarks and Git crypt state.
         has_history = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], cwd=repo, capture_output=True).returncode == 0
         if m["personalSecrets"] and not has_history:
             raise ValueError("Personal setup requires a Git repository with a valid HEAD")
         if m["personalSecrets"]:
             for name in BOOKMARKS:
                 encrypted_bookmark(repo, name)
-        hardware = scan_hardware(work)
-        # In dry-run, no key prompts/imports or hardware-token operations.
-        identity = certificate = token = None
+        if args.dry_run and m["personalSecrets"]:
+            raise ValueError("Dry-run does not unlock secrets. Select reduced setup for a secret-free dry-run.")
+
+    attempt(work, "Setup check", check_selection)
+    hardware = attempt(work, "Hardware scan", lambda: scan_hardware(work))
+    private = None
+    identity = certificate = token = None
+    try:
         if not args.dry_run:
             if os.geteuid() != 0 or not Path("/sys/firmware/efi").exists():
                 raise ValueError("Run installation as root from a UEFI-booted ISO")
-            runtime = Path("/run/icy-installer")
-            runtime.mkdir(mode=0o700)  # Existing state requires explicit operator cleanup.
-            private = runtime  # Only clean up after successful creation by this run.
+            private = attempt(work, "Runtime state", prepare_runtime)
             if m["personalSecrets"]:
-                identity = prepare_personal(repo, private)
+                identity = attempt(work, "Personal secrets", lambda: prepare_personal(repo, private))
             if m["signing"]:
-                certificate = fetch_public(private)
+                certificate = attempt(work, "YubiKey signing check", lambda: fetch_public(private),
+                                      skip="Continue without signing")
+                if certificate is SKIP:
+                    certificate, m["signing"] = None, False
             if m["fido2"]:
                 token = prepare_fido(m)
-        elif m["personalSecrets"]:
-            raise ValueError("Dry-run does not unlock secrets. Select reduced setup for a secret-free dry-run.")
-        host = generate(repo, m, schema, hardware)
-        run(["git", "switch", "-c", "hosts/" + m["hostname"]], cwd=repo)
-        stage_files(repo, list(host.iterdir()))
-        nix_eval(repo, f"nixosConfigurations.{m['hostname']}.config.system.build.toplevel.drvPath")
-        progress(work, "generated-and-evaluated")
+            save_session(work, revision, m)
+        host = attempt(work, "Generate configuration", lambda: generate_stage(repo, work, m, schema, hardware))
         if args.dry_run:
             notice(f"Dry-run complete: {host}. No disk or token changes performed.")
             return
-        data, protected, held = inventory(run)
-        snapshot = check_target(data, device_key(m["disk"]), protected, held)
-        check_storage_names(m)
-        notice(f"Free live store: {shutil.disk_usage('/nix/store').free // 1024**3} GiB; workspace: {shutil.disk_usage(work).free // 1024**3} GiB. Build completes before formatting.")
-        build(repo, m["hostname"], "toplevel", work)
-        build(repo, m["hostname"], "diskoScript", work)
-        sizes = json.loads(run(["nix", "path-info", "--json", "--closure-size", (work / "toplevel").resolve()]))
-        record = sizes[0] if isinstance(sizes, list) else next(iter(sizes.values()))
-        source_bytes = sum(p.stat().st_size for p in repo.rglob("*") if p.is_file() and not p.is_symlink())
-        check_capacity(m, snapshot[1], record["closureSize"], source_bytes)
-        progress(work, "prebuilt")
-        execute_install(repo, host, m, work, private, identity, certificate, token, snapshot)
+        snapshot = attempt(work, "Build and preflight", lambda: preflight_stage(repo, work, m))
+        attempt(work, "Installation", lambda: execute_install(repo, host, m, work, private, identity, certificate, token, snapshot))
+    finally:
+        if private and private.is_dir():
+            # Only session-owned private runtime state, never the source/target checkout.
+            subprocess.run(["gpgconf", "--homedir", private / "gnupg", "--kill", "all"], capture_output=True)
+            shutil.rmtree(private)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source", type=Path, default=Path(os.environ.get("ICY_INSTALLER_SOURCE", HERE.parent)))
+    parser.add_argument("--no-update", action="store_true", help="Explicitly use the local snapshot; do not fetch latest Git revision")
+    parser.add_argument("--resume", action="store_true", help="Continue in an earlier /var/tmp/icy-install-* workspace (asks which if several)")
+    parser.add_argument("--dry-run", action="store_true", help="Generate/evaluate only: never format, mount, enroll, or install")
+    parser.add_argument("--manifest", type=Path, help="Use nonsecret choices from JSON instead of the wizard; still confirm erasure interactively")
+    args = parser.parse_args()
+    os.umask(0o077)
+    work = repo = None
+    try:
+        if args.resume:
+            work = pick_workspace()
+            repo = work / "repository"
+            if destructive_started(work):
+                raise ValueError("Formatting already started in that workspace; the installer never repeats it automatically. Recover manually.")
+            session = load_session(work, repo)
+            revision = session["revision"]
+            progress(work, "resumed")
+        else:
+            work = Path(tempfile.mkdtemp(prefix="icy-install-", dir="/var/tmp"))
+            notice(f"Recoverable private workspace: {work}. It may contain decrypted configuration; protect it.")
+            progress(work, "workspace-created")
+            repo, revision = prepare(work, args.source.resolve(), not args.no_update)
+            session = {"manifest": None}
+            save_session(work, revision)
+        notice(f"Selected immutable source: {revision}")
+        schema = nix_eval(repo, "installerSchema.x86_64-linux")
+        m = json.loads(args.manifest.read_text()) if args.manifest else session.get("manifest")
+        edit = m is None
+        if args.resume and m is not None and not args.manifest:
+            picked = choose("Resume with the saved answers?", ["Continue with saved answers", "Edit answers", "Abort"])
+            if picked == "Abort":
+                raise KeyboardInterrupt
+            edit = picked == "Edit answers"
+        while True:
+            if edit:
+                m = wizard(repo, revision, schema, saved=m)
+            m["revision"] = revision
+            validate(m, schema)
+            save_session(work, revision, m)
+            try:
+                pipeline(args, work, repo, revision, schema, m)
+                return 0
+            except BackToWizard:
+                edit = True
     except KeyboardInterrupt:
-        notice("Cancelled. No automatic retry will occur; inspect stages.log before recovery.")
+        if work is not None and not destructive_started(work):
+            notice(f"Stopped by operator. Nothing was formatted. Workspace: {work}")
+            notice("Continue later with: run-installer --resume")
+        else:
+            notice("Stopped after formatting started. Never rerun formatting as automatic recovery.")
+        return 1
     except (RuntimeError, ValueError, OSError) as exc:
         # No tracebacks or subprocess argument dumps: secrets must not leak.
-        notice(f"Stopped: {type(exc).__name__}. {exc if isinstance(exc, (RuntimeError, ValueError)) else 'I/O failed; check available space and permissions.'}")
-        notice(f"Configuration/stages retained in {work}. Never rerun formatting as automatic recovery.")
+        notice(f"Stopped: {type(exc).__name__}. {describe(exc)}")
+        if work is not None and not destructive_started(work):
+            notice(f"Nothing was formatted. Workspace: {work}")
+            notice("Continue with: run-installer --resume")
+        else:
+            notice("Formatting had started. Never rerun formatting as automatic recovery; use the retained workspace.")
         return 1
     finally:
         if repo is not None:
             cache = repo / ".git" / "git-crypt"
             if cache.is_dir():
                 shutil.rmtree(cache)  # Session-generated unlock cache, never retained.
-        if private and private.is_dir():
-            # Only session-owned private runtime state, never the source/target checkout.
-            subprocess.run(["gpgconf", "--homedir", private / "gnupg", "--kill", "all"], capture_output=True)
-            shutil.rmtree(private)
     return 0
 
 

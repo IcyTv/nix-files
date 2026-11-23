@@ -109,7 +109,9 @@ class SafetyTests(unittest.TestCase):
             key, age = root / "external-sensitive-name", root / "external-age"
             key.write_bytes(b"test fixture")
             age.write_text("test fixture")
-            with patch.object(main, "ask", side_effect=[str(key), str(age)]), \
+            missing = str(root / "typo")
+            # Mistyped paths re-prompt instead of aborting the installer.
+            with patch.object(main, "ask_path", side_effect=[missing, str(key), missing, str(age)]) as prompts, \
                  patch.object(main, "run", return_value="") as run, \
                  patch.object(main, "encrypted_bookmark", return_value=b"\0GITCRYPT\0"), \
                  patch.object(main.subprocess, "run", return_value=subprocess_result(0)), \
@@ -120,6 +122,7 @@ class SafetyTests(unittest.TestCase):
                 self.assertTrue(argv[2].startswith("/proc/self/fd/"))
                 self.assertNotIn(str(key), argv)
                 self.assertTrue(run.call_args.kwargs["pass_fds"])
+                self.assertEqual(prompts.call_count, 4)
 
     def test_personal_blob_must_already_be_encrypted(self):
         with patch.object(main.subprocess, "check_output", return_value=b"plaintext"):
@@ -148,6 +151,7 @@ class SafetyTests(unittest.TestCase):
                 return ""
 
             with patch.object(main, "run", side_effect=fake_run) as run, \
+                 patch.object(main.subprocess, "run", return_value=subprocess_result(0)), \
                  patch.object(main, "nix_eval", return_value=1), patch.object(main, "engine_digest", return_value="same"):
                 repo, revision = main.prepare(work, source, update=False)
                 self.assertEqual(revision, "a" * 40)
@@ -285,6 +289,186 @@ class SafetyTests(unittest.TestCase):
         with patch.object(main, "run") as run:
             main.stage_files(Path("/repo"), [Path("/repo/hosts/falcon/configuration.nix")])
             self.assertEqual(run.call_args.args[0], ["git", "add", "--", "hosts/falcon/configuration.nix"])
+
+
+class ResumeAndRetryTests(unittest.TestCase):
+    def test_failed_stage_offers_retry_then_succeeds(self):
+        calls = []
+
+        def stage():
+            calls.append(1)
+            if len(calls) == 1:
+                raise RuntimeError("gpg failed (exit 2)")
+            return "ok"
+
+        with tempfile.TemporaryDirectory() as tmp, patch.object(main, "choose", return_value="Retry") as pick:
+            self.assertEqual(main.attempt(Path(tmp), "Signing", stage), "ok")
+            self.assertEqual(len(calls), 2)
+            self.assertIn("Retry", pick.call_args.args[1])
+
+    def test_failed_stage_can_edit_answers_skip_or_abort(self):
+        def stage():
+            raise ValueError("boom")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            with patch.object(main, "choose", return_value="Edit answers"):
+                with self.assertRaises(main.BackToWizard):
+                    main.attempt(work, "Signing", stage)
+            with patch.object(main, "choose", return_value="Skip it"):
+                self.assertIs(main.attempt(work, "Signing", stage, skip="Skip it"), main.SKIP)
+            with patch.object(main, "choose", return_value="Abort (continue later: run-installer --resume)"):
+                with self.assertRaises(KeyboardInterrupt):
+                    main.attempt(work, "Signing", stage)
+
+    def test_no_retry_prompt_once_formatting_started(self):
+        def stage():
+            raise RuntimeError("late failure")
+
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "stages.log").write_text("workspace-created\nformatting-started\n")
+            with patch.object(main, "choose") as pick:
+                with self.assertRaisesRegex(RuntimeError, "late failure"):
+                    main.attempt(work, "Installation", stage)
+                pick.assert_not_called()
+
+    def test_session_round_trip_and_fallback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            main.save_session(work, "a" * 40, {"hostname": "falcon"})
+            self.assertEqual(main.load_session(work, work), {"revision": "a" * 40, "manifest": {"hostname": "falcon"}})
+            (work / "session.json").write_text("not json at all")
+            with self.assertRaises(ValueError):
+                main.load_session(work, work)
+
+    def test_find_workspaces_newest_first_and_requires_repository(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            for name, stamp in (("icy-install-old", 100), ("icy-install-new", 200), ("icy-install-empty", 300)):
+                directory = base / name
+                if name != "icy-install-empty":
+                    (directory / "repository").mkdir(parents=True)
+                    (directory / "repository" / "flake.nix").write_text("{}")
+                else:
+                    directory.mkdir()
+                (directory / "stages.log").write_text("workspace-created\n")
+                os.utime(directory / "stages.log", (stamp, stamp))
+            self.assertEqual([d.name for d in main.find_workspaces(base)], ["icy-install-new", "icy-install-old"])
+            with patch.object(main, "choose", side_effect=lambda title, values, *a: values[0]):
+                self.assertEqual(main.pick_workspace(base).name, "icy-install-new")
+            with self.assertRaises(ValueError):
+                main.pick_workspace(base / "missing")
+
+    def test_formatting_workspace_cannot_be_resumed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp)
+            (work / "stages.log").write_text("formatting-started\n")
+            self.assertTrue(main.destructive_started(work))
+            (work / "stages.log").write_text("workspace-created\ngenerated-and-evaluated\n")
+            self.assertFalse(main.destructive_started(work))
+
+    def test_choose_keeps_cursor_on_current_entry(self):
+        with patch.object(main, "run_interactive", return_value="b") as run:
+            main.choose("title", ["a", "b", "c"], "b")
+            argv = run.call_args.args[0]
+            self.assertEqual(argv[argv.index("--selected") + 1], "b")
+            main.choose("title", ["a", "b", "c"], "x,y")
+            self.assertNotIn("--selected", run.call_args.args[0])
+            main.choose("title", ["a", "b", "c"])
+            self.assertNotIn("--selected", run.call_args.args[0])
+
+    def test_option_editor_returns_to_edited_entry(self):
+        schema = [{"scope": "system", "path": ["my", "nixos", name, "enable"], "writable": True,
+                   "supported": True, "type": "bool", "default": False, "description": "d"} for name in ("a", "b", "c")]
+        answers = {}
+        cursors = []
+
+        def fake_choose(title, entries, current=None):
+            cursors.append(current)
+            return "Done" if len(cursors) == 2 else next(e for e in entries if e.startswith("my.nixos.b.enable"))
+
+        with patch.object(main, "choose", side_effect=fake_choose), patch.object(main, "confirm", return_value=True):
+            main.edit_options(schema, "system", answers)
+        self.assertEqual(answers, {"my.nixos.b.enable": True})
+        self.assertEqual(cursors[0], "Done")
+        self.assertTrue(cursors[1].startswith("my.nixos.b.enable"))
+
+    def test_preset_defaults_follow_requested_choices(self):
+        for name in ("ananicy", "console-font", "docker", "geoclue", "keyd", "keymap", "plymouth", "subniri", "sudo-rs"):
+            self.assertIn(name, main.SYSTEM_PRESET)
+        self.assertEqual(sorted(main.HOME_DISABLED), ["ai", "anyrun", "games", "unifiedremote"])
+
+    def test_wizard_applies_preset_defaults_only_for_known_options(self):
+        schema = [{"scope": "system", "path": ["my", "nixos", name, "enable"], "writable": True, "supported": True,
+                   "type": "bool", "default": False, "description": ""} for name in ("docker", "zsh")]
+        schema += [{"scope": "home", "path": ["my", "hm", name, "enable"], "writable": True, "supported": True,
+                    "type": "bool", "default": False, "description": ""} for name in ("ai", "kitty")]
+        with patch.object(main, "nix_eval", return_value="26.05"), \
+             patch.object(main, "detect_hardware", return_value=dict(cpu="amd", gpu="amd", vm="none", laptop=False)):
+            m = main.default_answers(Path("/repo"), "a" * 40, schema)
+        self.assertEqual(m["system"], {"my.nixos.docker.enable": True, "my.nixos.zsh.enable": True})
+        self.assertEqual(m["home"], {"my.hm.default.enable": True, "my.hm.ai.enable": False})
+
+    def test_wizard_saved_answers_are_kept_not_reset(self):
+        saved = manifest()
+        saved["hostname"] = "kept-host"
+        with patch.object(main, "notice"), patch.object(main, "ask", side_effect=lambda t, d="": d), \
+             patch.object(main, "confirm", side_effect=lambda t, d=False: d), \
+             patch.object(main, "inventory", side_effect=ValueError("stop here")):
+            with self.assertRaisesRegex(ValueError, "stop here"):
+                with patch.object(main, "choose", return_value="Continue"):
+                    main.wizard(Path("/repo"), saved["revision"], [], saved=saved)
+        self.assertEqual(saved["hostname"], "kept-host")
+
+
+class GitBackedTests(unittest.TestCase):
+    """Real git; no network, no key material, nothing outside a temporary directory."""
+
+    def git(self, cwd, *args):
+        import subprocess
+        return subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false", *args],
+                              cwd=cwd, check=True, capture_output=True, text=True).stdout
+
+    def repo_with_host(self, root):
+        import subprocess
+        repo = Path(root) / "repo"
+        (repo / "hosts" / "upstream").mkdir(parents=True)
+        (repo / "hosts" / "upstream" / "x.nix").write_text("{}")
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        self.git(repo, "add", "-A")
+        self.git(repo, "commit", "-qm", "base")
+        return repo
+
+    def test_regenerating_our_own_host_is_allowed_but_upstream_hosts_are_not(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            (repo / "hosts" / "mine").mkdir()
+            (repo / "hosts" / "mine" / "install.json").write_text("{}")
+            self.git(repo, "add", "-A")
+            self.assertFalse(main.host_taken(repo, "mine"))
+            self.assertTrue(main.host_taken(repo, "upstream"))
+            main.reset_generated(repo, "mine")
+            self.assertFalse((repo / "hosts" / "mine").exists())
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                main.reset_generated(repo, "upstream")
+            self.assertTrue((repo / "hosts" / "upstream" / "x.nix").exists())
+
+    def test_relock_restores_ciphertext_from_the_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.repo_with_host(tmp)
+            (repo / "secrets").mkdir()
+            cipher = b"\0GITCRYPT\0" + b"x" * 20
+            for name in main.BOOKMARKS:
+                (repo / "secrets" / name).write_bytes(cipher)
+            self.git(repo, "add", "-A")
+            self.git(repo, "commit", "-qm", "secrets")
+            for name in main.BOOKMARKS:
+                (repo / "secrets" / name).write_text('["plaintext"]')
+            main.relock(repo)
+            for name in main.BOOKMARKS:
+                self.assertEqual((repo / "secrets" / name).read_bytes(), cipher)
+            self.assertEqual(self.git(repo, "status", "--porcelain").strip(), "")
 
 
 def subprocess_result(code):
