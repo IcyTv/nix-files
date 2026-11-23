@@ -1,0 +1,27 @@
+{
+  "my": {
+    "hm": {
+      "ai": {
+        "enable": false
+      },
+      "anyrun": {
+        "enable": false
+      },
+      "default": {
+        "enable": true
+      },
+      "games": {
+        "enable": false
+      },
+      "hyprland": {
+        "enable": false
+      },
+      "niri": {
+        "enable": true
+      },
+      "unifiedremote": {
+        "enable": false
+      }
+    }
+  }
+}
