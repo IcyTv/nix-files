@@ -21,6 +21,9 @@ in {
     repository = "/etc/nixos/nix-files";
     sharedRepository = true;
   };
+
+  services.fprintd.enable = true;
+
   networking.hostName = m.hostname;
   time.timeZone = lib.mkForce m.timezone;
   i18n.defaultLocale = lib.mkForce m.locale;
