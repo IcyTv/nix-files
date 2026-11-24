@@ -115,9 +115,6 @@ in {
         {
           sh = "dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=niri";
         }
-        {
-          sh = "${pkgs.polkit_gnome}/libexec/polkit-gnome-authentication-agent-1";
-        }
       ];
       screenshot-path = "~/Pictures/Screenshots/screenshot-%Y%m%d-%H-%M-%S.png";
 
