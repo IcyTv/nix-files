@@ -61,4 +61,59 @@ in {
     enable = true;
     pinentry.package = lib.mkDefault pkgs.pinentry-curses;
   };
+
+  # Same three external monitors as eagle (matched by resolution/refresh,
+  # connector names differ per-GPU), plus the laptop panel, parked at the
+  # bottom-middle of the external row for now.
+  programs.niri.settings.outputs = {
+    "DP-10" = {
+      enable = true;
+      mode = {
+        width = 1920;
+        height = 1080;
+        refresh = 60.0;
+      };
+      position = {
+        x = 0;
+        y = 0;
+      };
+    };
+    "DP-9" = {
+      enable = true;
+      focus-at-startup = true;
+      mode = {
+        width = 2560;
+        height = 1440;
+        refresh = 239.97;
+      };
+      position = {
+        x = 1920;
+        y = 0;
+      };
+    };
+    "DP-8" = {
+      enable = true;
+      mode = {
+        width = 1920;
+        height = 1080;
+        refresh = 60.0;
+      };
+      position = {
+        x = 4480;
+        y = 0;
+      };
+    };
+    "eDP-1" = {
+      enable = true;
+      mode = {
+        width = 1920;
+        height = 1200;
+        refresh = 60.001;
+      };
+      position = {
+        x = 2432;
+        y = 1440;
+      };
+    };
+  };
 }
