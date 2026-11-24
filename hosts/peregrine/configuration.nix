@@ -152,6 +152,8 @@ in {
       };
     };
 
+    services.linux-enable-ir-emitter.enable = false;
+
     networking.hostName = m.hostname;
     time.timeZone = lib.mkForce m.timezone;
     i18n.defaultLocale = lib.mkForce m.locale;
