@@ -1,0 +1,207 @@
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}: let
+  cfg = config.icy.internal.pamSecurity;
+  pamPkg = config.security.pam.package;
+
+  # Fingerprint is only offered as an auth method for sudo/polkit/swaylock once
+  # a real (non-fingerprint) authentication has already succeeded. The gate is
+  # a per-user stamp file under /run (tmpfs, so reboot clears it for free):
+  # sudo/polkit touch it when a session opens (fingerprint or password, once
+  # already open) and swaylock only ever reads it. pam_timestamp.so looked
+  # like a drop-in fit for this but turned out to scope its own timestamp
+  # file to the controlling tty (mirroring sudo's own per-terminal credential
+  # cache), so a stamp from one terminal was invisible to any other -- hence
+  # this hand-rolled version keyed on $PAM_USER alone.
+  fprintGateDir = "/run/fprint-gate";
+  fprintGateCheck = timeoutMinutes:
+    pkgs.writeShellScript "fprint-gate-check" ''
+      [ -n "$PAM_USER" ] || exit 1
+      found=$(${pkgs.findutils}/bin/find ${fprintGateDir} -maxdepth 1 -name "$PAM_USER" -mmin -${toString timeoutMinutes} 2>/dev/null)
+      [ -n "$found" ]
+    '';
+  # Always exits 0: this sits on the real-password success path (see
+  # fprintGateAuthStamp below), and a transient /run write failure must not
+  # turn a correct password into a denial.
+  #
+  # chown to $PAM_USER explicitly rather than relying on the calling
+  # process's uid: sudo's real uid is already the target user (so this is a
+  # no-op there), but polkit-1's auth check runs inside polkitd, a daemon
+  # that is always root regardless of who's authenticating. Without this the
+  # stamp ends up root-owned, and the sticky bit then blocks the user's own
+  # unprivileged lock/logout invalidation from ever deleting it.
+  fprintGateStampScript = pkgs.writeShellScript "fprint-gate-stamp" ''
+    if [ -n "$PAM_USER" ]; then
+      f="${fprintGateDir}/$PAM_USER"
+      : > "$f" 2>/dev/null || true
+      ${pkgs.coreutils}/bin/chown "$PAM_USER" "$f" 2>/dev/null || true
+    fi
+    exit 0
+  '';
+  fprintGateInvalidateScript = pkgs.writeShellScript "fprint-gate-invalidate" ''
+    [ -n "$PAM_USER" ] || exit 0
+    ${pkgs.coreutils}/bin/rm -f "${fprintGateDir}/$PAM_USER"
+  '';
+
+  fprintGateAuth = timeoutMinutes: fprintdOrder: {
+    order = fprintdOrder - 1;
+    control = "[success=ignore default=1]";
+    modulePath = "${pamPkg}/lib/security/pam_exec.so";
+    args = ["quiet" "${fprintGateCheck timeoutMinutes}"];
+  };
+  # sudo -v/polkit checks never open a PAM session (only a real privileged
+  # command does), so the stamp can't live in the session phase. Instead,
+  # flip the existing "unix" auth rule from plain `sufficient` to a jump that
+  # falls through to this stamp-and-succeed line on a correct password, and
+  # skips it (going straight to the pre-existing deny) on a wrong one -- the
+  # same verified [success=ignore default=1] + sufficient pair already used
+  # for fprintGate itself, just gating the password line instead of fprintd.
+  fprintGateUnixControl = "[success=ignore default=1]";
+  fprintGateAuthStamp = unixAuthOrder: {
+    order = unixAuthOrder + 1;
+    control = "sufficient";
+    modulePath = "${pamPkg}/lib/security/pam_exec.so";
+    args = ["quiet" "${fprintGateStampScript}"];
+  };
+in {
+  options.icy.internal.pamSecurity = {
+    enable = lib.mkEnableOption "the fingerprint/facial-recognition PAM gate for sudo, polkit-1, and swaylock";
+
+    fingerprint.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Wire fprintd into sudo/polkit-1/swaylock, each gated behind a stamp
+        left by a prior real (password) authentication. Disable on hosts
+        with no fingerprint reader.
+      '';
+    };
+
+    # No realistic sudo/polkit session lasts this long; it's effectively
+    # "until the gate is explicitly invalidated", not a real timeout.
+    noExpiryMinutes = lib.mkOption {
+      type = lib.types.int;
+      default = 7 * 24 * 60;
+      description = "How long the real-auth stamp stays valid for sudo/polkit-1.";
+    };
+
+    swaylockGraceMinutes = lib.mkOption {
+      type = lib.types.int;
+      default = 60;
+      description = "How long the real-auth stamp stays valid for swaylock.";
+    };
+
+    howdy = {
+      enable = lib.mkEnableOption ''
+        Howdy facial recognition as a gated fast path on polkit-1 and
+        swaylock, reusing the same real-auth stamp as fingerprint. Never
+        wired into sudo -- that path should always keep the moment of
+        friction a fingerprint/password forces, not a frictionless camera
+        glance
+      '';
+
+      videoDevice = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        example = "/dev/video2";
+        description = ''
+          The IR-capable camera device node for Howdy to use, as identified
+          by running `linux-enable-ir-emitter configure`.
+        '';
+      };
+    };
+  };
+
+  # services.fprintd.enable/services.howdy.enable both default their PAM
+  # auth (fprintAuth/howdy.enable) to true for every PAM service (login, su,
+  # sshd, greetd, ...), not just the ones configured below. Force both off
+  # everywhere by default so only sudo/polkit-1/swaylock (which get the
+  # gate) end up with them.
+  options.security.pam.services = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.submodule {
+      config.fprintAuth = lib.mkDefault false;
+      config.howdy.enable = lib.mkDefault false;
+    });
+  };
+
+  config = lib.mkMerge [
+    (lib.mkIf cfg.enable {
+      assertions = [
+        {
+          assertion = !cfg.howdy.enable || cfg.howdy.videoDevice != null;
+          message = "icy.internal.pamSecurity.howdy.enable requires icy.internal.pamSecurity.howdy.videoDevice to be set.";
+        }
+      ];
+
+      # Sticky + world-writable, like /tmp: any user may create/delete
+      # their own "$username" entry, but not another user's.
+      systemd.tmpfiles.rules = ["d ${fprintGateDir} 1777 root root -"];
+
+      # Invalidate the gate when the login session actually ends (not just
+      # a screen lock). Reboot already clears it for free since /run is
+      # tmpfs.
+      security.pam.services.greetd.rules.session.fprintGateInvalidate = {
+        order = config.security.pam.services.greetd.rules.session.unix.order + 5;
+        control = "optional";
+        modulePath = "${pamPkg}/lib/security/pam_exec.so";
+        args = ["quiet" "type=close_session" "${fprintGateInvalidateScript}"];
+      };
+    })
+
+    (lib.mkIf (cfg.enable && cfg.fingerprint.enable) {
+      services.fprintd.enable = true;
+
+      security.pam.services = {
+        sudo = {
+          fprintAuth = true;
+          rules.auth.fprintGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.sudo.rules.auth.fprintd.order;
+          rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+          rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.sudo.rules.auth.unix.order;
+        };
+        polkit-1 = {
+          fprintAuth = true;
+          rules.auth.fprintGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.fprintd.order;
+          rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+          rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.polkit-1.rules.auth.unix.order;
+        };
+        swaylock = {
+          fprintAuth = true;
+          # Read-only: swaylock never opens a session, so it can't refresh
+          # the gate itself. The window is "time since the last real
+          # sudo/polkit/login auth", not "time since the last screen
+          # unlock" (see memory on this).
+          rules.auth.fprintGate = fprintGateAuth cfg.swaylockGraceMinutes config.security.pam.services.swaylock.rules.auth.fprintd.order;
+        };
+      };
+    })
+
+    (lib.mkIf (cfg.enable && cfg.howdy.enable) {
+      # IR support that howdy's face recognition relies on; kept alongside
+      # it rather than split out since the two are a matched pair.
+      services.linux-enable-ir-emitter.enable = true;
+      services.howdy = {
+        enable = true;
+        settings.video.device_path = cfg.howdy.videoDevice;
+      };
+
+      # Same gate as fprintd, reusing the same stamp -- howdy is just
+      # another fast path offered only after a real auth already happened
+      # once, never an alternative to one.
+      security.pam.services = {
+        polkit-1 = {
+          howdy.enable = true;
+          howdy.control = "sufficient";
+          rules.auth.howdyGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.howdy.order;
+        };
+        swaylock = {
+          howdy.enable = true;
+          howdy.control = "sufficient";
+          rules.auth.howdyGate = fprintGateAuth cfg.swaylockGraceMinutes config.security.pam.services.swaylock.rules.auth.howdy.order;
+        };
+      };
+    })
+  ];
+}

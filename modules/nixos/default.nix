@@ -19,6 +19,7 @@
     ./limine.nix
     ./niri.nix
     ./openrgb.nix
+    ./pam-security.nix
     ./plymouth.nix
     ./podman.nix
     ./printing.nix
