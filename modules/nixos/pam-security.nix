@@ -190,15 +190,25 @@ in {
       # Same gate as fprintd, reusing the same stamp -- howdy is just
       # another fast path offered only after a real auth already happened
       # once, never an alternative to one.
+      #
+      # Ordered ahead of fprintd (order - 2, leaving room for its own gate
+      # at - 1 below it): a camera glance needs no touch, so give it first
+      # try and fall back to the fingerprint reader -- then password --
+      # only if no face is recognized in time. Relative offset from
+      # fprintd's own order, per nixpkgs' own warning on this option: never
+      # hardcode an absolute value, a nixpkgs update could silently reorder
+      # the built-in rules.
       security.pam.services = {
         polkit-1 = {
           howdy.enable = true;
           howdy.control = "sufficient";
+          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.polkit-1.rules.auth.fprintd.order - 2);
           rules.auth.howdyGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.howdy.order;
         };
         swaylock = {
           howdy.enable = true;
           howdy.control = "sufficient";
+          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.swaylock.rules.auth.fprintd.order - 2);
           rules.auth.howdyGate = fprintGateAuth cfg.swaylockGraceMinutes config.security.pam.services.swaylock.rules.auth.howdy.order;
         };
       };
