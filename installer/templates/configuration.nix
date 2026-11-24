@@ -33,7 +33,6 @@ in {
   boot.initrd.systemd.enable = true;
   users.users.root.hashedPassword = "!";
   users.users.${m.username}.uid = 1000;
-  security.sudo.enable = lib.mkDefault true;
   home-manager.users.${m.username} = import ./home.nix;
   environment.pathsToLink = ["/share/applications" "/share/xdg-desktop-portal"];
   system.stateVersion = m.stateVersion;

@@ -287,6 +287,10 @@ in {
   config = lib.mkIf config.my.hm.ai.enable {
     my.hm.git.excludes = [".opencode" ".serena/"];
 
+    home.packages = with pkgs; [
+      claude-code
+    ];
+
     programs.opencode = {
       enable = true;
       enableMcpIntegration = true;

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """IcyOS coordinator. Only execute_install crosses the destructive boundary."""
 import argparse
+import collections
 import copy
 import fcntl
 import getpass
@@ -8,12 +9,14 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import stat
 import subprocess
 import sys
 import tempfile
+import threading
 
 from model import API, PRIMARY, SIGNING, REPOSITORY, check_storage_names, generate, swap_suggestion, swap_warnings, validate, write_json
 from storage import check_target, device_key, flatten, inventory, stable_path
@@ -32,18 +35,78 @@ def log_line(text):
         return
     try:
         fd = os.open(LOG, os.O_WRONLY | os.O_APPEND | os.O_CREAT | os.O_NOFOLLOW, 0o600)
-        with os.fdopen(fd, "a") as stream:
+        with os.fdopen(fd, "a", encoding="utf-8", errors="replace") as stream:
             stream.write(text if text.endswith("\n") else text + "\n")
-    except OSError:
-        pass  # logging must never stop the installer
+    except Exception:  # noqa: BLE001 - logging must never stop the installer
+        pass
+
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07]*\x07")
+TEE_LOG_LIMIT = 200 * 1024
+
+
+def clean_log_line(raw):
+    """Terminal output -> log text: no ANSI escapes, only what remains after the last carriage return."""
+    text = raw.decode("utf-8", errors="replace") if isinstance(raw, bytes) else raw
+    text = ANSI_ESCAPE.sub("", text.rstrip("\n"))
+    return text.rsplit("\r", 1)[-1].rstrip("\r")
+
+
+def tee_stream(source, sink, limit=TEE_LOG_LIMIT):
+    """Copy `source` (binary, line by line) to `sink` and return the cleaned tail for the log.
+
+    At most `limit` bytes of log text are kept, dropping the oldest lines first.
+    """
+    kept, size, dropped = collections.deque(), 0, False
+    for raw in iter(source.readline, b""):
+        try:
+            sink.write(raw.decode("utf-8", errors="replace"))
+            sink.flush()
+        except (OSError, ValueError):
+            pass  # the terminal going away must not stop the command
+        line = clean_log_line(raw)
+        if not line:
+            continue
+        kept.append(line)
+        size += len(line.encode("utf-8", errors="replace")) + 1
+        while size > limit and kept:
+            size -= len(kept.popleft().encode("utf-8", errors="replace")) + 1
+            dropped = True
+    return ([f"[earlier output dropped; last {limit // 1024} KB kept]"] if dropped else []) + list(kept)
+
+
+def run_teed(args, *, cwd=None, capture=True, env=None, preexec=None):
+    """Run with stderr shown on the terminal AND saved to the log; stdout captured or passed through."""
+    process = subprocess.Popen([str(x) for x in args], cwd=cwd, env=env, preexec_fn=preexec,
+                               stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE if capture else None, stderr=subprocess.PIPE)
+    lines = []
+    reader = threading.Thread(target=lambda: lines.extend(tee_stream(process.stderr, sys.stderr)), daemon=True)
+    reader.start()
+    try:
+        stdout = process.stdout.read().decode("utf-8", errors="replace") if capture else ""
+        process.wait()
+    finally:
+        reader.join()
+        if lines:
+            log_line("\n".join([f"--- {Path(str(args[0])).name} output ---", *lines]))
+    return process.returncode, stdout
 
 
 def run(args, *, cwd=None, input=None, capture=True, env=None, private=False, show_errors=False, pass_fds=(),
-        stream_errors=False):
+        tee=False, umask=None):
     """Never include argument values in exceptions (some are sensitive paths).
 
-    stream_errors: capture stdout only and let stderr (progress, diagnostics) reach the terminal.
+    tee: stderr (progress, diagnostics) goes to the terminal and installer.log; stdout is
+    captured (capture=True) or shown. Only for nix commands: their output holds no secrets.
+    umask: file-creation mask for the child only (the installer itself keeps 077).
     """
+    preexec = (lambda: os.umask(umask)) if umask is not None else None
+    if tee and not private:
+        code, stdout = run_teed(args, cwd=cwd, capture=capture, env=env, preexec=preexec)
+        if code:
+            raise RuntimeError(f"{Path(args[0]).name} failed (exit {code})")
+        return stdout
     if private:
         # Bypass stdout/stderr redirection and tee: recovery output is terminal-only.
         fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
@@ -63,8 +126,8 @@ def run(args, *, cwd=None, input=None, capture=True, env=None, private=False, sh
     else:
         result = subprocess.run([str(x) for x in args], cwd=cwd, input=input, text=True,
                                 stdout=subprocess.PIPE if capture else None,
-                                stderr=subprocess.PIPE if capture and not stream_errors else None,
-                                env=env, pass_fds=pass_fds)
+                                stderr=subprocess.PIPE if capture else None,
+                                env=env, pass_fds=pass_fds, preexec_fn=preexec)
     if result.returncode:
         if show_errors and result.stderr:
             print(result.stderr, file=sys.stderr, end="")
@@ -191,8 +254,11 @@ def notice(text):
 
 def secret_twice(title):
     while True:
-        a = getpass.getpass(f"{title}: ")
-        b = getpass.getpass("Confirm: ")
+        try:
+            a = getpass.getpass(f"{title}: ")
+            b = getpass.getpass("Confirm: ")
+        except EOFError:
+            raise Cancelled from None  # never treat end of input as an answer
         if a and a == b and "\n" not in a and "\0" not in a:
             return a
         notice("Empty or mismatched secret. Try again.")
@@ -202,7 +268,7 @@ def nix_eval(repo, attr):
     # Git-aware references exclude .git, including git-crypt's runtime key cache.
     # Never use path: on an unlocked Git checkout.
     # stderr streams to the terminal so long evaluations show progress and errors.
-    return json.loads(run(["nix", "eval", "--no-write-lock-file", "--json", f"{repo}#{attr}"], stream_errors=True))
+    return json.loads(run(["nix", "eval", "--no-write-lock-file", "--json", f"{repo}#{attr}"], tee=True))
 
 
 def engine_digest(directory):
@@ -569,21 +635,36 @@ def private_file(directory, name, contents):
 def relock(repo):
     """Return the secrets to committed ciphertext so `git-crypt unlock` sees a clean tree.
 
-    Removing the filter sections first means git copies index blobs verbatim, which also
-    works after the session key cache was deleted.
+    `git checkout -- file` is NOT enough: after an unlock git's stat cache records the
+    smudged plaintext's size/mtime, so checkout treats the plaintext file as clean and
+    leaves it in place (reproduced with real git-crypt). Instead the raw index blob is
+    written directly (like lock_installed_bookmarks). The filter sections are removed
+    so later git commands copy blobs verbatim, even without the key cache.
     """
     for section in ("filter.git-crypt", "diff.git-crypt"):
         subprocess.run(["git", "config", "--remove-section", section], cwd=repo, capture_output=True)
-    # A snapshot without bookmarks has nothing to restore; never fail on it.
-    names = [f"secrets/{name}" for name in BOOKMARKS
-             if subprocess.run(["git", "ls-files", "--error-unmatch", "--", f"secrets/{name}"],
-                               cwd=repo, capture_output=True).returncode == 0]
-    if names:
-        run(["git", "checkout", "--", *names], cwd=repo, show_errors=True)
-    for name in names:
-        with open(repo / name, "rb") as handle:
+    restored = []
+    for name in BOOKMARKS:
+        # cat-file blob prints the stored bytes: no filters, no textconv.
+        shown = subprocess.run(["git", "cat-file", "blob", f":secrets/{name}"], cwd=repo, capture_output=True)
+        if shown.returncode:
+            continue  # a snapshot without bookmarks has nothing to restore; never fail on it
+        if not shown.stdout.startswith(CRYPT_MAGIC):
+            raise ValueError("Bookmark ciphertext could not be restored; refusing to continue")
+        path = repo / "secrets" / name
+        if path.is_symlink():
+            path.unlink()  # write the regular file, never through a link
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(shown.stdout)
+        with open(path, "rb") as handle:
             if handle.read(len(CRYPT_MAGIC)) != CRYPT_MAGIC:
                 raise ValueError("Bookmark ciphertext could not be restored; refusing to continue")
+        restored.append(f"secrets/{name}")
+    if restored:
+        # The stat cache still holds the plaintext's size, which --refresh cannot repair.
+        # With the filter gone, re-hashing stores the identical ciphertext blob and only
+        # updates the cached stat data. Best effort: the files are already correct.
+        subprocess.run(["git", "update-index", "-q", "--", *restored], cwd=repo, capture_output=True)
 
 
 def prepare_personal(repo, private):
@@ -699,55 +780,178 @@ def prepare_fido(m):
 
 
 TARGET = Path("/mnt")
-# Chroot store on the formatted target: the logical store stays /nix/store, the
-# physical one is /mnt/nix/store (on the target's /nix subvolume).
-TARGET_STORE = str(TARGET)
-TARGET_BUILD_DIR = TARGET / "nix" / "var" / "nix" / "builds"
 # Same substituter nixos-install uses: reuse paths already in the live store.
 LIVE_SUBSTITUTER = "auto?trusted=1"
 MIN_SYSTEM_GIB = 64
 
 
+# Chroot store on the formatted target: the logical store stays /nix/store, the
+# physical one is /mnt/nix/store (on the target's /nix subvolume). Derived at call
+# time so tests can point TARGET at a temporary directory.
+def target_store():
+    return str(TARGET)
+
+
+def target_build_dir():
+    return TARGET / "nix" / "var" / "nix" / "builds"
+
+
+def target_tmp_dir():
+    return TARGET / "nix" / "var" / "nix" / "installer-tmp"
+
+
 def build(repo, hostname, attribute, work, store=None, link_name=None):
     """Build `config.<attribute>`; the out-link in the workspace keeps it as a GC root.
 
-    With store=TARGET_STORE everything downloaded or built lands on the target disk,
+    With a target store everything downloaded or built lands on the target disk,
     never in the live ISO's RAM-backed store, and build directories live there too.
     """
     link = work / (link_name or attribute.rsplit(".", 1)[-1])
     notice(f"Building {attribute} for {hostname}{' on the target disk' if store else ''} (this can take a long time)...")
-    run([*build_command(repo, hostname, attribute, link, store)], capture=False,
-        env=target_build_env() if store else None)
+    if store:
+        # Store paths and nix's state on the target must be world-readable (umask 022).
+        run(build_command(repo, hostname, attribute, link, store), capture=False,
+            env=target_build_env(), umask=0o022, tee=True)
+    else:
+        run(build_command(repo, hostname, attribute, link), capture=False, tee=True)
     # A chroot-store out-link points at the logical /nix/store path, which need not exist live.
     return Path(os.readlink(link))
 
 
+def build_package(repo, hostname, attribute):
+    """Build a small package into the live store (no out-link) and return its store path."""
+    notice(f"Building {attribute} for {hostname}...")
+    out = run(["nix", "build", "-L", "--no-write-lock-file", "--no-link", "--print-out-paths",
+               # Multi-output packages (systemd) print every output; ask for `out` only.
+               f"{repo}#nixosConfigurations.{hostname}.config.{attribute}^out"], tee=True)
+    paths = out.split()
+    if len(paths) != 1 or not paths[0].startswith("/nix/store/"):
+        raise ValueError(f"Unexpected build result for {attribute}")
+    return paths[0]
+
+
 def build_command(repo, hostname, attribute, link, store=None):
     target = ["--store", store, "--extra-substituters", LIVE_SUBSTITUTER,
-              "--option", "build-dir", str(TARGET_BUILD_DIR)] if store else []
+              "--option", "build-dir", str(target_build_dir())] if store else []
     return ["nix", "build", "-L", "--no-write-lock-file", *target, "--out-link", link,
             f"{repo}#nixosConfigurations.{hostname}.config.{attribute}"]
 
 
+def fix_mount_modes():
+    """Mount roots of the target must be traversable by every user (/nix holds the store).
+
+    Subvolume roots keep whatever mode they were created with; a 0700 /nix makes every
+    non-root service fail with EACCES on its store path. /boot (vfat, umask=0077) is untouched.
+    """
+    for path in (TARGET, TARGET / "nix", TARGET / "home"):
+        if path.is_dir() and not path.is_symlink():
+            os.chmod(path, 0o755)
+
+
+def make_dirs(path, mode=0o755):
+    """Create each missing component with exactly `mode`, regardless of the process umask."""
+    missing = []
+    while not path.exists():
+        missing.append(path)
+        path = path.parent
+    for directory in reversed(missing):
+        os.mkdir(directory)
+        os.chmod(directory, mode)
+
+
 def target_build_env():
     # Builders run in build-dir; TMPDIR covers nix's own temporary files (as nixos-install does).
-    TARGET_BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    os.chmod(TARGET_BUILD_DIR, 0o755)  # nix requires o+x and forbids world-writable
-    tmp = TARGET / "nix" / "var" / "nix" / "installer-tmp"
-    tmp.mkdir(mode=0o700, parents=True, exist_ok=True)
-    return os.environ | {"TMPDIR": str(tmp)}
+    # nix requires o+x on build-dir and forbids world-writable; parents must stay traversable.
+    make_dirs(target_build_dir())
+    os.chmod(target_build_dir(), 0o755)
+    make_dirs(target_tmp_dir())
+    os.chmod(target_tmp_dir(), 0o700)
+    return os.environ | {"TMPDIR": str(target_tmp_dir())}
 
 
-def recovery_commands(repo, hostname, work):
-    """Manual continuation after formatting; contains no secrets."""
+def remove_target_temp_dirs():
+    """Remove only the installer-created temporary directories on the target's /nix."""
+    base = TARGET / "nix" / "var" / "nix"
+    for path in (target_tmp_dir(), target_build_dir()):
+        if path.parent != base or path.name not in ("installer-tmp", "builds"):
+            continue  # never anything but these two exact paths
+        if path.is_symlink() or not path.is_dir():
+            continue
+        try:
+            shutil.rmtree(path)
+        except OSError:
+            notice(f"Could not remove {path}; it is safe to delete later.")
+
+
+def shell_word(part):
+    return f"'{part}'" if any(c in str(part) for c in "?#$ ") else str(part)
+
+
+LUKS_ENROLLED_STAGES = ("luks-enrolled", "hardware-configured", "target-prepared", "final-system-built")
+
+
+def fido2_enroll_args(cryptenroll, token, device):
+    """The exact FIDO2 enrollment flags the installer uses (shared with recovery text)."""
+    return [cryptenroll, "--unlock-key-file=/run/icy-installer/luks-password",
+            f"--fido2-device={token}", "--fido2-with-client-pin=yes", "--fido2-with-user-presence=yes",
+            "--fido2-with-user-verification=no", device]
+
+
+def luks_recovery_lines(m, work):
+    cryptenroll = "systemd-cryptenroll"
+    try:
+        saved = (work / "cryptenroll-path").read_text().strip()
+        if saved.startswith("/nix/store/") and saved.endswith("/bin/systemd-cryptenroll"):
+            cryptenroll = saved
+    except OSError:
+        pass
+    mapper = "icy-" + m["hostname"]
+    device = "<partition from the line above>"
+    lines = [
+        "  # LUKS enrollment did not complete. Skipping it leaves the disk with ONLY the typed",
+        "  # passphrase and NO recovery key.",
+        f"  cryptsetup status {mapper} | grep device:    # the LUKS partition",
+        "  ls -l /dev/disk/by-partuuid/    # cross-check: the root partition UUID from storage.json",
+        f"  cryptsetup open --test-passphrase --key-file <a file you create with the LUKS passphrase> {device}",
+        f"  {cryptenroll} --unlock-key-file=<that file> --recovery-key {device}    # write the key down",
+    ]
+    if m.get("fido2"):
+        fido = fido2_enroll_args(cryptenroll, "<your /dev/hidrawN>", device)
+        fido[1] = "--unlock-key-file=<that file>"
+        lines.append("  " + " ".join(fido))
+    lines.append("  # then delete the passphrase file securely")
+    return lines
+
+
+def recovery_commands(repo, hostname, work, stage="formatted-and-mounted", m=None):
+    """Manual continuation after formatting, adapted to the last stage reached; no secrets."""
     link = work / "toplevel"
-    command = " ".join(f"'{part}'" if any(c in str(part) for c in "?#") else str(part)
-                       for part in build_command(repo, hostname, "system.build.toplevel", link, TARGET_STORE))
-    return [
-        f"  TMPDIR={TARGET}/nix/var/nix/installer-tmp {command}",
+    host = repo / "hosts" / hostname
+    lines = []
+    if m and m.get("encrypted") and stage not in LUKS_ENROLLED_STAGES:
+        lines += luks_recovery_lines(m, work)
+    if stage not in ("hardware-configured", "target-prepared", "final-system-built"):
+        lines += [
+            "  # Hardware and resume settings were not written yet:",
+            f"  nixos-generate-config --root {TARGET} --no-filesystems --show-hardware-config > {host}/hardware-configuration.nix",
+            "  # (hibernation: also fill resume.json; see the installer's execute_install)",
+            f"  git -C {repo} add hosts/{hostname}",
+        ]
+    command = " ".join(shell_word(part) for part in
+                       build_command(repo, hostname, "system.build.toplevel", link, target_store()))
+    lines += [
+        f"  mkdir -m 0755 -p {target_build_dir()}",
+        f"  mkdir -m 0700 -p {target_tmp_dir()}",
+        f"  (umask 022; TMPDIR={target_tmp_dir()} {command})",
         f"  nixos-install --root {TARGET} --system \"$(readlink {link})\" --no-root-passwd",
         f"  nixos-enter --root {TARGET} -c 'passwd <username>'",
     ]
+    if stage not in ("target-prepared", "final-system-built"):
+        lines.append(f"  Not covered here (do them manually, or reinstall): copying the repository to "
+                     f"{TARGET}{REPOSITORY} (without .git/git-crypt) and the age key in ~/.keys.")
+    lines.append("  Also not covered (do them manually, or reinstall): the repository's group ownership "
+                 "and ACLs, the GPG public key import, and the user password (chpasswd above sets it).")
+    return lines
 
 
 def check_capacity(m, disk_bytes, source_bytes):
@@ -755,7 +959,11 @@ def check_capacity(m, disk_bytes, source_bytes):
     # plus swap, EFI and the source. A layout that cannot fit must not erase a disk.
     needed = (MIN_SYSTEM_GIB + m["swapGiB"] + 2) * 1024 ** 3 + source_bytes
     if needed > disk_bytes:
-        raise ValueError(f"Target layout cannot fit: need approximately {needed / 1024**3:.1f} GiB including system, source, swap and EFI")
+        raise ValueError(
+            f"Target layout cannot fit: need approximately {needed / 1024**3:.1f} GiB "
+            f"(a fixed {MIN_SYSTEM_GIB} GiB floor for the system, plus {m['swapGiB']} GiB swap, "
+            f"2 GiB EFI and the source), but the disk has {disk_bytes / 1024**3:.1f} GiB. "
+            "Choose a larger target disk; the floor cannot be lowered.")
 
 
 def copy_install_repository(repo, target):
@@ -844,11 +1052,9 @@ def enroll(m, device, token, cryptenroll="systemd-cryptenroll"):
 
     while m["fido2"]:
         try:
-            run([cryptenroll, "--unlock-key-file=/run/icy-installer/luks-password",
-                 f"--fido2-device={token}", "--fido2-with-client-pin=yes", "--fido2-with-user-presence=yes",
-                 "--fido2-with-user-verification=no", device], capture=False, private=True)
+            run(fido2_enroll_args(cryptenroll, token, device), capture=False, private=True)
             break
-        except RuntimeError:
+        except (RuntimeError, OSError):  # OSError: e.g. the cryptenroll binary is missing
             token = after_failure()
             if token is None:
                 m["fido2"] = False
@@ -857,17 +1063,145 @@ def enroll(m, device, token, cryptenroll="systemd-cryptenroll"):
     # Never remove a token credential, recovery key or any slot automatically.
 
 
-def execute_install(repo, host, m, work, private, identity, certificate, token, snapshot):
-    if os.geteuid() != 0 or not Path("/sys/firmware/efi").exists():
+def install_environment_ok():
+    """Root on a UEFI-booted system; a separate function so tests need neither."""
+    return os.geteuid() == 0 and Path("/sys/firmware/efi").exists()
+
+
+def install_system(repo, m, work):
+    """Build the system on the target and run nixos-install, offering only a rebuild on failure.
+
+    Runs after formatting: nothing here formats, runs disko or enrolls again, and the
+    build is idempotent, so retrying it is safe.
+    """
+    while True:
+        try:
+            # Build only now, into the target's /nix: the live ISO store is a RAM-backed tmpfs.
+            system = build(repo, m["hostname"], "system.build.toplevel", work, store=target_store())
+            if last_stage(work) != "final-system-built":
+                progress(work, "final-system-built")
+            notice("Running nixos-install (the system is already in the target store; this sets up the boot loader)...")
+            # --system only sets the target profile (nix-env --store /mnt) to a path already in /mnt/nix/store.
+            # umask 022: nixos-install creates /etc, /var, ... which services running as other users traverse.
+            run(["nixos-install", "--root", TARGET, "--system", system, "--no-root-passwd"],
+                capture=False, umask=0o022)
+            fix_mount_modes()
+            progress(work, "system-installed")
+            remove_target_temp_dirs()
+            return
+        except (RuntimeError, ValueError, OSError) as exc:
+            notice(f"System build/installation failed: {describe(exc)}")
+            post_format_retry("The disk is already formatted; retrying only rebuilds and reinstalls the system.",
+                              "Retry build", "Stopped after formatting; the system build/installation did not finish.",
+                              exc)
+
+
+def post_format_retry(title, retry, stopped, exc):
+    """After formatting: offer only `retry` or Stop (never re-format). Returns on retry, raises on Stop."""
+    cancelled = 0
+    while True:
+        try:
+            action = choose(title, [retry, "Stop"])
+        except Cancelled:
+            cancelled += 1
+            if cancelled >= CANCEL_LIMIT:
+                raise RuntimeError("Prompt keeps failing; terminal may be gone. Stopped after formatting.") from exc
+            continue
+        if action == "Stop":
+            raise RuntimeError(stopped) from exc
+        return
+
+
+ERASE_PHRASE = "Yes, I understand my data will be deleted!"
+
+
+def confirm_erase(m):
+    """Unmissable summary, then the exact phrase. Anything else (or EOF/Esc/Ctrl+C) aborts."""
+    notice("=" * 72)
+    notice(f"TARGET DISK: {m['disk']}")
+    run(["lsblk", "--paths", "--output", "NAME,MODEL,SERIAL,SIZE,FSTYPE,MOUNTPOINTS", m["disk"]], capture=False)
+    notice("ALL partitions and data on this disk will be destroyed.")
+    notice("=" * 72)
+    try:
+        answer = ask(f"To erase it, type exactly: {ERASE_PHRASE}")
+    except EOFError:
+        raise Cancelled from None
+    if answer.strip() != ERASE_PHRASE:
+        raise ValueError("Erase confirmation did not match; nothing was formatted")
+
+
+def block_device(path):
+    """Return `path` if it is an existing block device below /dev/, else None."""
+    text = str(path).strip()
+    if not text.startswith("/dev/") or len(text) <= len("/dev/") or "\n" in text:
+        return None
+    try:
+        info = os.stat(text)
+    except OSError:
+        return None
+    return text if stat.S_ISBLK(info.st_mode) else None
+
+
+def luks_backing_device(m, host):
+    """The partition behind the target's LUKS mapper.
+
+    Preferred: the GPT partition UUID disko was given (storage.json), which needs no
+    parsing. It is cross-checked against `cryptsetup status`; lsblk --paths is the fallback.
+    """
+    mapper = "icy-" + m["hostname"]
+    by_uuid = None
+    try:
+        uuid = json.loads((host / "storage.json").read_text())["partitionUUIDs"]["root"]
+        by_uuid = block_device(os.path.realpath(f"/dev/disk/by-partuuid/{uuid}"))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    status = subprocess.run(["cryptsetup", "status", mapper], capture_output=True, text=True)
+    from_status = None
+    for line in status.stdout.splitlines():
+        key, _, value = line.strip().partition(":")
+        if key == "device":
+            from_status = block_device(value)
+    candidates = [d for d in (by_uuid, from_status) if d]
+    if not candidates:
+        parent = run(["lsblk", "--paths", "--noheadings", "--raw", "--output", "PKNAME", "/dev/mapper/" + mapper]).split()
+        candidates = [d for d in (block_device(p) for p in parent[:1]) if d]
+    if not candidates:
+        raise ValueError(f"Cannot identify the LUKS partition behind /dev/mapper/{mapper} "
+                         "(checked by-partuuid, cryptsetup status and lsblk)")
+    resolved = {os.path.realpath(d) for d in candidates}
+    if len(resolved) != 1:
+        raise ValueError("LUKS partition sources disagree (by-partuuid vs cryptsetup status); refusing to enroll")
+    return candidates[0]
+
+
+def check_luks(m, host, private):
+    """Resolve the LUKS partition and prove the typed passphrase opens it; retry-safe after formatting.
+
+    Only this part is wrapped in Retry/Stop: it changes nothing on disk. enroll() keeps its own
+    loops, so a retry never creates a second recovery key behind the operator's back.
+    """
+    while True:
+        try:
+            device = luks_backing_device(m, host)
+            run(["cryptsetup", "open", "--test-passphrase", "--key-file", private / "luks-password", device],
+                show_errors=True)
+            return device
+        except (RuntimeError, ValueError, OSError) as exc:
+            notice(f"LUKS check failed: {describe(exc)}")
+            post_format_retry("The disk is already formatted; retrying only re-checks the LUKS partition.",
+                              "Retry", "Stopped after formatting; LUKS enrollment did not run.", exc)
+
+
+def execute_install(repo, host, m, work, private, identity, certificate, token, snapshot, cryptenroll=None):
+    if not install_environment_ok():
         raise ValueError("Installation requires root and UEFI boot")
+    if m["encrypted"] and not cryptenroll:
+        raise ValueError("The target's systemd-cryptenroll was not prepared before formatting")
     data, protected, held = inventory(run)
     key = device_key(m["disk"])
     if check_target(data, key, protected, held) != snapshot:
         raise ValueError("Target disk identity/state changed since preflight")
-    run(["lsblk", "--paths", "--output", "NAME,MODEL,SERIAL,SIZE,FSTYPE,MOUNTPOINTS", m["disk"]], capture=False)
-    notice("DESTRUCTIVE STEP: all partitions/data on the selected disk will be destroyed.")
-    if ask(f"Type the exact target path to erase: {m['disk']}") != m["disk"]:
-        raise ValueError("Disk confirmation did not match")
+    confirm_erase(m)
     password = secret_twice("Installed user login password")
     if m["encrypted"]:
         private_file(private, "luks-password", secret_twice("LUKS fallback passphrase (not login/FIDO PIN)"))
@@ -877,36 +1211,30 @@ def execute_install(repo, host, m, work, private, identity, certificate, token, 
         raise ValueError("Target changed after confirmation")
     check_storage_names(m)
     progress(work, "formatting-started")
-    run([work / "diskoScript"], capture=False)
+    # The installer keeps umask 077; disko must not create subvolume roots (/nix, /home) as 0700.
+    run([work / "diskoScript"], capture=False, umask=0o022)
+    fix_mount_modes()
     progress(work, "formatted-and-mounted")
     if m["encrypted"]:
-        # Resolve actual parent of the specific mapper, not an ambiguous global partition label.
-        mapper = "/dev/mapper/icy-" + m["hostname"]
-        parent = run(["lsblk", "--noheadings", "--raw", "--output", "PKNAME", mapper]).strip()
-        device = parent if parent.startswith("/dev/") else "/dev/" + parent
-        if not device.startswith("/dev/") or "\n" in device:
-            raise ValueError("Cannot identify LUKS backing partition")
-        run(["cryptsetup", "open", "--test-passphrase", "--key-file", private / "luks-password", device])
-        # Use exactly the selected target's systemd, not an older ISO's enrollment format.
-        cryptenroll = nix_eval(repo, f"nixosConfigurations.{m['hostname']}.config.systemd.package.outPath") + "/bin/systemd-cryptenroll"
+        device = check_luks(m, host, private)
+        # The selected target's systemd, built into the live store during preflight.
         enroll(m, device, token, cryptenroll)
         write_json(host / "install.json", m)
-    hardware = run(["nixos-generate-config", "--root", "/mnt", "--no-filesystems", "--show-hardware-config"])
+        progress(work, "luks-enrolled")
+    hardware = run(["nixos-generate-config", "--root", TARGET, "--no-filesystems", "--show-hardware-config"])
     (host / "hardware-configuration.nix").write_text(hardware)
     if m["hibernate"] and m["swapGiB"]:
-        offset = run(["btrfs", "inspect-internal", "map-swapfile", "-r", "/mnt/swap/swapfile"]).strip()
+        offset = run(["btrfs", "inspect-internal", "map-swapfile", "-r", TARGET / "swap" / "swapfile"]).strip()
         if not offset.isdigit():
             raise ValueError("Invalid Btrfs resume offset")
-        uuid = run(["findmnt", "--noheadings", "--output", "UUID", "--target", "/mnt/swap"]).strip()
+        uuid = run(["findmnt", "--noheadings", "--output", "UUID", "--target", TARGET / "swap"]).strip()
         if not uuid:
             raise ValueError("Cannot identify swap filesystem")
         write_json(host / "resume.json", {"boot": {"resumeDevice": "/dev/mapper/icy-" + m["hostname"] if m["encrypted"] else "/dev/disk/by-uuid/" + uuid,
                                                    "kernelParams": ["resume_offset=" + offset]}})
     stage_files(repo, list(host.iterdir()))
-    # Build only now, into the target's /nix: the live ISO store is a RAM-backed tmpfs.
-    system = build(repo, m["hostname"], "system.build.toplevel", work, store=TARGET_STORE)
-    progress(work, "final-system-built")
-    target = Path("/mnt" + REPOSITORY)
+    progress(work, "hardware-configured")
+    target = Path(str(TARGET) + REPOSITORY)
     prepare_target_parent(target)
     if target.exists():
         raise ValueError("Target repository already exists; refusing to overwrite")
@@ -916,7 +1244,7 @@ def execute_install(repo, host, m, work, private, identity, certificate, token, 
         lock_installed_bookmarks(target)
     run(["git", "config", "core.sharedRepository", "group"], cwd=target)
     # Keys must exist before Home Manager activation during installation.
-    userhome = Path("/mnt/home") / m["username"]
+    userhome = TARGET / "home" / m["username"]
     userhome.mkdir(parents=True, exist_ok=True)
     os.chmod(userhome.parent, 0o755)
     os.chmod(userhome, 0o700)
@@ -929,25 +1257,24 @@ def execute_install(repo, host, m, work, private, identity, certificate, token, 
         # New normal user has explicit UID 1000 in generated configuration.
         shutil.chown(keys, 1000, 100)
         shutil.chown(keys / "age-master.key", 1000, 100)
-    notice("Running nixos-install (the system is already in the target store; this sets up the boot loader)...")
-    # --system only sets the target profile (nix-env --store /mnt) to a path already in /mnt/nix/store.
-    run(["nixos-install", "--root", "/mnt", "--system", system, "--no-root-passwd"], capture=False)
-    run(["nixos-enter", "--root", "/mnt", "-c", "chpasswd"], input=m["username"] + ":" + password + "\n")
+    progress(work, "target-prepared")
+    install_system(repo, m, work)
+    run(["nixos-enter", "--root", TARGET, "-c", "chpasswd"], input=m["username"] + ":" + password + "\n")
     password = ""
-    run(["nixos-enter", "--root", "/mnt", "-c", f"chown -R root:configurators {REPOSITORY}"])
-    run(["nixos-enter", "--root", "/mnt", "-c", f"chmod -R u+rwX,g+rwX,o-rwx {REPOSITORY}"])
-    run(["nixos-enter", "--root", "/mnt", "-c", f"find {REPOSITORY} -type d -exec chmod g+s '{{}}' +"])
-    run(["nixos-enter", "--root", "/mnt", "-c", f"setfacl -R -m g:configurators:rwX,m::rwX {REPOSITORY}"])
-    run(["nixos-enter", "--root", "/mnt", "-c", f"find {REPOSITORY} -type d -exec setfacl -m d:u::rwx,d:g::rwx,d:m::rwx,d:o::--- '{{}}' +"])
+    run(["nixos-enter", "--root", TARGET, "-c", f"chown -R root:configurators {REPOSITORY}"])
+    run(["nixos-enter", "--root", TARGET, "-c", f"chmod -R u+rwX,g+rwX,o-rwx {REPOSITORY}"])
+    run(["nixos-enter", "--root", TARGET, "-c", f"find {REPOSITORY} -type d -exec chmod g+s '{{}}' +"])
+    run(["nixos-enter", "--root", TARGET, "-c", f"setfacl -R -m g:configurators:rwX,m::rwX {REPOSITORY}"])
+    run(["nixos-enter", "--root", TARGET, "-c", f"find {REPOSITORY} -type d -exec setfacl -m d:u::rwx,d:g::rwx,d:m::rwx,d:o::--- '{{}}' +"])
     if certificate:
         destination = userhome / "signing-public.asc"
         shutil.copyfile(certificate, destination)
         shutil.chown(destination, 1000, 100)
         user = m["username"]  # validated shell-safe username; no arbitrary shell input.
-        run(["nixos-enter", "--root", "/mnt", "-c", f"su - {user} -c 'gpg --batch --import /home/{user}/signing-public.asc'"], capture=False)
-        run(["nixos-enter", "--root", "/mnt", "-c", f"su - {user} -c 'gpg --card-status'"], capture=False, private=True)
+        run(["nixos-enter", "--root", TARGET, "-c", f"su - {user} -c 'gpg --batch --import /home/{user}/signing-public.asc'"], capture=False)
+        run(["nixos-enter", "--root", TARGET, "-c", f"su - {user} -c 'gpg --card-status'"], capture=False, private=True)
     progress(work, "installed")
-    recovery = Path("/mnt/var/log/icy-installer")
+    recovery = TARGET / "var" / "log" / "icy-installer"
     recovery.mkdir(mode=0o700, parents=True, exist_ok=True)
     shutil.copyfile(work / "stages.log", recovery / "stages.log")
     notice("Installed. Verify boot, login, signing, disk unlock/recovery and hibernation before relying on this machine.")
@@ -1106,14 +1433,21 @@ def preflight_stage(repo, work, m):
            "Only the small disk-layout script is built now; the full system is built on the target after formatting.")
     # The live store is RAM-backed (tmpfs); the system closure must not be built here.
     build(repo, m["hostname"], "system.build.diskoScript", work)
+    cryptenroll = None
+    if m["encrypted"]:
+        # Enrollment must use the target's own systemd (not the ISO's); build it now,
+        # before formatting, because nix eval would only give an unbuilt store path.
+        systemd = build_package(repo, m["hostname"], "systemd.package")
+        cryptenroll = systemd + "/bin/systemd-cryptenroll"
+        (work / "cryptenroll-path").write_text(cryptenroll + "\n")  # public store path, for recovery text
     progress(work, "prebuilt")
-    return snapshot
+    return snapshot, cryptenroll
 
 
 def install_stage(repo, host, m, work, private, identity, certificate, token):
     """Preflight and install together, so Retry (before formatting) re-checks the disk first."""
-    snapshot = preflight_stage(repo, work, m)
-    execute_install(repo, host, m, work, private, identity, certificate, token, snapshot)
+    snapshot, cryptenroll = preflight_stage(repo, work, m)
+    execute_install(repo, host, m, work, private, identity, certificate, token, snapshot, cryptenroll)
 
 
 def pipeline(args, work, repo, revision, schema, m, history):
@@ -1141,7 +1475,7 @@ def pipeline(args, work, repo, revision, schema, m, history):
     identity = certificate = token = None
     try:
         if not args.dry_run:
-            if os.geteuid() != 0 or not Path("/sys/firmware/efi").exists():
+            if not install_environment_ok():
                 raise ValueError("Run installation as root from a UEFI-booted ISO")
             private = attempt(work, "Runtime state", prepare_runtime)
             if m["personalSecrets"]:
@@ -1177,7 +1511,7 @@ def main():
     args = parser.parse_args()
     os.umask(0o077)
     global LOG
-    work = repo = lock = hostname = None
+    work = repo = lock = answers = None
     try:
         if args.resume:
             work = pick_workspace()
@@ -1192,6 +1526,7 @@ def main():
                 head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True)
                 if head.returncode or head.stdout.strip() != revision:
                     raise ValueError("Workspace HEAD no longer matches the saved revision; start without --resume")
+            notice("Nix output is also saved in installer.log, next to the installer's own messages.")
             verify_repo(repo, revision, history)
             progress(work, "resumed")
         else:
@@ -1199,6 +1534,7 @@ def main():
             lock = lock_workspace(work)
             LOG = work / "installer.log"
             notice(f"Recoverable private workspace: {work}. It may contain decrypted configuration; protect it.")
+            notice("Nix output is also saved in installer.log, next to the installer's own messages.")
             progress(work, "workspace-created")
             repo, revision, history = prepare(work, args.source.resolve(), not args.no_update)
             session = {"manifest": None}
@@ -1223,7 +1559,7 @@ def main():
                 validate(m, schema)
             except (KeyError, TypeError) as exc:
                 raise ValueError("Manifest is missing or has malformed fields") from exc
-            hostname = m["hostname"]
+            answers = m
             save_session(work, revision, m, history)
             try:
                 pipeline(args, work, repo, revision, schema, m, history)
@@ -1237,7 +1573,7 @@ def main():
             notice("Stopped by operator. Nothing was formatted.")
             resume_hint(work, lock)
         else:
-            formatted_hint(work, repo, hostname)
+            formatted_hint(work, repo, answers)
         log_hint()
         return 1
     except (RuntimeError, ValueError, OSError) as exc:
@@ -1249,7 +1585,7 @@ def main():
             notice("Nothing was formatted.")
             resume_hint(work, lock)
         else:
-            formatted_hint(work, repo, hostname)
+            formatted_hint(work, repo, answers)
         log_hint()
         return 1
     finally:
@@ -1258,16 +1594,27 @@ def main():
     return 0
 
 
-def formatted_hint(work, repo, hostname):
+def formatted_hint(work, repo, m):
     """After formatting nothing is retried automatically; print (and log) manual recovery."""
-    notice(f"Disk is formatted but the build/install did not finish (last stage: {last_stage(work)}). "
+    hostname = m["hostname"] if isinstance(m, dict) else None
+    stage = last_stage(work)
+    if stage == "installed":
+        notice("Installation finished but a final step failed. Do NOT rerun the installer.")
+        return
+    if stage == "system-installed":
+        notice("The system is installed and bootable, but a final setup step failed "
+               f"(last stage: {stage}). Do NOT rerun the installer's formatting, and do not use --resume.")
+        notice(f"  Still to do manually: nixos-enter --root {TARGET} -c 'passwd <username>', the repository "
+               f"ownership/ACLs under {TARGET}{REPOSITORY}, and the GPG public key import.")
+        return
+    notice(f"Disk is formatted but the build/install did not finish (last stage: {stage}). "
            "Do NOT rerun the installer's formatting, and do not use --resume.")
     if repo is None:
         return
     notice(f"Recovery, with the target filesystems mounted at {TARGET} (mount them again first if they are not):")
-    for line in recovery_commands(repo, hostname or "<hostname>", work):
+    for line in recovery_commands(repo, hostname or "<hostname>", work, stage, m if isinstance(m, dict) else None):
         notice(line)
-    notice(f"Then copy {repo} to {TARGET}{REPOSITORY} if it is missing, and verify boot and disk unlock before relying on it.")
+    notice("Verify boot and disk unlock before relying on it.")
 
 
 def resume_hint(work, lock):

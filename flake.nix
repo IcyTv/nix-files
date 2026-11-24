@@ -184,7 +184,7 @@
     checks.x86_64-linux.installer = let
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
     in
-      pkgs.runCommand "installer-safety-tests" {nativeBuildInputs = [pkgs.python3 pkgs.psmisc pkgs.git];} ''
+      pkgs.runCommand "installer-safety-tests" {nativeBuildInputs = [pkgs.python3 pkgs.psmisc pkgs.git pkgs.git-crypt];} ''
         export PYTHONDONTWRITEBYTECODE=1
         python3 -m unittest discover -s ${./installer}/tests -p 'test_*.py' -v
         touch "$out"

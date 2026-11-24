@@ -43,7 +43,7 @@ This copies sources into a private `/var/tmp/icy-install-*` workspace, generates
 
 Implementation controls moved to `icy.internal.*`, outside the feature namespace. Personal identity/secrets use `icy.*`; available features remain `my.*`. Home Manager's default preset now uses overridable defaults. The wizard derives preset values from the actual module configuration rather than duplicating its feature list. Final Nix evaluation/build is authoritative and catches conflicts/dependencies (for example Docker + Podman).
 
-The engine generates and evaluates a complete host, builds its closure and locked Disko runner, then shows disk model/serial/capacity/partitions. It requires the exact target path and rechecks identity/use immediately before Disko. Formatting and mounting occur only there. Disk-derived hardware/resume metadata is finalized and rebuilt afterward; that last step can still fail after erasure.
+The engine generates and evaluates a complete host, builds its closure and locked Disko runner, then shows disk model/serial/capacity/partitions. It requires typing the exact phrase `Yes, I understand my data will be deleted!` and rechecks identity/use immediately before Disko. Formatting and mounting occur only there. Disk-derived hardware/resume metadata is finalized and rebuilt afterward; that last step can still fail after erasure.
 
 `/`, `/home`, `/nix`, `/swap` are Btrfs subvolumes; EFI is approximately 1 GiB. Optional LUKS2 wraps Btrfs. Swap is a file created by Disko using `btrfs filesystem mkswapfile`; no zram or swap partition. RAM-based Red Hat sizing guidelines are editable. **Small/zero swap only warns, even with hibernation selected.** No swap means no valid resume device/offset is emitted.
 
