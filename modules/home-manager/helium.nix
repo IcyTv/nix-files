@@ -367,18 +367,28 @@ in {
       ]
       ++ profileDesktopEntries;
 
-    # Bitwarden desktop's own browser-integration setup only writes native
-    # messaging manifests for a fixed list of known browsers (chrome, chromium,
-    # edge, ...); Helium's profile lives under a different product directory,
-    # so it never gets detected. Wire the manifest declaratively instead.
-    home.file."${heliumDataDir}/NativeMessagingHosts/com.8bit.bitwarden.json".text = builtins.toJSON {
-      name = "com.8bit.bitwarden";
-      description = "Bitwarden desktop integration";
-      path = "${pkgs.bitwarden-desktop}/libexec/desktop_proxy";
-      type = "stdio";
-      # Same Chrome Web Store id used in profiles.Default.extensions.bitwarden above.
-      allowed_origins = ["chrome-extension://nngceckbapebfimnlniiiahkandclblb/"];
-    };
+    # Bitwarden desktop's own browser-integration setup now also tries to
+    # rewrite this manifest itself on every startup (to repoint `path` at its
+    # current nix-store desktop_proxy, which changes on every update) -- it
+    # still doesn't auto-detect Helium's profile directory to create the file
+    # from scratch, but it does try to overwrite one that's already there.
+    # A plain home.file symlinks into the Nix store (read-only), so that
+    # self-rewrite throws EROFS and aborts the app's whole native-messaging
+    # setup for the run -- which greys out biometric unlock in every browser,
+    # not just Helium (see app.log: "Error while setting up native
+    # messaging"). `install` instead of a symlink keeps this a regular,
+    # writable file that both home-manager and Bitwarden can update.
+    home.activation.configureHeliumNativeMessaging = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      run mkdir -p "${heliumDataDir}/NativeMessagingHosts"
+      run install -m644 ${pkgs.writeText "com.8bit.bitwarden.json" (builtins.toJSON {
+        name = "com.8bit.bitwarden";
+        description = "Bitwarden desktop integration";
+        path = "${pkgs.bitwarden-desktop}/libexec/desktop_proxy";
+        type = "stdio";
+        # Same Chrome Web Store id used in profiles.Default.extensions.bitwarden above.
+        allowed_origins = ["chrome-extension://nngceckbapebfimnlniiiahkandclblb/"];
+      })} "${heliumDataDir}/NativeMessagingHosts/com.8bit.bitwarden.json"
+    '';
 
     systemd.user.services.helium-profile-sync = {
       Unit = {
