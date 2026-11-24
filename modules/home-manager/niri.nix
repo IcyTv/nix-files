@@ -4,12 +4,19 @@
   lib,
   ...
 }: let
-  # Invalidate the shared fingerprint-gate stamp before locking, so
-  # sudo/polkit fall back to requiring a real auth again after a lock,
-  # matching the swaylock/greetd invalidation in hosts/peregrine/configuration.nix.
-  # /run/fprint-gate is that host's fprintGateDir; kept as a literal here too
-  # since this module isn't peregrine-specific.
-  invalidateFprintGate = ''${pkgs.coreutils}/bin/rm -f "/run/fprint-gate/$(${pkgs.coreutils}/bin/id -un)"'';
+  # Invalidate the shared fingerprint gate before locking, so sudo/polkit
+  # fall back to requiring a real auth again after a lock, matching the
+  # swaylock/greetd invalidation in modules/nixos/pam-security.nix.
+  # /run/fprint-gate is that module's fprintGateDir; kept as a literal here
+  # too since this module isn't peregrine-specific. Writing a world-writable
+  # ".closed" marker (rather than deleting the stamp) sidesteps needing
+  # delete permission on a file that may be owned by a different uid (e.g.
+  # polkitd's unprivileged "polkituser") -- see pam-security.nix for why.
+  invalidateFprintGate = ''
+    f="/run/fprint-gate/$(${pkgs.coreutils}/bin/id -un).closed"
+    : > "$f" 2>/dev/null || true
+    ${pkgs.coreutils}/bin/chmod 666 "$f" 2>/dev/null || true
+  '';
   lockScreen = pkgs.writeShellScript "niri-lock-screen" ''
     ${invalidateFprintGate}
     exec ${pkgs.swaylock}/bin/swaylock

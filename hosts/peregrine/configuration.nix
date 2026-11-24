@@ -64,6 +64,12 @@ in {
     users.users.root.hashedPassword = "!";
     users.users.${m.username}.uid = 1000;
     home-manager.users.${m.username} = import ./home.nix;
+    # polkitd is a system daemon; it only scans environment.systemPackages'
+    # /share/polkit-1/actions, never a per-user home-manager profile. Without
+    # this, bitwarden-desktop's bundled com.bitwarden.Bitwarden.policy (in
+    # home.nix's home.packages) is invisible to it, and "Unlock with system
+    # authentication" in the app can never actually authorize.
+    environment.systemPackages = [pkgs.bitwarden-desktop];
     environment.pathsToLink = ["/share/applications" "/share/xdg-desktop-portal"];
     system.stateVersion = m.stateVersion;
   };

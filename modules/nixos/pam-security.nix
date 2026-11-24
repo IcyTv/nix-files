@@ -16,34 +16,47 @@
   # file to the controlling tty (mirroring sudo's own per-terminal credential
   # cache), so a stamp from one terminal was invisible to any other -- hence
   # this hand-rolled version keyed on $PAM_USER alone.
+  # Writers run as whatever uid happens to be doing the authenticating:
+  # sudo's real uid is the target user, but polkit-1's auth check runs
+  # inside polkitd, which on this system is an unprivileged "polkituser",
+  # not root -- so no writer here can be assumed to have chown/CAP_CHOWN.
+  # Every write chmods its own file to 666 right after creating it (always
+  # permitted: you own whatever you just created, regardless of your uid),
+  # so any *later* write from a different uid can still truncate it.
+  # "Invalidate" therefore can't mean unlink either -- the sticky bit still
+  # blocks a non-owner (or non-root) from deleting someone else's file even
+  # once it's 666. Instead it's a same-trick second marker file; gate-check
+  # requires the stamp to both be fresh *and* newer than that marker.
   fprintGateDir = "/run/fprint-gate";
+  worldWritableTouch = pkgs.writeShellScript "fprint-gate-touch" ''
+    f="$1"
+    : > "$f" 2>/dev/null || exit 0
+    ${pkgs.coreutils}/bin/chmod 666 "$f" 2>/dev/null || true
+  '';
   fprintGateCheck = timeoutMinutes:
     pkgs.writeShellScript "fprint-gate-check" ''
       [ -n "$PAM_USER" ] || exit 1
-      found=$(${pkgs.findutils}/bin/find ${fprintGateDir} -maxdepth 1 -name "$PAM_USER" -mmin -${toString timeoutMinutes} 2>/dev/null)
-      [ -n "$found" ]
+      stamp="${fprintGateDir}/$PAM_USER"
+      closed="${fprintGateDir}/$PAM_USER.closed"
+      [ -e "$stamp" ] || exit 1
+      found=$(${pkgs.findutils}/bin/find "$stamp" -maxdepth 0 -mmin -${toString timeoutMinutes} 2>/dev/null)
+      [ -n "$found" ] || exit 1
+      if [ -e "$closed" ] && [ "$closed" -nt "$stamp" ]; then
+        exit 1
+      fi
     '';
   # Always exits 0: this sits on the real-password success path (see
   # fprintGateAuthStamp below), and a transient /run write failure must not
   # turn a correct password into a denial.
-  #
-  # chown to $PAM_USER explicitly rather than relying on the calling
-  # process's uid: sudo's real uid is already the target user (so this is a
-  # no-op there), but polkit-1's auth check runs inside polkitd, a daemon
-  # that is always root regardless of who's authenticating. Without this the
-  # stamp ends up root-owned, and the sticky bit then blocks the user's own
-  # unprivileged lock/logout invalidation from ever deleting it.
   fprintGateStampScript = pkgs.writeShellScript "fprint-gate-stamp" ''
     if [ -n "$PAM_USER" ]; then
-      f="${fprintGateDir}/$PAM_USER"
-      : > "$f" 2>/dev/null || true
-      ${pkgs.coreutils}/bin/chown "$PAM_USER" "$f" 2>/dev/null || true
+      ${worldWritableTouch} "${fprintGateDir}/$PAM_USER"
     fi
     exit 0
   '';
   fprintGateInvalidateScript = pkgs.writeShellScript "fprint-gate-invalidate" ''
     [ -n "$PAM_USER" ] || exit 0
-    ${pkgs.coreutils}/bin/rm -f "${fprintGateDir}/$PAM_USER"
+    ${worldWritableTouch} "${fprintGateDir}/$PAM_USER.closed"
   '';
 
   fprintGateAuth = timeoutMinutes: fprintdOrder: {
