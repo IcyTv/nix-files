@@ -15,13 +15,14 @@ in {
     ]
     ++ lib.optional (!osConfig.stylix.enable) inputs.stylix.homeModules.stylix;
   icy = {
+    inherit (m) personalSecrets;
+    inherit (m.git) signing;
+
     internal.core.enable = true;
     user.name = m.username;
-    personalSecrets = m.personalSecrets;
     git = {
       name = m.gitName;
       email = m.gitEmail;
-      signing = m.signing;
     };
   };
   home.stateVersion = lib.mkForce m.stateVersion;
