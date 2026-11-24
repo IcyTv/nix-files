@@ -152,7 +152,7 @@ in {
       };
     };
 
-    services.linux-enable-ir-emitter.enable = false;
+    services.linux-enable-ir-emitter.enable = true;
 
     networking.hostName = m.hostname;
     time.timeZone = lib.mkForce m.timezone;
