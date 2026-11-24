@@ -62,6 +62,8 @@ in {
     pinentry.package = lib.mkDefault pkgs.pinentry-curses;
   };
 
+  my.hm.helium.enable = true;
+
   # Same three external monitors as eagle (matched by resolution/refresh,
   # connector names differ per-GPU), plus the laptop panel, parked at the
   # bottom-middle of the external row for now.
