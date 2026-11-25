@@ -51,7 +51,10 @@
         "enable": true
       },
       "subniri": {
-        "enable": true
+        "enable": true,
+        "batteryControl": {
+          "enable": true
+        }
       },
       "sudo-rs": {
         "enable": true
