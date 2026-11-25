@@ -92,15 +92,30 @@
   # flip the existing "unix" auth rule from plain `sufficient` to a jump that
   # falls through to this stamp-and-succeed line on a correct password, and
   # skips it (going straight to the pre-existing deny) on a wrong one -- the
-  # same verified [success=ignore default=1] + sufficient pair already used
-  # for fprintGate itself, just gating the password line instead of fprintd.
-  fprintGateUnixControl = "[success=ignore default=1]";
+  # same verified [success=ignore default=1] + sufficient pair reused below
+  # for howdy's own confirmation step.
+  ignoreThenJump = "[success=ignore default=1]";
   fprintGateAuthStamp = unixAuthOrder: {
     order = unixAuthOrder + 1;
     control = "sufficient";
     modulePath = "${pamPkg}/lib/security/pam_exec.so";
     args = ["quiet" "${fprintGateStampScript}"];
   };
+
+  # A fingerprint touch gives the user a deliberate moment to notice and
+  # cancel an unwanted polkit prompt; Howdy's face match doesn't -- it can
+  # succeed the instant a face is in frame, with no action and no time to
+  # react. PAM itself has no concept of "passive" vs "interactive" auth (a
+  # `sufficient` success never tells the caller which module produced it),
+  # so this tags Howdy's success explicitly: pam_echo.so prints a fixed
+  # marker string through the PAM conversation right after howdy's own line
+  # (flipped from plain `sufficient` to the same ignore-then-jump trick
+  # above, so its failure still falls through normally). thawth (see
+  # crates/polkit-agent/src/conversation.rs) watches for this exact string
+  # and, on seeing it, holds the already-successful result behind an
+  # explicit "Authorize" button instead of reporting it straight to polkit.
+  howdyConfirmMarker = "subniri:howdy";
+  howdyConfirmMarkerFile = pkgs.writeText "thawth-howdy-confirm-marker" howdyConfirmMarker;
 in {
   options.icy.internal.pamSecurity = {
     enable = lib.mkEnableOption "the fingerprint/facial-recognition PAM gate for sudo, polkit-1, and frostguard";
@@ -194,13 +209,13 @@ in {
         sudo = {
           fprintAuth = true;
           rules.auth.fprintGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.sudo.rules.auth.fprintd.order;
-          rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+          rules.auth.unix.control = lib.mkForce ignoreThenJump;
           rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.sudo.rules.auth.unix.order;
         };
         polkit-1 = {
           fprintAuth = true;
           rules.auth.fprintGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.fprintd.order;
-          rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
+          rules.auth.unix.control = lib.mkForce ignoreThenJump;
           rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.polkit-1.rules.auth.unix.order;
         };
         frostguard = {
@@ -245,19 +260,36 @@ in {
       # another fast path offered only after a real auth already happened
       # once, never an alternative to one.
       #
-      # Ordered ahead of fprintd (order - 2, leaving room for its own gate
-      # at - 1 below it): a camera glance needs no touch, so give it first
-      # try and fall back to the fingerprint reader -- then password --
-      # only if no face is recognized in time. Relative offset from
-      # fprintd's own order, per nixpkgs' own warning on this option: never
-      # hardcode an absolute value, a nixpkgs update could silently reorder
-      # the built-in rules.
+      # Ordered ahead of fprintd (order - 3, leaving room for its own gate
+      # at - 4 below it, and the confirmation marker at - 2 right above
+      # it): a camera glance needs no touch, so give it first try and fall
+      # back to the fingerprint reader -- then password -- only if no face
+      # is recognized in time. Relative offset from fprintd's own order,
+      # per nixpkgs' own warning on this option: never hardcode an
+      # absolute value, a nixpkgs update could silently reorder the
+      # built-in rules.
       security.pam.services = {
         polkit-1 = {
           howdy.enable = true;
-          howdy.control = "sufficient";
-          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.polkit-1.rules.auth.fprintd.order - 2);
-          rules.auth.howdyGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.howdy.order;
+          # Flipped from plain `sufficient`: a bare face match is never
+          # reported to polkit on its own, see howdyConfirmMarker above.
+          howdy.control = ignoreThenJump;
+          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.polkit-1.rules.auth.fprintd.order - 3);
+          rules.auth.howdyConfirm = {
+            order = config.security.pam.services.polkit-1.rules.auth.howdy.order + 1;
+            control = "sufficient";
+            modulePath = "${pamPkg}/lib/security/pam_echo.so";
+            args = ["file=${howdyConfirmMarkerFile}"];
+          };
+          # Skips 2, not the usual 1: a closed gate must also skip past
+          # howdyConfirm right below howdy, or pam_echo (which always
+          # "succeeds") would run unconditionally and report a face match
+          # that never actually happened.
+          rules.auth.howdyGate =
+            (fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.howdy.order)
+            // {
+              control = "[success=ignore default=2]";
+            };
         };
         frostguard = {
           howdy.enable = true;
