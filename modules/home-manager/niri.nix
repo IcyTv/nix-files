@@ -45,12 +45,12 @@ in {
   };
 
   options.my.hm.niri.defaultBrowser = lib.mkOption {
-    type = lib.types.str;
+    type = lib.types.listOf lib.types.str;
     default =
       if config.my.hm.firefox.enable
-      then "${pkgs.firefox}/bin/firefox"
+      then ["${pkgs.firefox}/bin/firefox"]
       else if config.my.hm.helium.enable
-      then "${config.my.hm.helium.pkg}/bin/helium --profile-directory=Default"
+      then ["${config.my.hm.helium.pkg}/bin/helium" "--profile-directory=Default"]
       else null;
     description = "The default browser to open when pressing Mod+B";
   };
@@ -242,7 +242,7 @@ in {
             then ["kitty"]
             else throw "Configuration Error: Either kitty or ghostty need to be enabled";
           "Mod+Space".action.spawn = ["subniri" "launcher" "open"];
-          "Mod+B".action.spawn = [config.my.hm.niri.defaultBrowser];
+          "Mod+B".action.spawn = config.my.hm.niri.defaultBrowser;
           "Mod+E".action.spawn = ["thunar"];
           "Mod+Alt+L".action.spawn = [config.my.hm.niri.lockCommand];
 
