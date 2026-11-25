@@ -44,6 +44,17 @@ in {
     description = "Same as lockCommand, but backgrounds locking app immediately (for swayidle's before-sleep/lock hooks).";
   };
 
+  options.my.hm.niri.defaultBrowser = lib.mkOption {
+    type = lib.types.str;
+    default =
+      if config.my.hm.firefox.enable
+      then "${pkgs.firefox}/bin/firefox"
+      else if config.my.hm.helium.enable
+      then "${config.my.hm.helium.pkg}/bin/helium"
+      else null;
+    description = "The default browser to open when pressing Mod+B";
+  };
+
   config = lib.mkIf config.my.hm.niri.enable {
     programs.niri.settings = {
       prefer-no-csd = true;
@@ -231,7 +242,7 @@ in {
             then ["kitty"]
             else throw "Configuration Error: Either kitty or ghostty need to be enabled";
           "Mod+Space".action.spawn = ["subniri" "launcher" "open"];
-          "Mod+B".action.spawn = ["firefox"];
+          "Mod+B".action.spawn = [config.my.hm.niri.defaultBrowser];
           "Mod+E".action.spawn = ["thunar"];
           "Mod+Alt+L".action.spawn = [config.my.hm.niri.lockCommand];
 

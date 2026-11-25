@@ -65,6 +65,8 @@ in {
 
   my.hm.helium.enable = true;
 
+  my.hm.niri.defaultBrowser = "${config.my.hm.helium.pkg}/bin/helium";
+
   # Same three external monitors as eagle (matched by resolution/refresh,
   # connector names differ per-GPU), plus the laptop panel, parked at the
   # bottom-middle of the external row for now.
