@@ -223,6 +223,24 @@ in {
         settings.video.device_path = cfg.howdy.videoDevice;
       };
 
+      # polkit-agent-helper@.service (where polkit-1's PAM stack, and so
+      # pam_howdy, actually runs) ships from nixpkgs with PrivateDevices=yes
+      # and DeviceAllow restricted to /dev/null -- unlike fprintd, which is a
+      # separate root daemon reached over D-Bus, howdy has no daemon of its
+      # own and opens the camera device directly from inside whatever
+      # process is running the PAM stack. Without this, every polkit-1
+      # Howdy attempt fails with "not possible to open camera at configured
+      # path", regardless of which agent (GNOME's, thawth, ...) asked for
+      # it, since both are just clients of this same shared helper.
+      # BindPaths re-exposes the one device node into its otherwise-private
+      # /dev; DeviceAllow grants the matching cgroup permission -- neither
+      # alone is sufficient, and everything else about the service stays as
+      # hardened as upstream ships it.
+      systemd.services."polkit-agent-helper@".serviceConfig = {
+        BindPaths = [cfg.howdy.videoDevice];
+        DeviceAllow = ["${cfg.howdy.videoDevice} rw"];
+      };
+
       # Same gate as fprintd, reusing the same stamp -- howdy is just
       # another fast path offered only after a real auth already happened
       # once, never an alternative to one.
