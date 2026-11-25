@@ -84,7 +84,7 @@
             "$mod, Space, exec, anyrun"
             "$mod, B, exec, firefox"
             "$mod, E, exec, thunar"
-            "$mod ALT, L, exec, ${pkgs.swaylock}/bin/swaylock"
+            "$mod ALT, L, exec, ${pkgs.frostguard}/bin/frostguard"
 
             "$mod, Q, killactive,"
             "$mod, F, fullscreen,"
