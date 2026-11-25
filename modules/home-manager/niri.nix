@@ -19,13 +19,13 @@
   '';
   lockScreen = pkgs.writeShellScript "niri-lock-screen" ''
     ${invalidateFprintGate}
-    exec ${pkgs.swaylock}/bin/swaylock
+    exec ${pkgs.frostguard}/bin/frostguard
   '';
   # swayidle's before-sleep/lock hooks must return promptly, so swaylock has
   # to fork into the background instead of blocking like the keybind variant.
   lockScreenDaemonized = pkgs.writeShellScript "niri-lock-screen-daemonized" ''
     ${invalidateFprintGate}
-    exec ${pkgs.swaylock}/bin/swaylock --daemonize
+    exec ${pkgs.frostguard}/bin/frostguard --daemonize
   '';
 in {
   options.my.hm.niri.enable = lib.mkEnableOption "Niri Wayland compositor home-manager configuration";
@@ -41,7 +41,7 @@ in {
     type = lib.types.str;
     readOnly = true;
     default = "${lockScreenDaemonized}";
-    description = "Same as lockCommand, but backgrounds swaylock immediately (for swayidle's before-sleep/lock hooks).";
+    description = "Same as lockCommand, but backgrounds locking app immediately (for swayidle's before-sleep/lock hooks).";
   };
 
   config = lib.mkIf config.my.hm.niri.enable {

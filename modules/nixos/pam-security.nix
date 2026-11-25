@@ -7,15 +7,16 @@
   cfg = config.icy.internal.pamSecurity;
   pamPkg = config.security.pam.package;
 
-  # Fingerprint is only offered as an auth method for sudo/polkit/swaylock once
-  # a real (non-fingerprint) authentication has already succeeded. The gate is
-  # a per-user stamp file under /run (tmpfs, so reboot clears it for free):
-  # sudo/polkit touch it when a session opens (fingerprint or password, once
-  # already open) and swaylock only ever reads it. pam_timestamp.so looked
-  # like a drop-in fit for this but turned out to scope its own timestamp
-  # file to the controlling tty (mirroring sudo's own per-terminal credential
-  # cache), so a stamp from one terminal was invisible to any other -- hence
-  # this hand-rolled version keyed on $PAM_USER alone.
+  # Fingerprint is only offered as an auth method for sudo/polkit/frostguard
+  # once a real (non-fingerprint) authentication has already succeeded. The
+  # gate is a per-user stamp file under /run (tmpfs, so reboot clears it for
+  # free): sudo/polkit touch it when a session opens (fingerprint or
+  # password, once already open) and frostguard only ever reads it.
+  # pam_timestamp.so looked like a drop-in fit for this but turned out to
+  # scope its own timestamp file to the controlling tty (mirroring sudo's own
+  # per-terminal credential cache), so a stamp from one terminal was
+  # invisible to any other -- hence this hand-rolled version keyed on
+  # $PAM_USER alone.
   # Writers run as whatever uid happens to be doing the authenticating:
   # sudo's real uid is the target user, but polkit-1's auth check runs
   # inside polkitd, which on this system is an unprivileged "polkituser",
@@ -81,13 +82,13 @@
   };
 in {
   options.icy.internal.pamSecurity = {
-    enable = lib.mkEnableOption "the fingerprint/facial-recognition PAM gate for sudo, polkit-1, and swaylock";
+    enable = lib.mkEnableOption "the fingerprint/facial-recognition PAM gate for sudo, polkit-1, and frostguard";
 
     fingerprint.enable = lib.mkOption {
       type = lib.types.bool;
       default = true;
       description = ''
-        Wire fprintd into sudo/polkit-1/swaylock, each gated behind a stamp
+        Wire fprintd into sudo/polkit-1/frostguard, each gated behind a stamp
         left by a prior real (password) authentication. Disable on hosts
         with no fingerprint reader.
       '';
@@ -101,16 +102,16 @@ in {
       description = "How long the real-auth stamp stays valid for sudo/polkit-1.";
     };
 
-    swaylockGraceMinutes = lib.mkOption {
+    lockscreenGraceMinutes = lib.mkOption {
       type = lib.types.int;
       default = 60;
-      description = "How long the real-auth stamp stays valid for swaylock.";
+      description = "How long the real-auth stamp stays valid for frostguard.";
     };
 
     howdy = {
       enable = lib.mkEnableOption ''
         Howdy facial recognition as a gated fast path on polkit-1 and
-        swaylock, reusing the same real-auth stamp as fingerprint. Never
+        frostguard, reusing the same real-auth stamp as fingerprint. Never
         wired into sudo -- that path should always keep the moment of
         friction a fingerprint/password forces, not a frictionless camera
         glance
@@ -131,7 +132,7 @@ in {
   # services.fprintd.enable/services.howdy.enable both default their PAM
   # auth (fprintAuth/howdy.enable) to true for every PAM service (login, su,
   # sshd, greetd, ...), not just the ones configured below. Force both off
-  # everywhere by default so only sudo/polkit-1/swaylock (which get the
+  # everywhere by default so only sudo/polkit-1/frostguard (which get the
   # gate) end up with them.
   options.security.pam.services = lib.mkOption {
     type = lib.types.attrsOf (lib.types.submodule {
@@ -180,13 +181,13 @@ in {
           rules.auth.unix.control = lib.mkForce fprintGateUnixControl;
           rules.auth.fprintGateStamp = fprintGateAuthStamp config.security.pam.services.polkit-1.rules.auth.unix.order;
         };
-        swaylock = {
+        frostguard = {
           fprintAuth = true;
-          # Read-only: swaylock never opens a session, so it can't refresh
-          # the gate itself. The window is "time since the last real
-          # sudo/polkit/login auth", not "time since the last screen
+          # Read-only: frostguard never opens a session, so it can't
+          # refresh the gate itself. The window is "time since the last
+          # real sudo/polkit/login auth", not "time since the last screen
           # unlock" (see memory on this).
-          rules.auth.fprintGate = fprintGateAuth cfg.swaylockGraceMinutes config.security.pam.services.swaylock.rules.auth.fprintd.order;
+          rules.auth.fprintGate = fprintGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.fprintd.order;
         };
       };
     })
@@ -218,11 +219,11 @@ in {
           rules.auth.howdy.order = lib.mkForce (config.security.pam.services.polkit-1.rules.auth.fprintd.order - 2);
           rules.auth.howdyGate = fprintGateAuth cfg.noExpiryMinutes config.security.pam.services.polkit-1.rules.auth.howdy.order;
         };
-        swaylock = {
+        frostguard = {
           howdy.enable = true;
           howdy.control = "sufficient";
-          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.swaylock.rules.auth.fprintd.order - 2);
-          rules.auth.howdyGate = fprintGateAuth cfg.swaylockGraceMinutes config.security.pam.services.swaylock.rules.auth.howdy.order;
+          rules.auth.howdy.order = lib.mkForce (config.security.pam.services.frostguard.rules.auth.fprintd.order - 2);
+          rules.auth.howdyGate = fprintGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.howdy.order;
         };
       };
     })
