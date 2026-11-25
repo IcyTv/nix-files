@@ -50,7 +50,7 @@ in {
       if config.my.hm.firefox.enable
       then "${pkgs.firefox}/bin/firefox"
       else if config.my.hm.helium.enable
-      then "${config.my.hm.helium.pkg}/bin/helium"
+      then "${config.my.hm.helium.pkg}/bin/helium --profile-directory=Default"
       else null;
     description = "The default browser to open when pressing Mod+B";
   };
