@@ -10,13 +10,26 @@
   # Fingerprint is only offered as an auth method for sudo/polkit/frostguard
   # once a real (non-fingerprint) authentication has already succeeded. The
   # gate is a per-user stamp file under /run (tmpfs, so reboot clears it for
-  # free): sudo/polkit touch it when a session opens (fingerprint or
-  # password, once already open) and frostguard only ever reads it.
-  # pam_timestamp.so looked like a drop-in fit for this but turned out to
-  # scope its own timestamp file to the controlling tty (mirroring sudo's own
-  # per-terminal credential cache), so a stamp from one terminal was
+  # free). pam_timestamp.so looked like a drop-in fit for this but turned out
+  # to scope its own timestamp file to the controlling tty (mirroring sudo's
+  # own per-terminal credential cache), so a stamp from one terminal was
   # invisible to any other -- hence this hand-rolled version keyed on
   # $PAM_USER alone.
+  #
+  # Two independent gates, not one shared one:
+  #   - fprintGateDir: sudo/polkit-1. Stamped only by a real sudo/polkit
+  #     password auth (never by frostguard); closed both at logout and at
+  #     every screen lock, so locking always forces a real re-auth for
+  #     privilege escalation.
+  #   - lockscreenGateDir: frostguard. Stamped by frostguard itself on any
+  #     successful unlock, password or biometric; closed only at logout, not
+  #     at lock -- otherwise the gate frostguard depends on would be shut
+  #     before frostguard even started probing, and fingerprint/Howdy could
+  #     never fire on the lock screen at all. See crates/lockscreen in the
+  #     subniri repo for the write side.
+  # Sharing one gate between both used to seem like the simpler option, but
+  # it made the two consumers' invalidation needs mutually exclusive.
+  #
   # Writers run as whatever uid happens to be doing the authenticating:
   # sudo's real uid is the target user, but polkit-1's auth check runs
   # inside polkitd, which on this system is an unprivileged "polkituser",
@@ -29,16 +42,19 @@
   # once it's 666. Instead it's a same-trick second marker file; gate-check
   # requires the stamp to both be fresh *and* newer than that marker.
   fprintGateDir = "/run/fprint-gate";
+  lockscreenGateDir = "/run/lockscreen-gate";
+  gateDirs = [fprintGateDir lockscreenGateDir];
+
   worldWritableTouch = pkgs.writeShellScript "fprint-gate-touch" ''
     f="$1"
     : > "$f" 2>/dev/null || exit 0
     ${pkgs.coreutils}/bin/chmod 666 "$f" 2>/dev/null || true
   '';
-  fprintGateCheck = timeoutMinutes:
+  mkGateCheck = dir: timeoutMinutes:
     pkgs.writeShellScript "fprint-gate-check" ''
       [ -n "$PAM_USER" ] || exit 1
-      stamp="${fprintGateDir}/$PAM_USER"
-      closed="${fprintGateDir}/$PAM_USER.closed"
+      stamp="${dir}/$PAM_USER"
+      closed="${dir}/$PAM_USER.closed"
       [ -e "$stamp" ] || exit 1
       found=$(${pkgs.findutils}/bin/find "$stamp" -maxdepth 0 -mmin -${toString timeoutMinutes} 2>/dev/null)
       [ -n "$found" ] || exit 1
@@ -55,17 +71,22 @@
     fi
     exit 0
   '';
-  fprintGateInvalidateScript = pkgs.writeShellScript "fprint-gate-invalidate" ''
+  # Closes every gate at once: a full logout should invalidate frostguard's
+  # unlock stamp exactly as much as sudo/polkit-1's, even though only the
+  # latter is also closed on every lock (see the comment above).
+  invalidateAllGatesScript = pkgs.writeShellScript "fprint-gate-invalidate-all" ''
     [ -n "$PAM_USER" ] || exit 0
-    ${worldWritableTouch} "${fprintGateDir}/$PAM_USER.closed"
+    ${lib.concatMapStringsSep "\n" (dir: ''${worldWritableTouch} "${dir}/$PAM_USER.closed"'') gateDirs}
   '';
 
-  fprintGateAuth = timeoutMinutes: fprintdOrder: {
+  mkGateAuth = dir: timeoutMinutes: fprintdOrder: {
     order = fprintdOrder - 1;
     control = "[success=ignore default=1]";
     modulePath = "${pamPkg}/lib/security/pam_exec.so";
-    args = ["quiet" "${fprintGateCheck timeoutMinutes}"];
+    args = ["quiet" "${mkGateCheck dir timeoutMinutes}"];
   };
+  fprintGateAuth = mkGateAuth fprintGateDir;
+  lockscreenGateAuth = mkGateAuth lockscreenGateDir;
   # sudo -v/polkit checks never open a PAM session (only a real privileged
   # command does), so the stamp can't live in the session phase. Instead,
   # flip the existing "unix" auth rule from plain `sufficient` to a jump that
@@ -105,7 +126,7 @@ in {
     lockscreenGraceMinutes = lib.mkOption {
       type = lib.types.int;
       default = 60;
-      description = "How long the real-auth stamp stays valid for frostguard.";
+      description = "How long frostguard's own unlock stamp stays valid before a password is required again.";
     };
 
     howdy = {
@@ -152,16 +173,17 @@ in {
 
       # Sticky + world-writable, like /tmp: any user may create/delete
       # their own "$username" entry, but not another user's.
-      systemd.tmpfiles.rules = ["d ${fprintGateDir} 1777 root root -"];
+      systemd.tmpfiles.rules = map (dir: "d ${dir} 1777 root root -") gateDirs;
 
-      # Invalidate the gate when the login session actually ends (not just
-      # a screen lock). Reboot already clears it for free since /run is
-      # tmpfs.
+      # Invalidate every gate when the login session actually ends (not
+      # just a screen lock -- see the comment on gateDirs above for why
+      # lockscreenGateDir specifically is *not* also closed on every lock).
+      # Reboot already clears both for free since /run is tmpfs.
       security.pam.services.greetd.rules.session.fprintGateInvalidate = {
         order = config.security.pam.services.greetd.rules.session.unix.order + 5;
         control = "optional";
         modulePath = "${pamPkg}/lib/security/pam_exec.so";
-        args = ["quiet" "type=close_session" "${fprintGateInvalidateScript}"];
+        args = ["quiet" "type=close_session" "${invalidateAllGatesScript}"];
       };
     })
 
@@ -183,11 +205,11 @@ in {
         };
         frostguard = {
           fprintAuth = true;
-          # Read-only: frostguard never opens a session, so it can't
-          # refresh the gate itself. The window is "time since the last
-          # real sudo/polkit/login auth", not "time since the last screen
-          # unlock" (see memory on this).
-          rules.auth.fprintGate = fprintGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.fprintd.order;
+          # frostguard's own gate (see gateDirs above): stamped by
+          # frostguard itself on any successful unlock, so the window is
+          # "time since the last unlock of any kind", not "time since the
+          # last real sudo/polkit/login auth".
+          rules.auth.fprintGate = lockscreenGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.fprintd.order;
         };
       };
     })
@@ -223,7 +245,7 @@ in {
           howdy.enable = true;
           howdy.control = "sufficient";
           rules.auth.howdy.order = lib.mkForce (config.security.pam.services.frostguard.rules.auth.fprintd.order - 2);
-          rules.auth.howdyGate = fprintGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.howdy.order;
+          rules.auth.howdyGate = lockscreenGateAuth cfg.lockscreenGraceMinutes config.security.pam.services.frostguard.rules.auth.howdy.order;
         };
       };
     })

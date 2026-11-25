@@ -1331,11 +1331,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1795605814,
-        "narHash": "sha256-0Znhr68hr19axftKj6I2e6KSjOlMAgSBY84k/2vBHRo=",
+        "lastModified": 1795606969,
+        "narHash": "sha256-KHkFH/4Bv01graFPotQm5NMJQQ2sZ/uJDvEA2pLiAcs=",
         "owner": "IcyTv",
         "repo": "subniri",
-        "rev": "41514552b761bf34abba15256cfc50a540f88200",
+        "rev": "5a73b91108d76942e77592e647b356db018f7481",
         "type": "github"
       },
       "original": {
