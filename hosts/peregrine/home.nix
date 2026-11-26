@@ -43,6 +43,7 @@ in {
       email = m.gitEmail;
     };
     signing = {
+      key = "5A498FB9128625874A0B890B14358C8CEB5D568B";
       format = "openpgp";
       signByDefault = m.signing;
     };
