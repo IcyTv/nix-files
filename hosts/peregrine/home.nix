@@ -57,6 +57,18 @@ in {
     events = {
       before-sleep = config.my.hm.niri.lockCommandDaemonized;
       lock = config.my.hm.niri.lockCommandDaemonized;
+      # amdgpu intermittently fails DP link training on DP-9 (the 240Hz
+      # monitor -- by far the highest-bandwidth of the three dock outputs)
+      # right after resume, before the dock's DP mux has settled; this
+      # shows up as screen noise/flicker. Forcing niri to drop and
+      # re-establish that output retriggers link training once things have
+      # stabilized, clearing the corruption without a full re-login.
+      after-resume = "${pkgs.writeShellScript "niri-relink-dp9" ''
+        sleep 3
+        ${pkgs.niri}/bin/niri msg output DP-9 off
+        sleep 1
+        ${pkgs.niri}/bin/niri msg output DP-9 on
+      ''}";
     };
   };
   services.gpg-agent = {
