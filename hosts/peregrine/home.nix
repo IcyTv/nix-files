@@ -68,8 +68,8 @@ in {
   my.hm.niri.defaultBrowser = ["${config.my.hm.helium.pkg}/bin/helium" "--profile-directory=Default"];
 
   # Same three external monitors as eagle (matched by resolution/refresh,
-  # connector names differ per-GPU), plus the laptop panel, parked at the
-  # bottom-middle of the external row for now.
+  # connector names differ per-GPU), plus the laptop panel, centered below
+  # the left (ASUS 24") monitor.
   programs.niri.settings.outputs = {
     "DP-10" = {
       enable = true;
@@ -116,8 +116,8 @@ in {
         refresh = 60.001;
       };
       position = {
-        x = 200;
-        y = 1440;
+        x = 0;
+        y = 1080;
       };
     };
   };
